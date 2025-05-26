@@ -3,12 +3,10 @@
 
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import * as THREE from 'three';
-// OrbitControls are removed as they are not typically used for a background element.
-// If you need them for debugging, you can re-add them.
-// import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 interface ThreeSceneProps {
   scrollPercentage: number;
+  currentTheme?: 'light' | 'dark'; // Added theme prop
 }
 
 interface Keyframe {
@@ -57,20 +55,37 @@ function interpolateKeyframes(scrollPercentage: number, object: THREE.Object3D |
 
   object.position.lerpVectors(prevKeyframe.position, nextKeyframe.position, t);
   
-  object.rotation.x = THREE.MathUtils.lerp(prevKeyframe.rotation.x, nextKeyframe.rotation.x, t);
-  object.rotation.y = THREE.MathUtils.lerp(prevKeyframe.rotation.y, nextKeyframe.rotation.y, t);
-  object.rotation.z = THREE.MathUtils.lerp(prevKeyframe.rotation.z, nextKeyframe.rotation.z, t);
+  const qPrev = new THREE.Quaternion().setFromEuler(prevKeyframe.rotation);
+  const qNext = new THREE.Quaternion().setFromEuler(nextKeyframe.rotation);
+  const qInterp = new THREE.Quaternion().slerpQuaternions(qPrev, qNext, t);
+  object.rotation.setFromQuaternion(qInterp);
   
   object.scale.lerpVectors(prevKeyframe.scale, nextKeyframe.scale, t);
 }
 
 
-const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage }) => {
+const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme = 'light' }) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const cubeRef = useRef<THREE.Mesh | null>(null);
+  const animatedObjectRef = useRef<THREE.Mesh | null>(null); // Renamed from cubeRef
+
+  // Theme-dependent properties
+  const sceneBackgroundColor = useMemo(() => {
+    return currentTheme === 'dark' ? new THREE.Color(0x301934) : new THREE.Color(0xF0F8FF); // Dark Purple vs AliceBlue
+  }, [currentTheme]);
+
+  const objectGeometry = useMemo(() => {
+    return currentTheme === 'dark' 
+      ? new THREE.ConeGeometry(0.7, 1.5, 32) // Cone for dark theme
+      : new THREE.BoxGeometry(1, 1, 1);    // Cube for light theme
+  }, [currentTheme]);
+
+  const objectMaterialColor = useMemo(() => {
+    return currentTheme === 'dark' ? 0xD8BFD8 : 0xECD8AE; // Light Lavender vs Sandy
+  }, [currentTheme]);
+
 
   useEffect(() => {
     if (typeof window === 'undefined' || !mountRef.current) return;
@@ -79,12 +94,12 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage }) => {
 
     // Scene
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf4f4f5); // Light gray background, matches theme's secondary/muted
+    scene.background = sceneBackgroundColor;
     sceneRef.current = scene;
 
     // Camera
     const camera = new THREE.PerspectiveCamera(75, currentMount.clientWidth / currentMount.clientHeight, 0.1, 1000);
-    camera.position.z = 3.5; // Adjusted camera position
+    camera.position.z = 3.5; 
     cameraRef.current = camera;
 
     // Renderer
@@ -95,41 +110,37 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage }) => {
     rendererRef.current = renderer;
     
     // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8); // Slightly increased ambient for light theme
+    const ambientLight = new THREE.AmbientLight(0xffffff, currentTheme === 'dark' ? 0.5 : 0.8);
     scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.7); // Adjusted intensity
+    const directionalLight = new THREE.DirectionalLight(0xffffff, currentTheme === 'dark' ? 0.4 : 0.7);
     directionalLight.position.set(5, 5, 5).normalize();
     scene.add(directionalLight);
     
-    const accentLight = new THREE.PointLight(0x9575CD, 1.2, 100); // Accent color light, slightly adjusted
-    accentLight.position.set(-2, 2, 2);
+    const accentLightColor = currentTheme === 'dark' ? 0xC8A2C8 : 0xFFD700; // Lilac vs Gold
+    const accentLight = new THREE.PointLight(accentLightColor, currentTheme === 'dark' ? 1.0 : 1.2, 100); 
+    accentLight.position.set(currentTheme === 'dark' ? 2 : -2, 2, 2);
     scene.add(accentLight);
 
 
-    // Cube
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
+    // Animated Object (Cube or Cone)
     const material = new THREE.MeshStandardMaterial({ 
-        color: 0x3F51B5, // Primary color
+        color: objectMaterialColor,
         metalness: 0.3,
         roughness: 0.6,
     }); 
-    const cube = new THREE.Mesh(geometry, material);
-    scene.add(cube);
-    cubeRef.current = cube;
+    const animatedObject = new THREE.Mesh(objectGeometry, material);
+    scene.add(animatedObject);
+    animatedObjectRef.current = animatedObject;
 
     // Initial positioning based on scroll 0
-    interpolateKeyframes(0, cubeRef.current);
+    interpolateKeyframes(0, animatedObjectRef.current);
 
 
     // Animation loop
     const animate = () => {
-      if (!rendererRef.current || !sceneRef.current || !cameraRef.current || !cubeRef.current) return;
+      if (!rendererRef.current || !sceneRef.current || !cameraRef.current || !animatedObjectRef.current) return;
       requestAnimationFrame(animate);
-      
-      // Update object based on current scrollPercentage
-      // This will be handled by the useEffect listening to scrollPercentage prop changes
-      
       rendererRef.current.render(sceneRef.current, cameraRef.current);
     };
     animate();
@@ -153,18 +164,60 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage }) => {
         }
       }
       rendererRef.current?.dispose();
+      // Dispose geometries and materials if they are being recreated
+      if (animatedObjectRef.current) {
+        if(animatedObjectRef.current.geometry) animatedObjectRef.current.geometry.dispose();
+        if(Array.isArray(animatedObjectRef.current.material)) {
+            animatedObjectRef.current.material.forEach(mat => mat.dispose());
+        } else if (animatedObjectRef.current.material) {
+            (animatedObjectRef.current.material as THREE.Material).dispose();
+        }
+      }
       sceneRef.current = null;
       cameraRef.current = null;
-      cubeRef.current = null;
+      animatedObjectRef.current = null;
     };
-  }, []); // Empty dependency array: setup runs once
+  // IMPORTANT: Re-run setup if theme changes to recreate objects with new geometry/colors
+  }, [currentTheme, sceneBackgroundColor, objectGeometry, objectMaterialColor]); 
 
-  // Effect to update cube based on scrollPercentage prop
+  // Effect to update object based on scrollPercentage prop
   useEffect(() => {
-    if (cubeRef.current) {
-      interpolateKeyframes(scrollPercentage, cubeRef.current);
+    if (animatedObjectRef.current) {
+      interpolateKeyframes(scrollPercentage, animatedObjectRef.current);
     }
   }, [scrollPercentage]);
+
+  // Effect to update scene background and object materials if theme changes dynamically
+  useEffect(() => {
+    if (sceneRef.current) {
+      sceneRef.current.background = sceneBackgroundColor;
+    }
+    if (animatedObjectRef.current && animatedObjectRef.current.material) {
+      // If material is an array, handle it properly. For now, assume single material.
+      ((animatedObjectRef.current.material as THREE.MeshStandardMaterial)).color.setHex(objectMaterialColor);
+      
+      // If geometry needs to change and is not handled by full re-render, update here
+      // This is more complex if the geometry type changes fundamentally.
+      // The current setup relies on the main useEffect re-running due to prop changes.
+    }
+    // Update lights based on theme
+    if (sceneRef.current) {
+        const ambient = sceneRef.current.children.find(c => c.type === 'AmbientLight') as THREE.AmbientLight;
+        if (ambient) ambient.intensity = currentTheme === 'dark' ? 0.5 : 0.8;
+
+        const directional = sceneRef.current.children.find(c => c.type === 'DirectionalLight') as THREE.DirectionalLight;
+        if (directional) directional.intensity = currentTheme === 'dark' ? 0.4 : 0.7;
+        
+        const point = sceneRef.current.children.find(c => c.type === 'PointLight') as THREE.PointLight;
+        if(point) {
+            point.color.setHex(currentTheme === 'dark' ? 0xC8A2C8 : 0xFFD700);
+            point.intensity = currentTheme === 'dark' ? 1.0 : 1.2;
+            point.position.set(currentTheme === 'dark' ? 2 : -2, 2, 2);
+        }
+    }
+
+  }, [currentTheme, sceneBackgroundColor, objectMaterialColor]);
+
 
   return <div ref={mountRef} className="fixed inset-0 -z-10 w-screen h-screen" />;
 };

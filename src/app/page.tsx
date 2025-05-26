@@ -8,20 +8,21 @@ import ProjectFilter, { Filters } from '@/components/portfolio/ProjectFilter';
 import { projectsData, Project } from '@/data/projects';
 import { Button } from '@/components/ui/button';
 import { ArrowDown } from 'lucide-react';
+import { useTheme } from 'next-themes'; // Import useTheme
 
 // Dynamically import ThreeScene to ensure it's client-side only
 const ThreeScene = dynamic(() => import('@/components/portfolio/ThreeScene'), {
   ssr: false,
-  // Loading placeholder removed as it's a background element
 });
 
 export default function PortfolioPage() {
   const [filters, setFilters] = useState<Filters>({ category: '', technologies: [] });
   const [scrollPercentage, setScrollPercentage] = useState(0);
   const [isClient, setIsClient] = useState(false);
+  const { resolvedTheme } = useTheme(); // Get current theme
 
   useEffect(() => {
-    setIsClient(true); // Set to true after initial mount on client
+    setIsClient(true); 
   }, []);
 
   useEffect(() => {
@@ -29,11 +30,11 @@ export default function PortfolioPage() {
       const currentScrollY = window.scrollY;
       const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
       const percentage = scrollHeight > 0 ? currentScrollY / scrollHeight : 0;
-      setScrollPercentage(Math.min(1, Math.max(0, percentage))); // Clamp between 0 and 1
+      setScrollPercentage(Math.min(1, Math.max(0, percentage))); 
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); // Initial calculation
+    handleScroll(); 
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
@@ -65,9 +66,9 @@ export default function PortfolioPage() {
 
   return (
     <>
-      {isClient && <ThreeScene scrollPercentage={scrollPercentage} />}
-      <div className="relative z-10 space-y-12"> {/* Content wrapper needs to be above background */}
-        <section aria-labelledby="welcome-heading" className="text-center py-12 md:py-16 bg-gradient-to-br from-background/80 to-primary/5 rounded-xl shadow-inner backdrop-blur-sm">
+      {isClient && <ThreeScene scrollPercentage={scrollPercentage} currentTheme={resolvedTheme as ('light' | 'dark' | undefined)} />}
+      <div className="relative z-10 space-y-12"> 
+        <section aria-labelledby="welcome-heading" className="text-center py-12 md:py-16 bg-gradient-to-br from-background/80 via-background/50 to-transparent rounded-xl shadow-inner backdrop-blur-sm border border-border/30">
           <div className="max-w-3xl mx-auto">
             <h1 id="welcome-heading" className="text-4xl md:text-5xl font-bold mb-6 text-primary">
               Hi
@@ -82,24 +83,11 @@ export default function PortfolioPage() {
           </div>
         </section>
 
-        {/* The original ThreeScene section is removed as it's now a background */}
-        {/* 
-        <section aria-labelledby="three-d-heading">
-          <h2 id="three-d-heading" className="text-3xl font-semibold mb-6 text-center">
-            Interactive 3D Showcase
-          </h2>
-          <ThreeScene /> // This instance is removed
-           <p className="text-center mt-4 text-muted-foreground text-sm">
-            Interact with the scene! Drag to rotate, scroll to zoom.
-          </p>
-        </section> 
-        */}
          <p className="text-center -mt-8 text-muted-foreground text-sm">
             The background animates as you scroll!
           </p>
 
-
-        <section id="projects-section" aria-labelledby="projects-heading" className="pt-8"> {/* Added pt-8 for spacing if needed */}
+        <section id="projects-section" aria-labelledby="projects-heading" className="pt-8"> 
           <h2 id="projects-heading" className="text-3xl font-semibold mb-8 text-center">
             My Projects
           </h2>
