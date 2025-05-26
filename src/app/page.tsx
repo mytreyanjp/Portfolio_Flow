@@ -73,7 +73,7 @@ export default function PortfolioPage() {
             <h1 id="welcome-heading" className="text-4xl md:text-5xl font-bold mb-6 text-primary">
               Hi, my name is Mytreyan.
             </h1>
-            <p className="text-lg md:text-xl text-foreground/80 mb-8">
+            <p className="text-lg md:text-xl text-foreground mb-4">
               Can create light outta a blackhole
             </p>
             <Button size="lg" onClick={scrollToProjects} className="rounded-full shadow-lg hover:shadow-primary/30 transition-shadow">
