@@ -68,8 +68,8 @@ export default function PortfolioPage() {
     <>
       {isClient && <ThreeScene scrollPercentage={scrollPercentage} currentTheme={resolvedTheme as ('light' | 'dark' | undefined)} />}
       <div className="relative z-10 space-y-12"> 
-        <section aria-labelledby="welcome-heading" className="text-center py-12 md:py-16 bg-gradient-to-br from-background/80 via-background/50 to-transparent rounded-xl shadow-inner backdrop-blur-sm border border-border/30">
-          <div className="max-w-3xl mx-auto">
+        <section aria-labelledby="welcome-heading" className="text-right py-12 md:py-16">
+          <div className="max-w-3xl ml-auto mr-0">
             <h1 id="welcome-heading" className="text-4xl md:text-5xl font-bold mb-6 text-primary">
               Hi
             </h1>
