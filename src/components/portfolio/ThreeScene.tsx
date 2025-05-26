@@ -16,7 +16,7 @@ interface Keyframe {
   scale: THREE.Vector3;
 }
 
-// Keyframes for the Light Theme (Cube - Beachy Vibe)
+// Keyframes for the Light Theme (Cube - Light Purple Vibe)
 const lightThemeKeyframes: Keyframe[] = [
   { scroll: 0,    position: new THREE.Vector3(0, -0.2, -1.8), rotation: new THREE.Euler(0.1, 0.1, 0), scale: new THREE.Vector3(1, 1, 1) },
   { scroll: 0.25, position: new THREE.Vector3(-1.5, 0.3, -1.2), rotation: new THREE.Euler(0.15, Math.PI / 7, 0.05), scale: new THREE.Vector3(1.05, 1.05, 1.05) },
@@ -83,7 +83,11 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
   const animatedObjectRef = useRef<THREE.Mesh | null>(null);
 
   const sceneBackgroundColor = useMemo(() => {
-    return currentTheme === 'dark' ? new THREE.Color(0x1A0F2A) : new THREE.Color(0xFFEBCD); // Darker purple vs Light Peachy Orange (Blanched Almond)
+    // Light theme: Very light lavender (matches CSS --background H:275 S:80 L:97)
+    // Dark theme: Very dark purple (matches CSS --background H:270 S:40 L:10)
+    return currentTheme === 'dark' 
+      ? new THREE.Color().setHSL(270/360, 0.40, 0.10) 
+      : new THREE.Color().setHSL(275/360, 0.80, 0.97);
   }, [currentTheme]);
 
   const objectGeometry = useMemo(() => {
@@ -93,7 +97,11 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
   }, [currentTheme]);
 
   const objectMaterialColor = useMemo(() => {
-    return currentTheme === 'dark' ? 0xC5A8E0 : 0xFFB347; // Lighter Lavender vs Pastel Orange
+    // Light theme object: Soft purple (lighter than UI primary: H:270 S:65 L:75)
+    // Dark theme object: Light lavender (matches dark theme text H:275 S:60 L:90)
+    return currentTheme === 'dark' 
+      ? new THREE.Color().setHSL(275/360, 0.60, 0.90)
+      : new THREE.Color().setHSL(270/360, 0.65, 0.75);
   }, [currentTheme]);
 
   const activeKeyframes = useMemo(() => {
@@ -120,17 +128,25 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
     currentMount.appendChild(renderer.domElement);
     rendererRef.current = renderer;
     
+    // Light theme ambient: 0.9; Dark theme ambient: 0.6
     const ambientLight = new THREE.AmbientLight(0xffffff, currentTheme === 'dark' ? 0.6 : 0.9);
     scene.add(ambientLight);
 
-    const directionalLightIntensity = currentTheme === 'dark' ? 0.5 : 0.8;
-    const directionalLightColor = currentTheme === 'dark' ? 0xCABBE9 : 0xFFE0B2; // Light purple tint vs light orange tint
-
+    // Directional Light
+    // Light theme: Softer, H:275 S:60 L:90; Dark theme: Muted, H:270 S:30 L:35
+    const directionalLightColor = currentTheme === 'dark' 
+        ? new THREE.Color().setHSL(270/360, 0.30, 0.35)
+        : new THREE.Color().setHSL(275/360, 0.60, 0.90);
+    const directionalLightIntensity = currentTheme === 'dark' ? 0.7 : 0.8;
     const directionalLight = new THREE.DirectionalLight(directionalLightColor, directionalLightIntensity);
     directionalLight.position.set(currentTheme === 'dark' ? -3 : 3, 3, 4).normalize();
     scene.add(directionalLight);
     
-    const accentLightColor = currentTheme === 'dark' ? 0x9F7AEA : 0xFFD700; // Brighter Purple Accent vs Gold
+    // Accent Light
+    // Light theme: Brighter purple accent, H:285 S:70 L:80; Dark theme: Brighter magenta accent, H:300 S:75 L:75
+    const accentLightColor = currentTheme === 'dark' 
+        ? new THREE.Color().setHSL(300/360, 0.75, 0.75) 
+        : new THREE.Color().setHSL(285/360, 0.70, 0.80);
     const accentLight = new THREE.PointLight(accentLightColor, currentTheme === 'dark' ? 1.2 : 1.5, 120); 
     accentLight.position.set(currentTheme === 'dark' ? 2.5 : -2.5, 2.5, 2.5);
     scene.add(accentLight);
@@ -183,6 +199,7 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
       cameraRef.current = null;
       animatedObjectRef.current = null;
     };
+  // IMPORTANT: Add all dependencies that influence the scene setup
   }, [currentTheme, sceneBackgroundColor, objectGeometry, objectMaterialColor, activeKeyframes]); 
 
   useEffect(() => {
@@ -191,15 +208,17 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
     }
   }, [scrollPercentage, activeKeyframes]);
 
+  // Effect to update scene elements when theme changes, if not already handled by re-creation
   useEffect(() => {
     if (sceneRef.current) {
       sceneRef.current.background = sceneBackgroundColor;
     }
     if (animatedObjectRef.current && animatedObjectRef.current.material) {
       const material = animatedObjectRef.current.material as THREE.MeshStandardMaterial;
-      material.color.setHex(objectMaterialColor);
+      material.color = objectMaterialColor; // Directly assign the THREE.Color object
       material.metalness = currentTheme === 'dark' ? 0.4 : 0.2;
       material.roughness = currentTheme === 'dark' ? 0.5 : 0.7;
+      material.needsUpdate = true;
     }
     if (sceneRef.current) {
         const ambient = sceneRef.current.children.find(c => c instanceof THREE.AmbientLight) as THREE.AmbientLight | undefined;
@@ -207,19 +226,24 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
 
         const directional = sceneRef.current.children.find(c => c instanceof THREE.DirectionalLight) as THREE.DirectionalLight | undefined;
         if (directional) {
-            directional.intensity = currentTheme === 'dark' ? 0.5 : 0.8;
-            directional.color.setHex(currentTheme === 'dark' ? 0xCABBE9 : 0xFFE0B2);
+            directional.intensity = currentTheme === 'dark' ? 0.7 : 0.8;
+            directional.color = currentTheme === 'dark' 
+                ? new THREE.Color().setHSL(270/360, 0.30, 0.35)
+                : new THREE.Color().setHSL(275/360, 0.60, 0.90);
             directional.position.set(currentTheme === 'dark' ? -3 : 3, 3, 4).normalize();
         }
         
         const point = sceneRef.current.children.find(c => c instanceof THREE.PointLight) as THREE.PointLight | undefined;
         if(point) {
-            point.color.setHex(currentTheme === 'dark' ? 0x9F7AEA : 0xFFD700);
+            point.color = currentTheme === 'dark' 
+                ? new THREE.Color().setHSL(300/360, 0.75, 0.75) 
+                : new THREE.Color().setHSL(285/360, 0.70, 0.80);
             point.intensity = currentTheme === 'dark' ? 1.2 : 1.5;
             point.position.set(currentTheme === 'dark' ? 2.5 : -2.5, 2.5, 2.5);
         }
     }
 
+  // IMPORTANT: Add all dependencies that influence these updates
   }, [currentTheme, sceneBackgroundColor, objectMaterialColor]);
 
 
@@ -227,4 +251,3 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
 };
 
 export default ThreeScene;
-
