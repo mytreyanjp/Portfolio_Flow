@@ -79,7 +79,7 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage }) => {
 
     // Scene
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x1A1A1A); // A slightly darker background
+    scene.background = new THREE.Color(0xf4f4f5); // Light gray background, matches theme's secondary/muted
     sceneRef.current = scene;
 
     // Camera
@@ -95,14 +95,14 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage }) => {
     rendererRef.current = renderer;
     
     // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8); // Slightly increased ambient for light theme
     scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.7); // Adjusted intensity
     directionalLight.position.set(5, 5, 5).normalize();
     scene.add(directionalLight);
     
-    const accentLight = new THREE.PointLight(0x9575CD, 1.5, 100); // Accent color light
+    const accentLight = new THREE.PointLight(0x9575CD, 1.2, 100); // Accent color light, slightly adjusted
     accentLight.position.set(-2, 2, 2);
     scene.add(accentLight);
 

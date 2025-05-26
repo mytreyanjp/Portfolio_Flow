@@ -70,7 +70,7 @@ export default function PortfolioPage() {
         <section aria-labelledby="welcome-heading" className="text-center py-12 md:py-16 bg-gradient-to-br from-background/80 to-primary/5 rounded-xl shadow-inner backdrop-blur-sm">
           <div className="max-w-3xl mx-auto">
             <h1 id="welcome-heading" className="text-4xl md:text-5xl font-bold mb-6 text-primary">
-              Welcome to My Digital Playground
+              Hi
             </h1>
             <p className="text-lg md:text-xl text-foreground/80 mb-8">
               Explore a curated collection of my projects, blending creativity with cutting-edge technology. 
