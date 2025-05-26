@@ -83,7 +83,7 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
   const animatedObjectRef = useRef<THREE.Mesh | null>(null);
 
   const sceneBackgroundColor = useMemo(() => {
-    // Light theme: Very light lavender (matches CSS --background H:275 S:80 L:97)
+    // Light theme: Very light, almost white lavender (matches CSS --background H:275 S:80 L:97)
     // Dark theme: Very dark purple (matches CSS --background H:270 S:40 L:10)
     return currentTheme === 'dark' 
       ? new THREE.Color().setHSL(270/360, 0.40, 0.10) 
