@@ -1,8 +1,9 @@
+
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Briefcase, Home, MessageSquare, FileText, Brain, CodeXml } from 'lucide-react';
+import { Briefcase, MessageSquare, FileText, CodeXml } from 'lucide-react'; // Removed Brain icon
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -12,7 +13,7 @@ const navItems = [
   { href: '/', label: 'Portfolio', icon: Briefcase },
   { href: '/contact', label: 'Contact', icon: MessageSquare },
   { href: '/resume', label: 'Resume', icon: FileText },
-  { href: '/ai-intro', label: 'AI Intro', icon: Brain },
+  // { href: '/ai-intro', label: 'AI Intro', icon: Brain }, // Removed AI Intro link
 ];
 
 export default function Header() {
