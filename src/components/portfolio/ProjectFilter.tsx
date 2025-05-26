@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -35,7 +36,7 @@ export default function ProjectFilter({ filters, onFilterChange, onResetFilters 
   };
 
   return (
-    <Card className="mb-8 shadow-lg">
+    <Card className="mb-8 bg-transparent shadow-none border-none">
       <CardHeader>
         <CardTitle className="text-2xl">Filter Projects</CardTitle>
       </CardHeader>
