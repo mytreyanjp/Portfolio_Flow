@@ -71,11 +71,10 @@ export default function PortfolioPage() {
         <section aria-labelledby="welcome-heading" className="text-left py-12 md:py-16">
           <div className="max-w-3xl ml-0 mr-auto">
             <h1 id="welcome-heading" className="text-4xl md:text-5xl font-bold mb-6 text-primary">
-              Hi
+              Hi, my name is Mytreyan.
             </h1>
             <p className="text-lg md:text-xl text-foreground/80 mb-8">
-              Explore a curated collection of my projects, blending creativity with cutting-edge technology. 
-              Dive into interactive 3D experiences and discover innovative solutions.
+              Can create light outta a blackhole
             </p>
             <Button size="lg" onClick={scrollToProjects} className="rounded-full shadow-lg hover:shadow-primary/30 transition-shadow">
               View Projects <ArrowDown className="ml-2 h-5 w-5 animate-bounce" />
