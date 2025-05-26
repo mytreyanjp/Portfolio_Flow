@@ -3,17 +3,18 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Briefcase, MessageSquare, FileText, CodeXml } from 'lucide-react'; // Removed Brain icon
+// Added Brain icon back, ensure Menu is also present
+import { Briefcase, MessageSquare, FileText, Brain, CodeXml, Menu } from 'lucide-react'; 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu } from 'lucide-react';
 
+// Updated navItems to include AI Intro with a disabled flag
 const navItems = [
   { href: '/', label: 'Portfolio', icon: Briefcase },
   { href: '/contact', label: 'Contact', icon: MessageSquare },
   { href: '/resume', label: 'Resume', icon: FileText },
-  // { href: '/ai-intro', label: 'AI Intro', icon: Brain }, // Removed AI Intro link
+  { href: '/ai-intro', label: 'AI Intro', icon: Brain, disabled: true }, // Re-added and marked as disabled
 ];
 
 export default function Header() {
@@ -21,22 +22,44 @@ export default function Header() {
 
   const NavLinks = ({isMobile = false}: {isMobile?: boolean}) => (
     <>
-      {navItems.map((item) => (
-        <Link key={item.href} href={item.href} passHref>
-          <Button
-            variant="ghost"
+      {navItems.map((item) => {
+        // Ensure item.disabled is treated as a boolean, defaulting to false if not present
+        const isDisabled = !!item.disabled; 
+
+        return (
+          <Link
+            key={item.href}
+            href={isDisabled ? '#' : item.href} // Change href if disabled to prevent navigation intent
+            passHref
+            onClick={(e) => {
+              if (isDisabled) {
+                e.preventDefault(); // Explicitly prevent navigation if link is disabled
+              }
+            }}
+            aria-disabled={isDisabled} // For accessibility, mark the link as disabled
             className={cn(
-              'justify-start text-base hover:bg-accent/80 hover:text-accent-foreground',
-              isMobile ? 'w-full my-1' : 'mx-1',
-              pathname === item.href ? 'bg-accent text-accent-foreground font-semibold' : ''
+              isDisabled ? "cursor-not-allowed" : "" // Visual cue on the link wrapper itself
             )}
-            aria-current={pathname === item.href ? 'page' : undefined}
           >
-            <item.icon className="mr-2 h-5 w-5" />
-            {item.label}
-          </Button>
-        </Link>
-      ))}
+            <Button
+              variant="ghost"
+              className={cn(
+                'justify-start text-base hover:bg-accent/80 hover:text-accent-foreground',
+                isMobile ? 'w-full my-1' : 'mx-1',
+                // Apply active styles only if the pathname matches AND the item is not disabled
+                pathname === item.href && !isDisabled ? 'bg-accent text-accent-foreground font-semibold' : ''
+                // The Button's own `disabled` prop will correctly handle opacity and pointer-events styling
+              )}
+              aria-current={pathname === item.href && !isDisabled ? 'page' : undefined}
+              disabled={isDisabled} // Pass the disabled state to the Button component
+              tabIndex={isDisabled ? -1 : undefined} // Remove from tab order if disabled
+            >
+              <item.icon className="mr-2 h-5 w-5" />
+              {item.label}
+            </Button>
+          </Link>
+        );
+      })}
     </>
   );
 
