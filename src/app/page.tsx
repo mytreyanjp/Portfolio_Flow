@@ -8,7 +8,7 @@ import ProjectFilter, { Filters } from '@/components/portfolio/ProjectFilter';
 import { projectsData, Project } from '@/data/projects';
 import { Button } from '@/components/ui/button';
 import { ArrowDown } from 'lucide-react';
-import { useTheme } from 'next-themes'; // Import useTheme
+import { useTheme } from 'next-themes'; 
 
 // Dynamically import ThreeScene to ensure it's client-side only
 const ThreeScene = dynamic(() => import('@/components/portfolio/ThreeScene'), {
@@ -19,7 +19,7 @@ export default function PortfolioPage() {
   const [filters, setFilters] = useState<Filters>({ category: '', technologies: [] });
   const [scrollPercentage, setScrollPercentage] = useState(0);
   const [isClient, setIsClient] = useState(false);
-  const { resolvedTheme } = useTheme(); // Get current theme
+  const { resolvedTheme } = useTheme(); 
 
   useEffect(() => {
     setIsClient(true); 
@@ -68,8 +68,8 @@ export default function PortfolioPage() {
     <>
       {isClient && <ThreeScene scrollPercentage={scrollPercentage} currentTheme={resolvedTheme as ('light' | 'dark' | undefined)} />}
       <div className="relative z-10 space-y-12"> 
-        <section aria-labelledby="welcome-heading" className="text-right py-12 md:py-16">
-          <div className="max-w-3xl ml-auto mr-0">
+        <section aria-labelledby="welcome-heading" className="text-left py-12 md:py-16">
+          <div className="max-w-3xl ml-0 mr-auto">
             <h1 id="welcome-heading" className="text-4xl md:text-5xl font-bold mb-6 text-primary">
               Hi
             </h1>
