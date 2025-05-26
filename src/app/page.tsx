@@ -18,6 +18,11 @@ const ThreeScene = dynamic(() => import('@/components/portfolio/ThreeScene'), {
 export default function PortfolioPage() {
   const [filters, setFilters] = useState<Filters>({ category: '', technologies: [] });
   const [scrollPercentage, setScrollPercentage] = useState(0);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true); // Set to true after initial mount on client
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -60,7 +65,7 @@ export default function PortfolioPage() {
 
   return (
     <>
-      {typeof window !== 'undefined' && <ThreeScene scrollPercentage={scrollPercentage} />}
+      {isClient && <ThreeScene scrollPercentage={scrollPercentage} />}
       <div className="relative z-10 space-y-12"> {/* Content wrapper needs to be above background */}
         <section aria-labelledby="welcome-heading" className="text-center py-12 md:py-16 bg-gradient-to-br from-background/80 to-primary/5 rounded-xl shadow-inner backdrop-blur-sm">
           <div className="max-w-3xl mx-auto">
