@@ -1,16 +1,52 @@
+
+'use client';
+
 import type { Metadata } from 'next';
 import ContactForm from '@/components/contact/ContactForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mail, Phone, MapPin } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { cn } from '@/lib/utils';
 
-export const metadata: Metadata = {
-  title: 'Contact Me',
-  description: 'Get in touch with me for collaborations, inquiries, or just to say hi.',
-};
+// export const metadata: Metadata = { // Metadata needs to be exported from server components or moved to layout
+//   title: 'Contact Me',
+//   description: 'Get in touch with me for collaborations, inquiries, or just to say hi.',
+// };
 
 export default function ContactPage() {
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.1,
+    };
+
+    const observer = new IntersectionObserver(([entry]) => {
+      setIsVisible(entry.isIntersecting);
+    }, observerOptions);
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => {
+      if (sectionRef.current) {
+        observer.unobserve(sectionRef.current);
+      }
+    };
+  }, []);
+
   return (
-    <div className="max-w-4xl mx-auto py-8">
+    <div 
+      ref={sectionRef}
+      className={cn(
+        "max-w-4xl mx-auto py-8 transition-all duration-700 ease-in-out",
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+      )}
+    >
       <h1 className="text-4xl font-bold text-center mb-12 text-primary">Let's Connect</h1>
       
       <div className="grid md:grid-cols-2 gap-12 items-start">

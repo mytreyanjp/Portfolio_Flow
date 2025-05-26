@@ -1,16 +1,52 @@
+
+'use client';
+
 import type { Metadata } from 'next';
 import AiIntroGeneratorForm from '@/components/ai/AiIntroGeneratorForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sparkles } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { cn } from '@/lib/utils';
 
-export const metadata: Metadata = {
-  title: 'AI Intro Generator',
-  description: 'Generate personalized introductory messages for potential employers using AI.',
-};
+// export const metadata: Metadata = { // Metadata needs to be exported from server components or moved to layout
+//   title: 'AI Intro Generator',
+//   description: 'Generate personalized introductory messages for potential employers using AI.',
+// };
 
 export default function AiIntroPage() {
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.1,
+    };
+
+    const observer = new IntersectionObserver(([entry]) => {
+      setIsVisible(entry.isIntersecting);
+    }, observerOptions);
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => {
+      if (sectionRef.current) {
+        observer.unobserve(sectionRef.current);
+      }
+    };
+  }, []);
+
   return (
-    <div className="max-w-3xl mx-auto py-8">
+    <div 
+      ref={sectionRef}
+      className={cn(
+        "max-w-3xl mx-auto py-8 transition-all duration-700 ease-in-out",
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+      )}
+    >
       <header className="text-center mb-12">
         <Sparkles className="h-16 w-16 text-primary mx-auto mb-4 animate-pulse" />
         <h1 className="text-4xl font-bold text-primary mb-4">AI-Powered Introduction Generator</h1>

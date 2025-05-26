@@ -1,13 +1,18 @@
+
+'use client';
+
 import type { Metadata } from 'next';
 import ResumeDownloader from '@/components/resume/ResumeDownloader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Award, Briefcase, GraduationCap, Lightbulb, CheckCircle } from 'lucide-react';
 import Image from 'next/image';
+import React, { useState, useEffect, useRef } from 'react';
+import { cn } from '@/lib/utils';
 
-export const metadata: Metadata = {
-  title: 'My Resume',
-  description: 'View and download my professional resume, detailing my skills, experience, and education.',
-};
+// export const metadata: Metadata = { // Metadata needs to be exported from server components or moved to layout
+//   title: 'My Resume',
+//   description: 'View and download my professional resume, detailing my skills, experience, and education.',
+// };
 
 const skills = [
   { name: 'JavaScript (ES6+)', level: 90 },
@@ -23,8 +28,39 @@ const skills = [
 ];
 
 export default function ResumePage() {
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.1,
+    };
+
+    const observer = new IntersectionObserver(([entry]) => {
+      setIsVisible(entry.isIntersecting);
+    }, observerOptions);
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => {
+      if (sectionRef.current) {
+        observer.unobserve(sectionRef.current);
+      }
+    };
+  }, []);
+
   return (
-    <div className="max-w-4xl mx-auto py-8">
+    <div 
+      ref={sectionRef}
+      className={cn(
+        "max-w-4xl mx-auto py-8 transition-all duration-700 ease-in-out",
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+      )}
+    >
       <header className="text-center mb-12">
         <h1 className="text-4xl font-bold text-primary mb-4">My Professional Profile</h1>
         <p className="text-lg text-muted-foreground">A snapshot of my journey, skills, and achievements.</p>
