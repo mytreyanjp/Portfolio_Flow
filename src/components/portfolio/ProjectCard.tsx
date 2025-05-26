@@ -8,19 +8,23 @@ import { ArrowUpRight, Github } from 'lucide-react';
 
 interface ProjectCardProps {
   project: Project;
+  index: number; // Added index for animation delay
 }
 
-export default function ProjectCard({ project }: ProjectCardProps) {
+export default function ProjectCard({ project, index }: ProjectCardProps) {
   return (
-    <Card className="flex flex-col h-full overflow-hidden transform transition-all duration-300 hover:shadow-xl hover:scale-[1.02]">
+    <Card 
+      className="flex flex-col h-full overflow-hidden transform transition-all duration-300 hover:shadow-xl hover:scale-[1.02] animate-fadeInUpScale"
+      style={{ animationDelay: `${index * 100}ms` }} // Staggered animation
+    >
       <CardHeader>
-        <div className="relative w-full h-48 mb-4 rounded-t-md overflow-hidden">
+        <div className="relative w-full h-48 mb-4 rounded-t-md overflow-hidden group"> {/* Added group for image scale on card hover */}
           <Image
             src={project.imageUrl}
             alt={project.title}
             layout="fill"
             objectFit="cover"
-            className="transition-transform duration-300 group-hover:scale-105"
+            className="transition-transform duration-300 group-hover:scale-105" // Image scales on card hover now
             data-ai-hint={project.dataAiHint}
           />
         </div>

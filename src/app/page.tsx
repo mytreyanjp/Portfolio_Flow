@@ -103,6 +103,9 @@ export default function PortfolioPage() {
     document.getElementById('projects-section')?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Key for re-rendering the project grid to trigger animations
+  const gridKey = useMemo(() => JSON.stringify(filters), [filters]);
+
   return (
     <>
       {isClient && <ThreeScene scrollPercentage={scrollPercentage} currentTheme={resolvedTheme as ('light' | 'dark' | undefined)} />}
@@ -130,7 +133,7 @@ export default function PortfolioPage() {
 
          <p className={cn(
             "text-center -mt-8 text-muted-foreground text-sm transition-all duration-700 ease-in-out",
-            isWelcomeVisible ? "opacity-100" : "opacity-0" // Simple fade for this small text
+            isWelcomeVisible ? "opacity-100" : "opacity-0" 
           )}>
             The background animates as you scroll!
           </p>
@@ -153,13 +156,15 @@ export default function PortfolioPage() {
             onResetFilters={handleResetFilters}
           />
           {filteredProjects.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredProjects.map((project) => (
-                <ProjectCard key={project.id} project={project} />
+            <div key={gridKey} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredProjects.map((project, index) => (
+                <ProjectCard key={project.id} project={project} index={index} />
               ))}
             </div>
           ) : (
-            <p className="text-center text-muted-foreground py-8">No projects match the current filters. Try adjusting your selection or reset filters.</p>
+            <p className="text-center text-muted-foreground py-8 animate-fadeInUpScale" style={{ animationDelay: '0s' }}>
+                No projects match the current filters. Try adjusting your selection or reset filters.
+            </p>
           )}
         </section>
       </div>
