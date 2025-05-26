@@ -83,7 +83,7 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
   const animatedObjectRef = useRef<THREE.Mesh | null>(null);
 
   const sceneBackgroundColor = useMemo(() => {
-    return currentTheme === 'dark' ? new THREE.Color(0x1A0F2A) : new THREE.Color(0xE0F2FE); // Darker purple vs Lighter Sky Blue
+    return currentTheme === 'dark' ? new THREE.Color(0x1A0F2A) : new THREE.Color(0xFFEBCD); // Darker purple vs Light Peachy Orange (Blanched Almond)
   }, [currentTheme]);
 
   const objectGeometry = useMemo(() => {
@@ -227,3 +227,4 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
 };
 
 export default ThreeScene;
+
