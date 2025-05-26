@@ -1,0 +1,51 @@
+import type { Metadata } from 'next';
+import AiIntroGeneratorForm from '@/components/ai/AiIntroGeneratorForm';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Sparkles } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'AI Intro Generator',
+  description: 'Generate personalized introductory messages for potential employers using AI.',
+};
+
+export default function AiIntroPage() {
+  return (
+    <div className="max-w-3xl mx-auto py-8">
+      <header className="text-center mb-12">
+        <Sparkles className="h-16 w-16 text-primary mx-auto mb-4 animate-pulse" />
+        <h1 className="text-4xl font-bold text-primary mb-4">AI-Powered Introduction Generator</h1>
+        <p className="text-lg text-muted-foreground">
+          Craft the perfect first impression. Let AI help you create tailored introductory messages 
+          for potential employers.
+        </p>
+      </header>
+
+      <Card className="shadow-xl">
+        <CardHeader>
+          <CardTitle className="text-2xl">Generate Your Custom Intro</CardTitle>
+          <CardDescription>
+            Provide some details about yourself and the job you're applying for, 
+            and our AI will whip up a personalized message.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AiIntroGeneratorForm />
+        </CardContent>
+      </Card>
+      
+      <div className="mt-10 p-6 bg-card border border-border rounded-lg shadow-md">
+        <h3 className="text-xl font-semibold text-foreground mb-3">How it Works:</h3>
+        <ol className="list-decimal list-inside space-y-2 text-foreground/80">
+          <li>Enter the employer's name and the job title.</li>
+          <li>List your key skills relevant to the role.</li>
+          <li>Briefly describe your experience.</li>
+          <li>Choose your desired tone (Formal, Casual, or Enthusiastic).</li>
+          <li>Click "Generate Intro" and let the AI do its magic!</li>
+        </ol>
+        <p className="mt-4 text-sm text-muted-foreground">
+          This tool uses advanced AI to help you stand out. Remember to review and personalize the generated message further.
+        </p>
+      </div>
+    </div>
+  );
+}
