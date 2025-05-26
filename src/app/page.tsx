@@ -5,22 +5,29 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import ProjectCard from '@/components/portfolio/ProjectCard';
 import ProjectFilter, { Filters } from '@/components/portfolio/ProjectFilter';
-import { projectsData, Project } from '@/data/projects';
+import type { Project } from '@/data/projects'; // Keep type import
+import { getProjects } from '@/services/projectsService'; // Import the new service
 import { Button } from '@/components/ui/button';
-import { ArrowDown } from 'lucide-react';
-import { useTheme } from 'next-themes'; 
+import { ArrowDown, Loader2, AlertTriangle } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton'; // For loading state
 
 // Dynamically import ThreeScene to ensure it's client-side only
 const ThreeScene = dynamic(() => import('@/components/portfolio/ThreeScene'), {
   ssr: false,
+  loading: () => <div style={{ height: '100vh', width: '100vw', position: 'fixed' }} />, // Basic placeholder for ThreeScene
 });
 
 export default function PortfolioPage() {
   const [filters, setFilters] = useState<Filters>({ category: '', technologies: [] });
   const [scrollPercentage, setScrollPercentage] = useState(0);
   const [isClient, setIsClient] = useState(false);
-  const { resolvedTheme } = useTheme(); 
+  const { resolvedTheme } = useTheme();
+
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const welcomeSectionRef = useRef<HTMLElement>(null);
   const projectsSectionRef = useRef<HTMLElement>(null);
@@ -28,19 +35,38 @@ export default function PortfolioPage() {
   const [isProjectsVisible, setIsProjectsVisible] = useState(false);
 
   useEffect(() => {
-    setIsClient(true); 
+    setIsClient(true);
   }, []);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const fetchedProjects = await getProjects();
+        setProjects(fetchedProjects);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An unknown error occurred while fetching projects.');
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    if (isClient) { // Fetch projects only on the client-side after mount
+      fetchProjects();
+    }
+  }, [isClient]);
 
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
       const percentage = scrollHeight > 0 ? currentScrollY / scrollHeight : 0;
-      setScrollPercentage(Math.min(1, Math.max(0, percentage))); 
+      setScrollPercentage(Math.min(1, Math.max(0, percentage)));
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); 
+    handleScroll();
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
@@ -51,7 +77,7 @@ export default function PortfolioPage() {
     const observerOptions = {
       root: null,
       rootMargin: '0px',
-      threshold: 0.1, // Trigger when 10% of the element is visible
+      threshold: 0.1,
     };
 
     const welcomeObserver = new IntersectionObserver(([entry]) => {
@@ -82,14 +108,15 @@ export default function PortfolioPage() {
 
 
   const filteredProjects = useMemo(() => {
-    return projectsData.filter(project => {
+    if (isLoading || error) return []; // Return empty if loading or error
+    return projects.filter(project => {
       const categoryMatch = filters.category ? project.category === filters.category : true;
-      const techMatch = filters.technologies.length > 0 
-        ? filters.technologies.every(tech => project.technologies.includes(tech)) 
+      const techMatch = filters.technologies.length > 0
+        ? filters.technologies.every(tech => project.technologies.includes(tech))
         : true;
       return categoryMatch && techMatch;
     });
-  }, [filters]);
+  }, [filters, projects, isLoading, error]);
 
   const handleFilterChange = (newFilters: Filters) => {
     setFilters(newFilters);
@@ -98,20 +125,47 @@ export default function PortfolioPage() {
   const handleResetFilters = () => {
     setFilters({ category: '', technologies: [] });
   };
-  
+
   const scrollToProjects = () => {
     document.getElementById('projects-section')?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Key for re-rendering the project grid to trigger animations
-  const gridKey = useMemo(() => JSON.stringify(filters), [filters]);
+  const gridKey = useMemo(() => JSON.stringify(filters) + `_loading:${isLoading}_error:${!!error}`, [filters, isLoading, error]);
+
+  const ProjectSkeletonCard = () => (
+    <div className="flex flex-col h-full overflow-hidden animate-fadeInUpScale">
+      <Skeleton className="w-full h-48 mb-4 rounded-t-md" />
+      <div className="p-4 space-y-3">
+        <Skeleton className="h-6 w-3/4" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-5/6" />
+        <div className="pt-2">
+          <Skeleton className="h-5 w-1/4 mb-2" />
+          <Skeleton className="h-5 w-1/3" />
+        </div>
+        <div className="pt-2">
+          <Skeleton className="h-5 w-1/4 mb-2" />
+          <div className="flex flex-wrap gap-1">
+            <Skeleton className="h-5 w-10" />
+            <Skeleton className="h-5 w-12" />
+            <Skeleton className="h-5 w-8" />
+          </div>
+        </div>
+        <div className="flex justify-start space-x-2 pt-4 border-t mt-2">
+          <Skeleton className="h-9 w-24" />
+          <Skeleton className="h-9 w-24" />
+        </div>
+      </div>
+    </div>
+  );
+
 
   return (
     <>
       {isClient && <ThreeScene scrollPercentage={scrollPercentage} currentTheme={resolvedTheme as ('light' | 'dark' | undefined)} />}
-      <div className="relative z-10 space-y-12"> 
-        <section 
-          aria-labelledby="welcome-heading" 
+      <div className="relative z-10 space-y-12">
+        <section
+          aria-labelledby="welcome-heading"
           className={cn(
             "text-left py-12 md:py-16 transition-all duration-700 ease-in-out",
             isWelcomeVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
@@ -133,38 +187,52 @@ export default function PortfolioPage() {
 
          <p className={cn(
             "text-center -mt-8 text-muted-foreground text-sm transition-all duration-700 ease-in-out",
-            isWelcomeVisible ? "opacity-100" : "opacity-0" 
+            isWelcomeVisible ? "opacity-100" : "opacity-0"
           )}>
             The background animates as you scroll!
           </p>
 
-        <section 
-          id="projects-section" 
-          aria-labelledby="projects-heading" 
+        <section
+          id="projects-section"
+          aria-labelledby="projects-heading"
           className={cn(
             "pt-8 transition-all duration-700 ease-in-out",
             isProjectsVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
           )}
           ref={projectsSectionRef}
-        > 
+        >
           <h2 id="projects-heading" className="text-3xl font-semibold mb-8 text-center">
             My Projects
           </h2>
-          <ProjectFilter 
-            filters={filters} 
+          <ProjectFilter
+            filters={filters}
             onFilterChange={handleFilterChange}
             onResetFilters={handleResetFilters}
           />
-          {filteredProjects.length > 0 ? (
-            <div key={gridKey} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredProjects.map((project, index) => (
-                <ProjectCard key={project.id} project={project} index={index} />
-              ))}
+          {error && (
+            <div className="text-center py-8 text-destructive flex flex-col items-center animate-fadeInUpScale">
+              <AlertTriangle className="h-12 w-12 mb-4" />
+              <p className="text-xl font-semibold">Failed to load projects</p>
+              <p>{error}</p>
+              <Button onClick={() => window.location.reload()} className="mt-4">Try Again</Button>
             </div>
-          ) : (
-            <p className="text-center text-muted-foreground py-8 animate-fadeInUpScale" style={{ animationDelay: '0s' }}>
-                No projects match the current filters. Try adjusting your selection or reset filters.
-            </p>
+          )}
+          {!error && (
+            isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {[...Array(3)].map((_, i) => <ProjectSkeletonCard key={`skeleton-${i}`} />)}
+              </div>
+            ) : filteredProjects.length > 0 ? (
+              <div key={gridKey} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {filteredProjects.map((project, index) => (
+                  <ProjectCard key={project.id} project={project} index={index} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground py-8 animate-fadeInUpScale" style={{ animationDelay: '0s' }}>
+                  No projects match the current filters. Try adjusting your selection or reset filters.
+              </p>
+            )
           )}
         </section>
       </div>
