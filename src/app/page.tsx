@@ -154,7 +154,7 @@ export default function PortfolioPage() {
 
   return (
     <>
-      <div className="space-y-12 py-6"> {/* Added py-6 for vertical padding */}
+      <div className="space-y-12 py-6 px-6"> {/* Added px-6 for horizontal padding */}
         <section
           aria-labelledby="welcome-heading"
           className={cn(
@@ -279,3 +279,4 @@ export default function PortfolioPage() {
     </>
   );
 }
+
