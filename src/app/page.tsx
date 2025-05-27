@@ -2,28 +2,28 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import dynamic from 'next/dynamic';
+// import dynamic from 'next/dynamic'; // ThreeScene is now in layout
 import ProjectCard from '@/components/portfolio/ProjectCard';
 import ProjectFilter, { Filters } from '@/components/portfolio/ProjectFilter';
-import type { Project } from '@/data/projects'; // Keep type import
-import { getProjects } from '@/services/projectsService'; // Import the new service
+import type { Project } from '@/data/projects';
+import { getProjects } from '@/services/projectsService';
 import { Button } from '@/components/ui/button';
 import { ArrowDown, Loader2, AlertTriangle } from 'lucide-react';
-import { useTheme } from 'next-themes';
+// import { useTheme } from 'next-themes'; // Only needed if page.tsx uses theme for other things
 import { cn } from '@/lib/utils';
-import { Skeleton } from '@/components/ui/skeleton'; // For loading state
+import { Skeleton } from '@/components/ui/skeleton';
 
-// Dynamically import ThreeScene to ensure it's client-side only
-const ThreeScene = dynamic(() => import('@/components/portfolio/ThreeScene'), {
-  ssr: false,
-  loading: () => <div style={{ height: '100vh', width: '100vw', position: 'fixed' }} />, // Basic placeholder for ThreeScene
-});
+// ThreeScene is no longer imported or rendered here
+// const ThreeScene = dynamic(() => import('@/components/portfolio/ThreeScene'), {
+//   ssr: false,
+//   loading: () => <div style={{ height: '100vh', width: '100vw', position: 'fixed' }} />,
+// });
 
 export default function PortfolioPage() {
   const [filters, setFilters] = useState<Filters>({ category: '', technologies: [] });
-  const [scrollPercentage, setScrollPercentage] = useState(0);
-  const [isClient, setIsClient] = useState(false);
-  const { resolvedTheme } = useTheme();
+  // const [scrollPercentage, setScrollPercentage] = useState(0); // Moved to layout
+  // const [isClient, setIsClient] = useState(false); // Moved to layout or not needed if only for ThreeScene
+  // const { resolvedTheme } = useTheme(); // Keep if theme is used for page-specific logic, otherwise remove
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -34,9 +34,9 @@ export default function PortfolioPage() {
   const [isWelcomeVisible, setIsWelcomeVisible] = useState(false);
   const [isProjectsVisible, setIsProjectsVisible] = useState(false);
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+  // useEffect(() => { // isClient state setup, moved to layout
+  //   setIsClient(true);
+  // }, []);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -52,26 +52,18 @@ export default function PortfolioPage() {
         setIsLoading(false);
       }
     };
-    if (isClient) { // Fetch projects only on the client-side after mount
-      fetchProjects();
-    }
-  }, [isClient]);
+    // if (isClient) { // Fetch projects based on a general client-side check if needed, or just directly
+    fetchProjects();
+    // }
+  }, []); // Removed isClient dependency if it was only for ThreeScene
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const percentage = scrollHeight > 0 ? currentScrollY / scrollHeight : 0;
-      setScrollPercentage(Math.min(1, Math.max(0, percentage)));
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
+  // Scroll percentage calculation moved to layout
+  // useEffect(() => {
+  //   const handleScroll = () => { /* ... */ };
+  //   window.addEventListener('scroll', handleScroll, { passive: true });
+  //   handleScroll();
+  //   return () => window.removeEventListener('scroll', handleScroll);
+  // }, []);
 
   useEffect(() => {
     const observerOptions = {
@@ -108,7 +100,7 @@ export default function PortfolioPage() {
 
 
   const filteredProjects = useMemo(() => {
-    if (isLoading || error) return []; // Return empty if loading or error
+    if (isLoading || error) return [];
     return projects.filter(project => {
       const categoryMatch = filters.category ? project.category === filters.category : true;
       const techMatch = filters.technologies.length > 0
@@ -162,14 +154,9 @@ export default function PortfolioPage() {
 
   return (
     <>
-      {isClient && resolvedTheme && (
-        <ThreeScene
-          key={resolvedTheme} /* Force re-mount on theme change */
-          scrollPercentage={scrollPercentage}
-          currentTheme={resolvedTheme as ('light' | 'dark')}
-        />
-      )}
-      <div className="relative z-10 space-y-12">
+      {/* ThreeScene component is removed from here; it's now in RootLayout */}
+      {/* The main content div now doesn't need z-10 if the layout handles global background layering */}
+      <div className="space-y-12">
         <section
           aria-labelledby="welcome-heading"
           className={cn(
