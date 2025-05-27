@@ -10,12 +10,12 @@ import { AlertTriangle } from 'lucide-react';
 
 interface ProjectModelViewerProps {
   modelUrl: string;
-  containerRef: React.RefObject<HTMLDivElement>; 
+  containerRef: React.RefObject<HTMLDivElement>; // Still useful for resize observer if needed
 }
 
 // Initialize DRACOLoader and GLTFLoader once
 const dracoLoaderInstance = new DRACOLoader();
-dracoLoaderInstance.setDecoderPath('/libs/draco/gltf/'); 
+dracoLoaderInstance.setDecoderPath('/libs/draco/gltf/');
 dracoLoaderInstance.setDecoderConfig({ type: 'wasm' });
 
 const gltfLoaderInstance = new GLTFLoader();
@@ -26,7 +26,6 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelUrl, conta
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Refs for Three.js objects to manage them across renders and cleanup
   const modelGroupRef = useRef<THREE.Group | null>(null);
   const targetRotationRef = useRef({ x: 0, y: 0 });
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -35,13 +34,12 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelUrl, conta
   const animationFrameIdRef = useRef<number | null>(null);
   const lightsRef = useRef<THREE.Light[]>([]);
 
-
   useEffect(() => {
     console.log(`ProjectModelViewer (${modelUrl}): useEffect triggered.`);
-    setIsLoading(true); 
-    setError(null);   
+    let timeoutId: NodeJS.Timeout;
 
-    const timeoutId = setTimeout(() => {
+    // Defer execution to ensure refs are set
+    timeoutId = setTimeout(() => {
       if (!mountRef.current || !containerRef.current) {
         console.warn(`ProjectModelViewer (${modelUrl}): DEFERRED CHECK - Mount or container ref not available. mountRef: ${mountRef.current}, containerRef: ${containerRef.current}`);
         setError("Initialization failed: Mounting point not ready.");
@@ -53,24 +51,28 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelUrl, conta
       const currentMount = mountRef.current;
 
       sceneRef.current = new THREE.Scene();
-      // sceneRef.current.background = new THREE.Color(0xeeeeee); // Set to light gray for visibility during debugging
+      // sceneRef.current.background = new THREE.Color(0xeeeeee); // Debug background
 
       cameraRef.current = new THREE.PerspectiveCamera(50, currentMount.clientWidth / currentMount.clientHeight, 0.1, 100);
       cameraRef.current.position.z = 3;
       console.log(`ProjectModelViewer (${modelUrl}): Camera initialized. Aspect: ${currentMount.clientWidth / currentMount.clientHeight}`);
 
-      rendererRef.current = new THREE.WebGLRenderer({ antialias: true, alpha: true }); // alpha: true for transparency
+      rendererRef.current = new THREE.WebGLRenderer({ antialias: true, alpha: true });
       rendererRef.current.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      rendererRef.current.setClearAlpha(0); // Ensure clear alpha is 0 for transparency
+      rendererRef.current.setClearAlpha(0); 
       
       if (currentMount.clientWidth > 0 && currentMount.clientHeight > 0) {
         rendererRef.current.setSize(currentMount.clientWidth, currentMount.clientHeight);
       } else {
         console.warn(`ProjectModelViewer (${modelUrl}): currentMount has zero dimensions during renderer setup. Using fallback 300x150.`);
-        rendererRef.current.setSize(300, 150); // Fallback size
+        rendererRef.current.setSize(300, 150); 
       }
       currentMount.appendChild(rendererRef.current.domElement);
       console.log(`ProjectModelViewer (${modelUrl}): Renderer created with size ${currentMount.clientWidth}x${currentMount.clientHeight}`);
+
+      // Clear previous lights if any
+      lightsRef.current.forEach(light => sceneRef.current?.remove(light));
+      lightsRef.current = [];
 
       const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
       sceneRef.current.add(ambientLight);
@@ -89,7 +91,6 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelUrl, conta
           console.log(`ProjectModelViewer (${modelUrl}): GLTF loaded successfully.`);
           if (modelGroupRef.current && sceneRef.current) { 
             sceneRef.current.remove(modelGroupRef.current);
-            // Basic disposal for previous model - can be more thorough if needed
             modelGroupRef.current.traverse(child => {
               if ((child as THREE.Mesh).isMesh) {
                 (child as THREE.Mesh).geometry?.dispose();
@@ -111,17 +112,16 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelUrl, conta
           console.log(`ProjectModelViewer (${modelUrl}): Loaded model raw BBox size: X=${size.x.toFixed(2)}, Y=${size.y.toFixed(2)}, Z=${size.z.toFixed(2)}. MaxDim: ${maxDim.toFixed(2)}`);
 
           let scaleFactor = 1.0;
-          const targetViewSize = 1.8; // Adjust this to control how large the model appears
-          if (maxDim > 0.001) { // Avoid division by zero or very small numbers
+          const targetViewSize = 1.8; 
+          if (maxDim > 0.001) { 
             scaleFactor = targetViewSize / maxDim;
           } else {
             console.warn(`ProjectModelViewer (${modelUrl}): Model has very small or zero max dimension. Using default scale factor.`);
-            scaleFactor = 1.0; // Fallback scale
+            scaleFactor = 1.0; 
           }
           modelGroupRef.current.scale.set(scaleFactor, scaleFactor, scaleFactor);
           console.log(`ProjectModelViewer (${modelUrl}): Applied scaleFactor: ${scaleFactor.toFixed(2)}`);
           
-          // Center the model
           const scaledBox = new THREE.Box3().setFromObject(modelGroupRef.current);
           const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
           modelGroupRef.current.position.sub(scaledCenter);
@@ -145,32 +145,36 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelUrl, conta
         }
       );
       
-      const parentContainer = containerRef.current;
+      // const parentContainer = containerRef.current; // Not used for global listener target
       const handleMouseMove = (event: MouseEvent) => {
-        if (!modelGroupRef.current || !parentContainer) return;
-        const rect = parentContainer.getBoundingClientRect();
-        const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-        const y = -(((event.clientY - rect.top) / rect.height) * 2 - 1);
-        targetRotationRef.current.x = y * 0.25; // Reduced sensitivity
-        targetRotationRef.current.y = x * 0.25; // Reduced sensitivity
+        if (!modelGroupRef.current) return;
+        
+        // Normalize mouse position from -1 to 1 relative to viewport center
+        const x = (event.clientX / window.innerWidth) * 2 - 1;
+        const y = -(event.clientY / window.innerHeight) * 2 + 1; // Inverted Y for typical 3D coordinate system (up is positive)
+        
+        // Apply sensitivity. Adjust these values to control rotation amount.
+        const sensitivity = 0.15; 
+        targetRotationRef.current.x = y * sensitivity; // Tilt up/down
+        targetRotationRef.current.y = x * sensitivity; // Tilt left/right
       };
 
-      const handleMouseLeave = () => {
-         targetRotationRef.current.x = 0;
-         targetRotationRef.current.y = 0;
-      };
+      // Attach listener to window for global mouse tracking
+      window.addEventListener('mousemove', handleMouseMove);
+      console.log(`ProjectModelViewer (${modelUrl}): Global mousemove listener added.`);
 
-      if (parentContainer) {
-        parentContainer.addEventListener('mousemove', handleMouseMove);
-        parentContainer.addEventListener('mouseleave', handleMouseLeave);
-      }
 
       const animate = () => {
         animationFrameIdRef.current = requestAnimationFrame(animate);
         if (modelGroupRef.current && rendererRef.current && sceneRef.current && cameraRef.current) {
           // Smoothly interpolate rotation towards target
-          modelGroupRef.current.rotation.x += (targetRotationRef.current.x - modelGroupRef.current.rotation.x) * 0.05;
-          modelGroupRef.current.rotation.y += (targetRotationRef.current.y - modelGroupRef.current.rotation.y) * 0.05;
+          // Add the initial rotation to the mouse-driven target rotation
+          const targetX = targetRotationRef.current.x;
+          const targetY = (Math.PI / 4) + targetRotationRef.current.y; // Keep initial Y rotation + mouse influence
+
+          modelGroupRef.current.rotation.x += (targetX - modelGroupRef.current.rotation.x) * 0.05;
+          modelGroupRef.current.rotation.y += (targetY - modelGroupRef.current.rotation.y) * 0.05;
+          
           rendererRef.current.render(sceneRef.current, cameraRef.current);
         }
       };
@@ -196,16 +200,14 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelUrl, conta
         } else {
             console.warn(`ProjectModelViewer (${modelUrl}): Initial resize skipped after timeout - mount still has zero dimensions.`);
         }
-      }, 100); // Slight delay for layout to settle
+      }, 100); 
 
       return () => {
         console.log(`ProjectModelViewer (${modelUrl}): setTimeout callback cleanup starting.`);
         clearTimeout(initialResizeTimeoutId);
         window.removeEventListener('resize', handleResize);
-        if (parentContainer) {
-          parentContainer.removeEventListener('mousemove', handleMouseMove);
-          parentContainer.removeEventListener('mouseleave', handleMouseLeave);
-        }
+        window.removeEventListener('mousemove', handleMouseMove); // Remove global listener
+        console.log(`ProjectModelViewer (${modelUrl}): Global mousemove listener removed.`);
       };
     }, 0); 
 
@@ -234,7 +236,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelUrl, conta
 
       lightsRef.current.forEach(light => {
         sceneRef.current?.remove(light);
-        light.dispose?.(); // Some lights might not have dispose
+        light.dispose?.(); 
       });
       lightsRef.current = [];
       
@@ -267,9 +269,9 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelUrl, conta
           <p className="text-xs">{error}</p>
         </div>
       )}
-      {/* The div above (with mountRef) is where Three.js canvas will be. It's always rendered. */}
     </div>
   );
 };
 
 export default ProjectModelViewer;
+
