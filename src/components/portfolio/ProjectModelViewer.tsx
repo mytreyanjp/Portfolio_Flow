@@ -10,7 +10,7 @@ import { AlertTriangle } from 'lucide-react';
 
 interface ProjectModelViewerProps {
   modelUrl: string;
-  containerRef: React.RefObject<HTMLDivElement>; // Still useful for resize observer if needed
+  containerRef: React.RefObject<HTMLDivElement>; 
 }
 
 // Initialize DRACOLoader and GLTFLoader once
@@ -37,13 +37,15 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelUrl, conta
   useEffect(() => {
     console.log(`ProjectModelViewer (${modelUrl}): useEffect triggered.`);
     let timeoutId: NodeJS.Timeout;
+    let isMounted = true; // To prevent updates after unmount
 
-    // Defer execution to ensure refs are set
     timeoutId = setTimeout(() => {
-      if (!mountRef.current || !containerRef.current) {
-        console.warn(`ProjectModelViewer (${modelUrl}): DEFERRED CHECK - Mount or container ref not available. mountRef: ${mountRef.current}, containerRef: ${containerRef.current}`);
-        setError("Initialization failed: Mounting point not ready.");
-        setIsLoading(false);
+      if (!isMounted || !mountRef.current || !containerRef.current) {
+        if (isMounted) {
+          console.warn(`ProjectModelViewer (${modelUrl}): DEFERRED CHECK - Mount or container ref not available. mountRef: ${mountRef.current}, containerRef: ${containerRef.current}`);
+          setError("Initialization failed: Mounting point not ready.");
+          setIsLoading(false);
+        }
         return;
       }
       console.log(`ProjectModelViewer (${modelUrl}): DEFERRED CHECK - Mount and container refs available. Initializing Three.js scene.`);
@@ -51,15 +53,16 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelUrl, conta
       const currentMount = mountRef.current;
 
       sceneRef.current = new THREE.Scene();
-      // sceneRef.current.background = new THREE.Color(0xeeeeee); // Debug background
+      // sceneRef.current.background = new THREE.Color(0x000000); // Debug: Black background
+      // sceneRef.current.background = null; // For transparent background
 
       cameraRef.current = new THREE.PerspectiveCamera(50, currentMount.clientWidth / currentMount.clientHeight, 0.1, 100);
       cameraRef.current.position.z = 3;
       console.log(`ProjectModelViewer (${modelUrl}): Camera initialized. Aspect: ${currentMount.clientWidth / currentMount.clientHeight}`);
 
-      rendererRef.current = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      rendererRef.current = new THREE.WebGLRenderer({ antialias: true, alpha: true }); // alpha: true for transparent background
       rendererRef.current.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      rendererRef.current.setClearAlpha(0); 
+      rendererRef.current.setClearAlpha(0); // Ensure clear alpha is 0 for transparency
       
       if (currentMount.clientWidth > 0 && currentMount.clientHeight > 0) {
         rendererRef.current.setSize(currentMount.clientWidth, currentMount.clientHeight);
@@ -70,16 +73,15 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelUrl, conta
       currentMount.appendChild(rendererRef.current.domElement);
       console.log(`ProjectModelViewer (${modelUrl}): Renderer created with size ${currentMount.clientWidth}x${currentMount.clientHeight}`);
 
-      // Clear previous lights if any
       lightsRef.current.forEach(light => sceneRef.current?.remove(light));
       lightsRef.current = [];
 
-      const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+      const ambientLight = new THREE.AmbientLight(0xffffff, 1.2); // Softer ambient light
       sceneRef.current.add(ambientLight);
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 1.8);
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 1.8); // Main directional light
       directionalLight.position.set(3, 3, 5);
       sceneRef.current.add(directionalLight);
-      const pointLight = new THREE.PointLight(0xffffff, 0.7);
+      const pointLight = new THREE.PointLight(0xffffff, 0.7); // Fill light
       pointLight.position.set(-3, 2, 3);
       sceneRef.current.add(pointLight);
       lightsRef.current = [ambientLight, directionalLight, pointLight];
@@ -88,6 +90,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelUrl, conta
       gltfLoaderInstance.load(
         modelUrl,
         (gltf) => {
+          if (!isMounted) return;
           console.log(`ProjectModelViewer (${modelUrl}): GLTF loaded successfully.`);
           if (modelGroupRef.current && sceneRef.current) { 
             sceneRef.current.remove(modelGroupRef.current);
@@ -126,10 +129,11 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelUrl, conta
           const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
           modelGroupRef.current.position.sub(scaledCenter);
           console.log(`ProjectModelViewer (${modelUrl}): Model positioned at world origin.`);
-
-          // Apply initial Y-axis rotation
-          modelGroupRef.current.rotation.y = Math.PI / 4; // 45 degrees
-          console.log(`ProjectModelViewer (${modelUrl}): Applied initial Y rotation of 45 degrees.`);
+          
+          // Initial rotation removed
+          // modelGroupRef.current.rotation.y = Math.PI / 4; // 45 degrees Y-axis
+          // modelGroupRef.current.rotation.z = Math.PI / 4; // 45 degrees Z-axis
+          // console.log(`ProjectModelViewer (${modelUrl}): Applied initial Z rotation of 45 degrees.`);
           
           cameraRef.current!.lookAt(0, 0, 0);
           setIsLoading(false);
@@ -139,38 +143,33 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelUrl, conta
           console.log(`ProjectModelViewer (${modelUrl}): Model loading progress: ${(xhr.loaded / xhr.total * 100).toFixed(2)}% loaded`);
         },
         (loadError) => {
+          if (!isMounted) return;
           console.error(`ProjectModelViewer (${modelUrl}): Error loading model:`, loadError);
           setError(`Failed to load model. ${loadError.message || 'Unknown error'}`);
           setIsLoading(false);
         }
       );
       
-      // const parentContainer = containerRef.current; // Not used for global listener target
       const handleMouseMove = (event: MouseEvent) => {
-        if (!modelGroupRef.current) return;
+        if (!isMounted || !modelGroupRef.current) return;
         
-        // Normalize mouse position from -1 to 1 relative to viewport center
         const x = (event.clientX / window.innerWidth) * 2 - 1;
-        const y = -(event.clientY / window.innerHeight) * 2 + 1; // Inverted Y for typical 3D coordinate system (up is positive)
+        const y = -(event.clientY / window.innerHeight) * 2 + 1;
         
-        // Apply sensitivity. Adjust these values to control rotation amount.
         const sensitivity = 0.15; 
-        targetRotationRef.current.x = y * sensitivity; // Tilt up/down
-        targetRotationRef.current.y = x * sensitivity; // Tilt left/right
+        targetRotationRef.current.x = y * sensitivity;
+        targetRotationRef.current.y = x * sensitivity;
       };
 
-      // Attach listener to window for global mouse tracking
       window.addEventListener('mousemove', handleMouseMove);
       console.log(`ProjectModelViewer (${modelUrl}): Global mousemove listener added.`);
 
-
       const animate = () => {
+        if (!isMounted) return;
         animationFrameIdRef.current = requestAnimationFrame(animate);
         if (modelGroupRef.current && rendererRef.current && sceneRef.current && cameraRef.current) {
-          // Smoothly interpolate rotation towards target
-          // Add the initial rotation to the mouse-driven target rotation
           const targetX = targetRotationRef.current.x;
-          const targetY = (Math.PI / 4) + targetRotationRef.current.y; // Keep initial Y rotation + mouse influence
+          const targetY = targetRotationRef.current.y; // No initial Y offset
 
           modelGroupRef.current.rotation.x += (targetX - modelGroupRef.current.rotation.x) * 0.05;
           modelGroupRef.current.rotation.y += (targetY - modelGroupRef.current.rotation.y) * 0.05;
@@ -182,7 +181,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelUrl, conta
       console.log(`ProjectModelViewer (${modelUrl}): Animation loop started.`);
 
       const handleResize = () => {
-        if (!currentMount || !rendererRef.current || !cameraRef.current || currentMount.clientWidth === 0 || currentMount.clientHeight === 0) {
+        if (!isMounted || !currentMount || !rendererRef.current || !cameraRef.current || currentMount.clientWidth === 0 || currentMount.clientHeight === 0) {
           console.warn(`ProjectModelViewer (${modelUrl}): Resize skipped, mount/renderer/camera not ready or zero dimensions.`);
           return;
         }
@@ -194,24 +193,26 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelUrl, conta
       window.addEventListener('resize', handleResize);
       
       const initialResizeTimeoutId = setTimeout(() => {
-        if (currentMount && currentMount.clientWidth > 0 && currentMount.clientHeight > 0) {
+        if (isMounted && currentMount && currentMount.clientWidth > 0 && currentMount.clientHeight > 0) {
             handleResize();
             console.log(`ProjectModelViewer (${modelUrl}): Initial resize executed after timeout.`);
-        } else {
+        } else if (isMounted) {
             console.warn(`ProjectModelViewer (${modelUrl}): Initial resize skipped after timeout - mount still has zero dimensions.`);
         }
       }, 100); 
 
       return () => {
+        isMounted = false;
         console.log(`ProjectModelViewer (${modelUrl}): setTimeout callback cleanup starting.`);
         clearTimeout(initialResizeTimeoutId);
         window.removeEventListener('resize', handleResize);
-        window.removeEventListener('mousemove', handleMouseMove); // Remove global listener
+        window.removeEventListener('mousemove', handleMouseMove);
         console.log(`ProjectModelViewer (${modelUrl}): Global mousemove listener removed.`);
       };
     }, 0); 
 
     return () => {
+      isMounted = false;
       console.log(`ProjectModelViewer (${modelUrl}): Main useEffect cleanup starting.`);
       clearTimeout(timeoutId); 
       if (animationFrameIdRef.current) {
@@ -253,7 +254,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelUrl, conta
       cameraRef.current = null;
       console.log(`ProjectModelViewer (${modelUrl}): Main useEffect cleanup complete.`);
     };
-  }, [modelUrl, containerRef]); // Key dependencies
+  }, [modelUrl, containerRef]);
 
   return (
     <div ref={mountRef} className="w-full h-full overflow-hidden relative">
@@ -274,4 +275,3 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelUrl, conta
 };
 
 export default ProjectModelViewer;
-
