@@ -1,7 +1,7 @@
 
-'use client'; // Make layout a client component to use hooks
+'use client';
 
-// import type { Metadata } from 'next'; // Metadata can still be defined, but in a client component, it's more for static parts or needs specific handling for dynamic updates.
+// import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import Header from '@/components/layout/Header';
@@ -12,7 +12,6 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import dynamic from 'next/dynamic';
 
-// Dynamically import ThreeScene to ensure it's client-side only
 const ThreeScene = dynamic(() => import('@/components/portfolio/ThreeScene'), {
   ssr: false,
   // Placeholder for ThreeScene during dynamic import, covers the screen
@@ -29,15 +28,6 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
-// Static metadata can be here. For dynamic, you'd use useMetadata or other patterns.
-// export const metadata: Metadata = { // This is problematic in client components for dynamic titles per page
-//   title: {
-//     default: 'PortfolioFlow',
-//     template: '%s | PortfolioFlow',
-//   },
-//   description: 'Interactive 3D portfolio showcasing projects and skills.',
-// };
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -45,16 +35,16 @@ export default function RootLayout({
 }>) {
   const [scrollPercentage, setScrollPercentage] = useState(0);
   const [isClient, setIsClient] = useState(false);
-  const { resolvedTheme } = useTheme(); // resolvedTheme can be undefined initially
+  const { resolvedTheme, theme: rawTheme } = useTheme(); // Using 'rawTheme' to distinguish from resolvedTheme
 
   useEffect(() => {
     setIsClient(true);
-    console.log("RootLayout: isClient set to true");
+    console.log("RootLayout useEffect: isClient set to true");
   }, []);
 
   useEffect(() => {
-    if (!isClient) return; // Only run scroll listener on client
-    console.log("RootLayout: Adding scroll listener");
+    if (!isClient) return; 
+    console.log("RootLayout useEffect: Adding scroll listener");
 
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
@@ -67,20 +57,28 @@ export default function RootLayout({
     handleScroll(); // Initialize on mount
 
     return () => {
-      console.log("RootLayout: Removing scroll listener");
+      console.log("RootLayout useEffect: Removing scroll listener");
       window.removeEventListener('scroll', handleScroll);
     };
   }, [isClient]);
 
-  useEffect(() => {
-    // This log helps debug the resolvedTheme value
-    if (isClient) {
-      console.log("RootLayout: resolvedTheme is", resolvedTheme);
-    }
-  }, [isClient, resolvedTheme]);
+  // Render-phase logging
+  console.log("RootLayout Render: isClient is", isClient);
+  console.log("RootLayout Render: rawTheme (from useTheme) is", rawTheme);
+  console.log("RootLayout Render: resolvedTheme is", resolvedTheme);
 
-  // Determine if ThreeScene can be rendered
-  const canRenderThreeScene = isClient && (resolvedTheme === 'light' || resolvedTheme === 'dark');
+  // Determine the theme to pass to ThreeScene. Default to 'light' if resolvedTheme is undefined.
+  const currentThemeForScene: 'light' | 'dark' = 
+    (resolvedTheme === 'light' || resolvedTheme === 'dark') ? resolvedTheme : 'light';
+
+  // Condition to render ThreeScene: must be client-side.
+  // ThreeScene will receive a valid 'currentThemeForScene' and remount via key prop when resolvedTheme changes.
+  const canRenderThreeScene = isClient;
+
+  console.log("RootLayout Render: canRenderThreeScene is", canRenderThreeScene);
+  console.log("RootLayout Render: currentThemeForScene is", currentThemeForScene);
+  console.log("RootLayout Render: Key for ThreeScene will be", resolvedTheme || 'initial-theme-key');
+
 
   return (
     <html lang="en" suppressHydrationWarning className={resolvedTheme || ''}>
@@ -88,9 +86,9 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {canRenderThreeScene && (
             <ThreeScene
-              key={resolvedTheme} /* Force re-mount on theme change */
+              key={resolvedTheme || 'initial-theme-key'} // Force re-mount on resolvedTheme change (including from undefined)
               scrollPercentage={scrollPercentage}
-              currentTheme={resolvedTheme as ('light' | 'dark')} // We've ensured it's 'light' or 'dark'
+              currentTheme={currentThemeForScene} 
             />
           )}
           <div className="relative z-10 flex flex-col min-h-screen"> {/* Wrapper to sit above ThreeScene */}
