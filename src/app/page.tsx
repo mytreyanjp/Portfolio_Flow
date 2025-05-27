@@ -155,10 +155,13 @@ export default function PortfolioPage() {
           ref={welcomeSectionRef}
         >
           <div className="max-w-3xl ml-0 mr-auto">
-            <h1 id="welcome-heading" className="text-4xl md:text-5xl font-bold mb-6 text-primary">
-              Hi, my name is Mytreyan.
+            <h1 id="welcome-heading" className="text-6xl md:text-7xl font-bold mb-2 text-primary">
+              Hi
             </h1>
-            <p className="text-lg md:text-xl text-foreground mb-4">
+            <p className="text-3xl md:text-4xl font-semibold mb-4 text-primary">
+              my name is Mytreyan.
+            </p>
+            <p className="text-lg md:text-xl text-foreground mb-6">
               Can create light outta a blackhole
             </p>
             <Button size="lg" onClick={scrollToProjects} className="rounded-full shadow-lg hover:shadow-primary/30 transition-shadow">
