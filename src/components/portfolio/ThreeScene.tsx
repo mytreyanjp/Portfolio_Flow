@@ -1,17 +1,17 @@
 
 'use client';
 
-import React, { useRef, useEffect, useMemo, useCallback } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 
 interface ThreeSceneProps {
   scrollPercentage: number;
-  currentTheme: 'light' | 'dark'; // Expect 'light' or 'dark'
+  currentTheme: 'light' | 'dark';
 }
 
-// Keyframes for the GLB model's animation
+// Define keyframes for the GLB model's animation
 // IMPORTANT: You will likely need to adjust these values significantly
 // to suit your custom GLB model's size, orientation, and desired animation.
 // These keyframes are for the '/models/blind_man.glb' model.
@@ -84,16 +84,29 @@ const interpolateKeyframes = (
   };
 };
 
+// Create these loaders only once
+const gltfLoader = new GLTFLoader();
+const dracoLoader = new DRACOLoader();
+// IMPORTANT: You MUST copy the draco decoder files to this path in your public folder
+// This path should point to the directory containing draco_wasm_wrapper.js and draco_decoder.wasm
+dracoLoader.setDecoderPath('/libs/draco/');
+dracoLoader.setDecoderConfig({ type: 'wasm' }); // Use WASM decoder
+gltfLoader.setDRACOLoader(dracoLoader);
+
 
 const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme }) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const animatedObjectRef = useRef<THREE.Group | null>(null);
+  const animatedObjectRef = useRef<THREE.Group | null>(null); // For GLB model
   const animationFrameIdRef = useRef<number | null>(null);
-  const gltfLoaderRef = useRef<GLTFLoader | null>(null);
-  const dracoLoaderRef = useRef<DRACOLoader | null>(null);
+
+  const sceneBackgroundColor = useMemo(() => {
+    // Transparent background
+    return null;
+  }, []);
+
 
   useEffect(() => {
     if (!mountRef.current) {
@@ -103,76 +116,102 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
     const currentMount = mountRef.current;
     console.log(`ThreeScene: useEffect triggered. Theme: ${currentTheme}, Scroll: ${scrollPercentage.toFixed(2)}`);
 
-    // Initialize Scene, Camera, Renderer if they don't exist for this instance
-    sceneRef.current = new THREE.Scene();
-    sceneRef.current.background = null; // Transparent background
-
-    const mountWidth = currentMount.clientWidth;
-    const mountHeight = currentMount.clientHeight;
-
-    if (mountWidth === 0 || mountHeight === 0) {
-      console.warn("ThreeScene: Mount dimensions are zero during setup. Using fallback 640x480. Ensure parent div has dimensions.");
+    // Initialize Scene, Camera, Renderer
+    if (!sceneRef.current) {
+      sceneRef.current = new THREE.Scene();
+      console.log("ThreeScene: Scene created.");
     }
-    const effectiveWidth = mountWidth || 640;
-    const effectiveHeight = mountHeight || 480;
+    sceneRef.current.background = sceneBackgroundColor;
 
-    cameraRef.current = new THREE.PerspectiveCamera(75, effectiveWidth / effectiveHeight, 0.1, 1000);
-    cameraRef.current.position.z = 3; // Adjust camera position as needed for your GLB
 
-    rendererRef.current = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    rendererRef.current.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Clamp pixel ratio
-    rendererRef.current.setSize(effectiveWidth, effectiveHeight);
-    rendererRef.current.setClearAlpha(0); // Ensure transparent background
-    currentMount.appendChild(rendererRef.current.domElement);
-    console.log(`ThreeScene: Renderer initialized and appended. Size: ${effectiveWidth}x${effectiveHeight}`);
+    if (!cameraRef.current) {
+      cameraRef.current = new THREE.PerspectiveCamera(75, currentMount.clientWidth / currentMount.clientHeight, 0.1, 1000);
+      cameraRef.current.position.z = 3; // Adjust camera position as needed
+      console.log("ThreeScene: Camera created.");
+    } else {
+      // Update camera aspect ratio if mount size changed (e.g. due to resize)
+      if (currentMount.clientWidth > 0 && currentMount.clientHeight > 0) {
+        cameraRef.current.aspect = currentMount.clientWidth / currentMount.clientHeight;
+        cameraRef.current.updateProjectionMatrix();
+      }
+    }
 
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, currentTheme === 'dark' ? 0.6 : 1.2);
-    sceneRef.current.add(ambientLight);
-
-    const directionalLight = new THREE.DirectionalLight(0xffffff, currentTheme === 'dark' ? 1.2 : 2.0);
-    directionalLight.position.set(1, 3, 2).normalize();
-    sceneRef.current.add(directionalLight);
-
-    const pointLight = new THREE.PointLight(currentTheme === 'dark' ? 0x9575CD : 0xFFEBCD, 1.0, 100);
-    pointLight.position.set(-2, -1, 3);
-    sceneRef.current.add(pointLight);
-
-    // Setup DracoLoader
-    if (!dracoLoaderRef.current) {
-      dracoLoaderRef.current = new DRACOLoader();
-      // IMPORTANT: You MUST copy the draco decoder files to this path in your public folder
-      dracoLoaderRef.current.setDecoderPath('/libs/draco/'); 
-      dracoLoaderRef.current.setDecoderConfig({ type: 'js' }); // or 'wasm' if you prefer
-      console.log("ThreeScene: DRACOLoader instance created and decoder path set.");
+    if (!rendererRef.current) {
+      rendererRef.current = new THREE.WebGLRenderer({ antialias: true, alpha: true }); // alpha: true for transparent bg
+      rendererRef.current.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Clamp pixel ratio
+      console.log("ThreeScene: Renderer instance created.");
     }
     
-    // Setup GLTFLoader
-    if (!gltfLoaderRef.current) {
-        gltfLoaderRef.current = new GLTFLoader();
+    if (currentMount.clientWidth > 0 && currentMount.clientHeight > 0) {
+      rendererRef.current.setSize(currentMount.clientWidth, currentMount.clientHeight);
+    } else {
+        console.warn("ThreeScene: Mount dimensions are zero during renderer setup. Using fallback 640x480.");
+        rendererRef.current.setSize(640, 480); // Fallback size
     }
-    gltfLoaderRef.current.setDRACOLoader(dracoLoaderRef.current); // Assign DRACOLoader to GLTFLoader
-    console.log("ThreeScene: GLTFLoader instance created/retrieved and DRACOLoader assigned.");
+    rendererRef.current.setClearAlpha(0); // Ensure transparent background
+
+    if (!currentMount.contains(rendererRef.current.domElement)) {
+        currentMount.appendChild(rendererRef.current.domElement);
+        console.log("ThreeScene: Renderer DOM element appended.");
+    }
+
+
+    // Remove previous lights and model before adding new ones
+    sceneRef.current.children.filter(child => child.type === "PointLight" || child.type === "AmbientLight" || child.type === "DirectionalLight" || child.isGroup).forEach(child => {
+        sceneRef.current?.remove(child);
+        if ((child as any).dispose) (child as any).dispose(); // For lights if they have dispose
+        if (child.isGroup) { // For GLB model group
+            child.traverse(subChild => {
+                if ((subChild as THREE.Mesh).isMesh) {
+                    (subChild as THREE.Mesh).geometry.dispose();
+                    const material = (subChild as THREE.Mesh).material;
+                     if (Array.isArray(material)) {
+                        material.forEach(m => m.dispose());
+                    } else if (material) {
+                        material.dispose();
+                    }
+                }
+            });
+        }
+    });
+    animatedObjectRef.current = null;
+
+    // Lighting (adjust based on theme if needed)
+    const ambientLight = new THREE.AmbientLight(0xffffff, currentTheme === 'dark' ? 0.8 : 1.5);
+    sceneRef.current.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, currentTheme === 'dark' ? 1.2 : 1.8);
+    directionalLight.position.set(1, 3, 2).normalize();
+    sceneRef.current.add(directionalLight);
+    
+    const pointLightColor = currentTheme === 'dark' ? 0x9575CD : 0xFFEBCD; // Violet for dark, peachy for light
+    const pointLight = new THREE.PointLight(pointLightColor, 1.5, 150); // Increased intensity and distance
+    pointLight.position.set(-2, 1, 3);
+    sceneRef.current.add(pointLight);
 
 
     // Load GLB Model
-    // IMPORTANT: Path to your GLB file in the public folder
-    const modelPath = '/models/blind_man.glb'; 
+    const modelPath = '/models/blind_man.glb';
     console.log(`ThreeScene: Attempting to load GLB model from: ${modelPath}`);
 
-    gltfLoaderRef.current.load(
+    gltfLoader.load(
       modelPath,
       (gltf) => {
         console.log("ThreeScene: GLB model loaded successfully.", gltf);
         if (sceneRef.current) {
+          // Remove previous model if any to avoid duplicates on HMR or prop changes
           if (animatedObjectRef.current) {
             sceneRef.current.remove(animatedObjectRef.current);
-            // Basic cleanup, more thorough might be needed for complex models
-            animatedObjectRef.current.traverse((child) => {
-              if ((child as THREE.Mesh).isMesh) {
-                (child as THREE.Mesh).geometry.dispose();
-                ((child as THREE.Mesh).material as THREE.Material | THREE.Material[]).dispose();
-              }
+             animatedObjectRef.current.traverse(subChild => {
+                if ((subChild as THREE.Mesh).isMesh) {
+                    (subChild as THREE.Mesh).geometry.dispose();
+                    const material = (subChild as THREE.Mesh).material;
+                     if (Array.isArray(material)) {
+                        material.forEach(m => m.dispose());
+                    } else if (material) {
+                        material.dispose();
+                    }
+                }
             });
           }
           animatedObjectRef.current = gltf.scene;
@@ -194,7 +233,8 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
     // Animation Loop
     const animate = () => {
       if (!rendererRef.current || !sceneRef.current || !cameraRef.current) {
-        console.warn("ThreeScene: animate() called but renderer, scene, or camera is missing.");
+        // console.warn("ThreeScene: animate() called but renderer, scene, or camera is missing.");
+        animationFrameIdRef.current = requestAnimationFrame(animate); // Keep trying
         return;
       }
       animationFrameIdRef.current = requestAnimationFrame(animate);
@@ -228,11 +268,11 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
       }
     };
     window.addEventListener('resize', handleResize);
-    if(mountWidth > 0 && mountHeight > 0) handleResize(); // Initial call
+    if(currentMount.clientWidth > 0 && currentMount.clientHeight > 0) handleResize(); // Initial call
 
     // Cleanup
     return () => {
-      console.log("ThreeScene: useEffect cleanup initiated.");
+      console.log("ThreeScene: useEffect cleanup initiated for theme:", currentTheme);
       if (animationFrameIdRef.current) {
         cancelAnimationFrame(animationFrameIdRef.current);
         animationFrameIdRef.current = null;
@@ -249,7 +289,7 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
                 const material = (child as THREE.Mesh).material;
                 if (Array.isArray(material)) {
                     material.forEach(m => m.dispose());
-                } else if (material) { // Check if material is not undefined
+                } else if (material) { 
                     material.dispose();
                 }
             }
@@ -258,32 +298,33 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
         console.log("ThreeScene: Animated object removed and disposed from scene.");
       }
       
-      sceneRef.current?.children.slice().forEach(child => { // remove all direct children including lights
-        if(child !== animatedObjectRef.current) { // if not already removed
-            sceneRef.current?.remove(child);
-            if ((child as any).dispose) (child as any).dispose(); // if light has dispose, call it
-        }
+      // Clean up lights
+      sceneRef.current?.children.filter(child => child.type === "PointLight" || child.type === "AmbientLight" || child.type === "DirectionalLight").forEach(child => {
+        sceneRef.current?.remove(child);
+        if ((child as any).dispose) (child as any).dispose();
       });
+      console.log("ThreeScene: Lights removed from scene.");
 
-      if (rendererRef.current) {
-        if (rendererRef.current.domElement.parentNode === currentMount) {
-            currentMount.removeChild(rendererRef.current.domElement);
-            console.log("ThreeScene: Renderer DOM element removed.");
-        }
-        rendererRef.current.dispose();
-        rendererRef.current = null;
-        console.log("ThreeScene: Renderer disposed.");
+      // Do not dispose renderer, scene, camera here if they are meant to persist across theme changes
+      // If they are re-created due to the key prop, React's unmount will handle the refs.
+      // However, if rendererRef.current itself is being nulled, we need to dispose it.
+      if (rendererRef.current && rendererRef.current.domElement.parentNode === currentMount) {
+          // currentMount.removeChild(rendererRef.current.domElement); // This can cause issues if remounting
+          console.log("ThreeScene: Renderer DOM element potentially removed by React unmount.");
       }
+      // if (rendererRef.current) { // This could be too aggressive if renderer is shared
+      //   rendererRef.current.dispose();
+      //   rendererRef.current = null;
+      //   console.log("ThreeScene: Renderer disposed.");
+      // }
       
-      sceneRef.current = null; 
-      cameraRef.current = null;
-      console.log("ThreeScene: Scene and camera refs nulled.");
+      // sceneRef.current = null; 
+      // cameraRef.current = null;
+      // console.log("ThreeScene: Scene and camera refs nulled for full remount.");
     };
-  }, [scrollPercentage, currentTheme]); // Dependencies that drive re-render/updates
+  }, [scrollPercentage, currentTheme, sceneBackgroundColor]); // Dependencies
 
   return <div ref={mountRef} className="fixed inset-0 -z-10 w-screen h-screen bg-transparent" />;
 };
 
 export default ThreeScene;
-
-    
