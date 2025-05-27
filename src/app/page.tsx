@@ -7,10 +7,11 @@ import ProjectFilter, { Filters } from '@/components/portfolio/ProjectFilter';
 import type { Project } from '@/data/projects';
 import { getProjects } from '@/services/projectsService';
 import { Button } from '@/components/ui/button';
-import { ArrowDown, Loader2, AlertTriangle, X as XIcon } from 'lucide-react';
+import { ArrowDown, Loader2, AlertTriangle, X as XIcon, Mail, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import Link from 'next/link'; // Import Link
 
 export default function PortfolioPage() {
   const [filters, setFilters] = useState<Filters>({ category: '', technologies: [] });
@@ -20,8 +21,10 @@ export default function PortfolioPage() {
   const [noProjectsMessageVisible, setNoProjectsMessageVisible] = useState(false);
 
   const welcomeSectionRef = useRef<HTMLElement>(null);
+  const quickNavSectionRef = useRef<HTMLElement>(null); // Ref for new section
   const projectsSectionRef = useRef<HTMLElement>(null);
   const [isWelcomeVisible, setIsWelcomeVisible] = useState(false);
+  const [isQuickNavVisible, setIsQuickNavVisible] = useState(false); // State for new section
   const [isProjectsVisible, setIsProjectsVisible] = useState(false);
 
   const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
@@ -51,22 +54,22 @@ export default function PortfolioPage() {
       threshold: 0.1,
     };
 
-    const welcomeObserver = new IntersectionObserver(([entry]) => {
-      setIsWelcomeVisible(entry.isIntersecting);
-    }, observerOptions);
+    const observers: [React.RefObject<HTMLElement>, React.Dispatch<React.SetStateAction<boolean>>][] = [
+      [welcomeSectionRef, setIsWelcomeVisible],
+      [quickNavSectionRef, setIsQuickNavVisible],
+      [projectsSectionRef, setIsProjectsVisible],
+    ];
 
-    if (welcomeSectionRef.current) {
-      welcomeObserver.observe(welcomeSectionRef.current);
-    }
-
-    const projectsObserver = new IntersectionObserver(([entry]) => {
-      setIsProjectsVisible(entry.isIntersecting);
-    }, observerOptions);
-
-    if (projectsSectionRef.current) {
-      projectsObserver.observe(projectsSectionRef.current);
-    }
-
+    const intersectionObservers = observers.map(([ref, setVisible]) => {
+      const observer = new IntersectionObserver(([entry]) => {
+        setVisible(entry.isIntersecting);
+      }, observerOptions);
+      if (ref.current) {
+        observer.observe(ref.current);
+      }
+      return { observer, ref };
+    });
+    
     // Mouse move listener for parallax effect on welcome section
     const handleMouseMove = (event: MouseEvent) => {
       if (welcomeSectionRef.current) {
@@ -79,12 +82,11 @@ export default function PortfolioPage() {
     window.addEventListener('mousemove', handleMouseMove);
 
     return () => {
-      if (welcomeSectionRef.current) {
-        welcomeObserver.unobserve(welcomeSectionRef.current);
-      }
-      if (projectsSectionRef.current) {
-        projectsObserver.unobserve(projectsSectionRef.current);
-      }
+      intersectionObservers.forEach(({ observer, ref }) => {
+        if (ref.current) {
+          observer.unobserve(ref.current);
+        }
+      });
       window.removeEventListener('mousemove', handleMouseMove);
     };
   }, []);
@@ -155,16 +157,16 @@ export default function PortfolioPage() {
         <section
           aria-labelledby="welcome-heading"
           className={cn(
-            "text-center py-12 md:py-16 transition-all duration-700 ease-in-out", // Changed to text-center
+            "text-center py-12 md:py-16 transition-all duration-700 ease-in-out",
             isWelcomeVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
           )}
           ref={welcomeSectionRef}
           style={{ 
             transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`,
-            transition: 'transform 0.1s ease-out' // Smooth out the transform
+            transition: 'transform 0.1s ease-out' 
           }}
         >
-          <div className="max-w-3xl mx-auto"> {/* Changed to mx-auto */}
+          <div className="max-w-3xl mx-auto"> 
             <h1 id="welcome-heading" className="text-7xl md:text-7xl font-bold mb-2 text-primary">
               Hi
             </h1>
@@ -176,6 +178,33 @@ export default function PortfolioPage() {
             </p>
             <Button size="lg" onClick={scrollToProjects} className="rounded-full shadow-lg hover:shadow-primary/30 transition-shadow">
               View Projects <ArrowDown className="ml-2 h-5 w-5 animate-bounce" />
+            </Button>
+          </div>
+        </section>
+
+        <section
+          aria-labelledby="quick-navigation-heading"
+          className={cn(
+            "py-8 text-center transition-all duration-700 ease-in-out",
+            isQuickNavVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+          )}
+          ref={quickNavSectionRef}
+        >
+          <h2 id="quick-navigation-heading" className="text-2xl font-semibold mb-6 text-foreground">
+            Connect & Explore
+          </h2>
+          <div className="flex justify-center space-x-4">
+            <Button asChild size="lg" variant="outline" className="shadow-md hover:shadow-lg transition-shadow">
+              <Link href="/contact">
+                <Mail className="mr-2 h-5 w-5" />
+                Get in Touch
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="shadow-md hover:shadow-lg transition-shadow">
+              <Link href="/resume">
+                <FileText className="mr-2 h-5 w-5" />
+                View Resume
+              </Link>
             </Button>
           </div>
         </section>
@@ -220,7 +249,7 @@ export default function PortfolioPage() {
               noProjectsMessageVisible && (
                 <Alert 
                   variant="destructive" 
-                  className="relative py-8 text-center animate-fadeInUpScale bg-destructive/10" // Added bg-destructive/10
+                  className="relative py-8 text-center animate-fadeInUpScale bg-destructive/10" 
                   style={{ animationDelay: '0s' }}
                 >
                   <button 
