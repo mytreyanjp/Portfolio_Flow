@@ -7,12 +7,13 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 interface ThreeSceneProps {
   scrollPercentage: number;
-  currentTheme: 'light' | 'dark'; // Though theme isn't used for geometry now, it might be for lighting/bg
+  currentTheme: 'light' | 'dark';
 }
 
 // Keyframes for the GLB model's animation
 // IMPORTANT: You will likely need to adjust these values significantly
 // to suit your custom GLB model's size, orientation, and desired animation.
+// These keyframes are for the '/models/blind_man.glb' model.
 const modelKeyframes = [
   { scroll: 0, position: [0, -0.5, 0], rotation: [0, 0, 0], scale: [1, 1, 1] },
   { scroll: 0.25, position: [0.5, 0, -1], rotation: [0, Math.PI / 4, 0], scale: [1.1, 1.1, 1.1] },
@@ -128,8 +129,8 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
     }
 
     const loader = new GLTFLoader();
-    // IMPORTANT: Replace with the actual path to your GLB file in the public folder
-    const modelPath = '/models/placeholder.glb'; 
+    // IMPORTANT: Path to your GLB file in the public folder
+    const modelPath = '/models/blind_man.glb'; 
     console.log(`ThreeScene: Attempting to load GLB model from: ${modelPath}`);
 
     loader.load(
@@ -288,5 +289,3 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
 };
 
 export default ThreeScene;
-
-    
