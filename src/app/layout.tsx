@@ -16,7 +16,7 @@ import dynamic from 'next/dynamic';
 const ThreeScene = dynamic(() => import('@/components/portfolio/ThreeScene'), {
   ssr: false,
   // Placeholder for ThreeScene during dynamic import, covers the screen
-  loading: () => <div style={{ height: '100vh', width: '100vw', position: 'fixed', top: 0, left: 0, zIndex: -1 }} />,
+  loading: () => <div style={{ height: '100vh', width: '100vw', position: 'fixed', top: 0, left: 0, zIndex: -1, backgroundColor: 'transparent' }} />,
 });
 
 const geistSans = Geist({
@@ -45,14 +45,16 @@ export default function RootLayout({
 }>) {
   const [scrollPercentage, setScrollPercentage] = useState(0);
   const [isClient, setIsClient] = useState(false);
-  const { resolvedTheme } = useTheme(); // useTheme needs to be called within ThemeProvider, but its usage here for ThreeScene is okay as ThemeProvider is its parent in the tree.
+  const { resolvedTheme } = useTheme();
 
   useEffect(() => {
     setIsClient(true);
+    console.log("RootLayout: isClient set to true");
   }, []);
 
   useEffect(() => {
     if (!isClient) return; // Only run scroll listener on client
+    console.log("RootLayout: Adding scroll listener");
 
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
@@ -65,13 +67,20 @@ export default function RootLayout({
     handleScroll(); // Initialize on mount
 
     return () => {
+      console.log("RootLayout: Removing scroll listener");
       window.removeEventListener('scroll', handleScroll);
     };
   }, [isClient]);
 
+  useEffect(() => {
+    if (isClient) {
+      console.log("RootLayout: resolvedTheme is", resolvedTheme);
+    }
+  }, [isClient, resolvedTheme]);
+
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}>
+    <html lang="en" suppressHydrationWarning className={resolvedTheme}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-background`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {isClient && resolvedTheme && (
             <ThreeScene
