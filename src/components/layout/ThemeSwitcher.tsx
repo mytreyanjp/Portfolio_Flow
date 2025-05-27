@@ -6,14 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Moon, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-interface ThemeSwitcherProps {
-  onThemeToggle: () => void;
-  isThemeChanging: boolean;
-}
-
-export default function ThemeSwitcher({ onThemeToggle, isThemeChanging }: ThemeSwitcherProps) {
+export default function ThemeSwitcher() {
   const [mounted, setMounted] = useState(false);
-  const { resolvedTheme } = useTheme(); // Still useful to determine the icon
+  const { setTheme, resolvedTheme } = useTheme(); 
 
   useEffect(() => {
     setMounted(true);
@@ -28,8 +23,7 @@ export default function ThemeSwitcher({ onThemeToggle, isThemeChanging }: ThemeS
     <Button
       variant="ghost"
       size="icon"
-      onClick={onThemeToggle}
-      disabled={isThemeChanging}
+      onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
       aria-label="Toggle theme"
     >
       {resolvedTheme === 'dark' ? (

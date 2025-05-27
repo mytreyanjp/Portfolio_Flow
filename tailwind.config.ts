@@ -7,11 +7,6 @@ export default {
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
-  // Whitelist dynamic duration classes if needed, or use fixed values.
-  // For FADE_DURATION_MS = 300, we'll use 'duration-300' directly in RootLayout.
-  // safelist: [ 
-  //   { pattern: /duration-(100|200|300|500|700|1000)/ } // Example if dynamic durations were used
-  // ],
   theme: {
   	extend: {
   		colors: {
@@ -71,9 +66,6 @@ export default {
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
   		},
-  		transitionDuration: { // Add FADE_DURATION_MS if needed for dynamic classes
-        '300': '300ms', // Example if you were to use duration-300
-      },
   		keyframes: {
   			'accordion-down': {
   				from: {

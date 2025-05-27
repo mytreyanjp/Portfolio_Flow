@@ -8,7 +8,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
@@ -28,8 +28,6 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
-const FADE_DURATION_MS = 300; // Duration for one phase of the fade
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -37,8 +35,7 @@ export default function RootLayout({
 }>) {
   const [scrollPercentage, setScrollPercentage] = useState(0);
   const [isClient, setIsClient] = useState(false);
-  const { setTheme, resolvedTheme, theme: rawTheme } = useTheme();
-  const [isThemeChanging, setIsThemeChanging] = useState(false);
+  const { theme: rawTheme, resolvedTheme } = useTheme();
 
   useEffect(() => {
     setIsClient(true);
@@ -65,22 +62,6 @@ export default function RootLayout({
     };
   }, [isClient]);
 
-  const handleThemeToggle = useCallback(() => {
-    if (isThemeChanging || !resolvedTheme) return;
-
-    setIsThemeChanging(true); // Start fade out
-
-    setTimeout(() => {
-      setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
-      // Theme changes, ThreeScene will re-key and remount
-    }, FADE_DURATION_MS);
-
-    setTimeout(() => {
-      setIsThemeChanging(false); // Transition complete, content fades back in
-    }, FADE_DURATION_MS * 2);
-  }, [isThemeChanging, resolvedTheme, setTheme]);
-
-
   // console.log("RootLayout Render: isClient is", isClient);
   // console.log("RootLayout Render: rawTheme (from useTheme) is", rawTheme);
   // console.log("RootLayout Render: resolvedTheme is", resolvedTheme);
@@ -94,7 +75,7 @@ export default function RootLayout({
   // console.log("RootLayout Render: currentThemeForScene is", currentThemeForScene);
   // console.log("RootLayout Render: Key for ThreeScene will be", resolvedTheme || 'initial-theme-key');
 
-  const currentHtmlClass = resolvedTheme || ''; // Use resolvedTheme for html class, or empty if undefined initially
+  const currentHtmlClass = resolvedTheme || ''; 
 
   return (
     <html lang="en" suppressHydrationWarning className={currentHtmlClass}>
@@ -107,12 +88,8 @@ export default function RootLayout({
               currentTheme={currentThemeForScene}
             />
           )}
-          <div className={cn(
-            "relative z-10 flex flex-col min-h-screen transition-opacity ease-in-out",
-            `duration-${FADE_DURATION_MS}`, // Ensure this duration class is available or use fixed e.g. 'duration-300'
-            isThemeChanging ? "opacity-0" : "opacity-100"
-          )}>
-            <Header onThemeToggle={handleThemeToggle} isThemeChanging={isThemeChanging} />
+          <div className="relative z-10 flex flex-col min-h-screen">
+            <Header />
             <main className="flex-grow container mx-auto px-4 py-8">
               {children}
             </main>

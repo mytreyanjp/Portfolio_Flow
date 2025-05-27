@@ -16,12 +16,7 @@ const navItems = [
   { href: '/ai-intro', label: 'AI Intro', icon: Brain, disabled: true },
 ];
 
-interface HeaderProps {
-  onThemeToggle: () => void;
-  isThemeChanging: boolean;
-}
-
-export default function Header({ onThemeToggle, isThemeChanging }: HeaderProps) {
+export default function Header() {
   const pathname = usePathname();
 
   const NavLinks = ({isMobile = false}: {isMobile?: boolean}) => (
@@ -50,7 +45,7 @@ export default function Header({ onThemeToggle, isThemeChanging }: HeaderProps) 
                 'justify-start text-base hover:bg-accent/80 hover:text-accent-foreground',
                 isMobile ? 'w-full my-1' : 'mx-1',
                 pathname === item.href && !isDisabled ? 'bg-accent text-accent-foreground font-semibold' : '',
-                isDisabled ? 'opacity-50' : '' // Added for visual cue if needed, but button disabled handles it
+                isDisabled ? 'opacity-50' : '' 
               )}
               aria-current={pathname === item.href && !isDisabled ? 'page' : undefined}
               disabled={isDisabled}
@@ -80,13 +75,13 @@ export default function Header({ onThemeToggle, isThemeChanging }: HeaderProps) 
             <NavLinks />
           </nav>
 
-          <ThemeSwitcher onThemeToggle={onThemeToggle} isThemeChanging={isThemeChanging} />
+          <ThemeSwitcher />
 
           {/* Mobile Navigation */}
           <div className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" disabled={isThemeChanging}>
+                <Button variant="ghost" size="icon">
                   <Menu className="h-6 w-6" />
                   <span className="sr-only">Toggle navigation menu</span>
                 </Button>
