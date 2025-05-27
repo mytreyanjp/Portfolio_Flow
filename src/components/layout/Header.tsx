@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import ThemeSwitcher from './ThemeSwitcher';
+import React, { useState, useEffect } from 'react'; // Added for mounted state
 
 const navItems = [
   { href: '/', label: 'Portfolio', icon: Briefcase },
@@ -18,6 +19,11 @@ const navItems = [
 
 export default function Header() {
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false); // For client-side only rendering of mobile nav
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const NavLinks = ({isMobile = false}: {isMobile?: boolean}) => (
     <>
@@ -78,27 +84,29 @@ export default function Header() {
           <ThemeSwitcher />
 
           {/* Mobile Navigation */}
-          <div className="md:hidden">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-6 w-6" />
-                  <span className="sr-only">Toggle navigation menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] sm:w-[400px] p-6 pt-10">
-                <SheetHeader className="mb-4 text-left">
-                  <SheetTitle>Navigation Menu</SheetTitle>
-                  <SheetDescription>
-                    Select a page to navigate to.
-                  </SheetDescription>
-                </SheetHeader>
-                <nav className="flex flex-col space-y-3">
-                  <NavLinks isMobile={true} />
-                </nav>
-              </SheetContent>
-            </Sheet>
-          </div>
+          {mounted && (
+            <div className="md:hidden">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-6 w-6" />
+                    <span className="sr-only">Toggle navigation menu</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[300px] sm:w-[400px] p-6 pt-10">
+                  <SheetHeader className="mb-4 text-left">
+                    <SheetTitle>Navigation Menu</SheetTitle>
+                    <SheetDescription>
+                      Select a page to navigate to.
+                    </SheetDescription>
+                  </SheetHeader>
+                  <nav className="flex flex-col space-y-3">
+                    <NavLinks isMobile={true} />
+                  </nav>
+                </SheetContent>
+              </Sheet>
+            </div>
+          )}
         </div>
       </div>
     </header>
