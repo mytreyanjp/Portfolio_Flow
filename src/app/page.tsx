@@ -28,7 +28,7 @@ export default function PortfolioPage() {
   const [isProjectsVisible, setIsProjectsVisible] = useState(false);
 
   const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
-  const parallaxSensitivity = 15; // Adjusted for subtlety
+  const parallaxSensitivity = 15; 
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -147,21 +147,22 @@ export default function PortfolioPage() {
     </div>
   );
 
+  const parallaxStyle = {
+    transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`,
+    transition: 'transform 0.1s ease-out' 
+  };
 
   return (
     <>
-      <div className="space-y-12">
+      <div className="space-y-12 py-6"> {/* Added py-6 for vertical padding */}
         <section
           aria-labelledby="welcome-heading"
           className={cn(
-            "text-center py-12 md:py-16 transition-all duration-700 ease-in-out",
+            "text-center transition-all duration-700 ease-in-out",
             isWelcomeVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
           )}
           ref={welcomeSectionRef}
-          style={{ 
-            transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`,
-            transition: 'transform 0.1s ease-out' 
-          }}
+          style={parallaxStyle}
         >
           <div className="max-w-3xl mx-auto">
             <h1 id="welcome-heading" className="text-7xl md:text-7xl font-bold mb-2 text-primary">
@@ -190,7 +191,7 @@ export default function PortfolioPage() {
           <h2 
             id="quick-navigation-heading" 
             className="text-2xl font-semibold mb-6 text-foreground"
-            style={{ transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`, transition: 'transform 0.1s ease-out' }}
+            style={parallaxStyle}
           >
             Connect & Explore
           </h2>
@@ -222,7 +223,7 @@ export default function PortfolioPage() {
           <h2 
             id="projects-heading" 
             className="text-3xl font-semibold mb-8 text-center"
-            style={{ transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`, transition: 'transform 0.1s ease-out' }}
+            style={parallaxStyle}
           >
             My Projects
           </h2>
