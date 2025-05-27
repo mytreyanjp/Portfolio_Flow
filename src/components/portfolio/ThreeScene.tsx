@@ -85,8 +85,8 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
   const directionalLightRef = useRef<THREE.DirectionalLight | null>(null);
   const accentLightRef = useRef<THREE.PointLight | null>(null);
 
-
   const objectGeometry = useMemo(() => {
+    console.log(`ThreeScene: Recalculating geometry for theme: ${currentTheme}`);
     return currentTheme === 'dark'
       ? new THREE.ConeGeometry(0.8, 1.6, 32) 
       : new THREE.BoxGeometry(1.1, 1.1, 1.1); 
@@ -96,14 +96,53 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
     return currentTheme === 'dark' ? darkThemeKeyframes : lightThemeKeyframes;
   }, [currentTheme]);
 
-  // Effect for scene setup (ran once on mount or when geometry/keyframes force re-creation)
   useEffect(() => {
     if (typeof window === 'undefined' || !mountRef.current) return;
     const currentMount = mountRef.current;
 
-    // Initialize scene, camera, renderer
+    console.log(`ThreeScene MAIN useEffect: Theme: ${currentTheme}, Scroll: ${scrollPercentage}, Mount Dims: ${currentMount.clientWidth}x${currentMount.clientHeight}`);
+
+    // --- 1. Explicit Cleanup of previous instance (if any) ---
+    if (rendererRef.current) {
+        console.log("ThreeScene: Cleaning up previous renderer and scene elements.");
+        if (mountRef.current && rendererRef.current.domElement && mountRef.current.contains(rendererRef.current.domElement)) {
+            mountRef.current.removeChild(rendererRef.current.domElement);
+        }
+        rendererRef.current.dispose();
+        rendererRef.current = null; // Ensure it's null for next setup
+    }
+    if (sceneRef.current) {
+        sceneRef.current.traverse(object => {
+            if (object instanceof THREE.Mesh) {
+                object.geometry?.dispose();
+                if (object.material) {
+                    if (Array.isArray(object.material)) {
+                        object.material.forEach(material => material.dispose());
+                    } else {
+                        object.material.dispose();
+                    }
+                }
+            }
+        });
+        sceneRef.current = null;
+    }
+    // Clear refs to ensure they are re-initialized for the new instance
+    cameraRef.current = null;
+    animatedObjectRef.current = null;
+    ambientLightRef.current = null;
+    directionalLightRef.current = null;
+    accentLightRef.current = null;
+
+
+    // --- 2. Initialize scene, camera, renderer ---
     const scene = new THREE.Scene();
     sceneRef.current = scene;
+
+    if (currentMount.clientWidth === 0 || currentMount.clientHeight === 0) {
+        console.warn('ThreeScene: mountRef has zero dimensions. Renderer might not be visible or sized correctly.');
+        // Early exit or wait for dimensions. For fixed full-screen, this shouldn't ideally happen.
+        return;
+    }
 
     const camera = new THREE.PerspectiveCamera(75, currentMount.clientWidth / currentMount.clientHeight, 0.1, 1000);
     camera.position.z = 3;
@@ -115,13 +154,14 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
     rendererRef.current = renderer;
     currentMount.appendChild(renderer.domElement);
 
-    // Material and Object (geometry changes based on theme via useMemo)
-    const material = new THREE.MeshStandardMaterial();
-    const animatedObject = new THREE.Mesh(objectGeometry, material);
+    // --- 3. Material and Object ---
+    const material = new THREE.MeshStandardMaterial(); // Fresh material
+    const animatedObject = new THREE.Mesh(objectGeometry, material); // objectGeometry is theme-dependent
     animatedObjectRef.current = animatedObject;
     scene.add(animatedObject);
+    animatedObject.visible = true; // Explicitly set visible
 
-    // Lights
+    // --- 4. Lights ---
     const ambientLight = new THREE.AmbientLight();
     ambientLightRef.current = ambientLight;
     scene.add(ambientLight);
@@ -134,80 +174,37 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
     accentLightRef.current = accentLight;
     scene.add(accentLight);
     
-    // Initial interpolation for object position
-    interpolateKeyframes(0, animatedObjectRef.current, activeKeyframes);
-
-    const animate = () => {
-      if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return;
-      requestAnimationFrame(animate);
-      rendererRef.current.render(sceneRef.current, cameraRef.current);
-    };
-    animate();
-
-    const handleResize = () => {
-      if (currentMount && rendererRef.current && cameraRef.current) {
-        cameraRef.current.aspect = currentMount.clientWidth / currentMount.clientHeight;
-        cameraRef.current.updateProjectionMatrix();
-        rendererRef.current.setSize(currentMount.clientWidth, currentMount.clientHeight);
-      }
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (currentMount && rendererRef.current?.domElement) {
-        if (currentMount.contains(rendererRef.current.domElement)) {
-            currentMount.removeChild(rendererRef.current.domElement);
-        }
-      }
-      rendererRef.current?.dispose();
-      if (animatedObjectRef.current) {
-        animatedObjectRef.current.geometry?.dispose();
-        (animatedObjectRef.current.material as THREE.Material)?.dispose();
-      }
-    };
-  }, [objectGeometry, activeKeyframes]); // Key dependencies for scene recreation
-
-  // Effect for THEME-DEPENDENT visual updates (colors, lighting properties)
-  useEffect(() => {
-    const scene = sceneRef.current;
-    const material = animatedObjectRef.current?.material as THREE.MeshStandardMaterial | undefined;
-    const ambientLight = ambientLightRef.current;
-    const directionalLight = directionalLightRef.current;
-    const accentLight = accentLightRef.current;
-
-    if (!scene || !material || !ambientLight || !directionalLight || !accentLight) {
-      return; 
-    }
-
+    // --- 5. Apply Theme Specifics (colors, lighting properties) ---
     if (currentTheme === 'dark') {
-      // Dark Theme: Royal Purple
-      scene.background = new THREE.Color().setHSL(270/360, 0.60, 0.015); // INTENDED VERY DARK VIOLET
+      console.log("ThreeScene: Applying DARK theme visuals.");
+      scene.background = new THREE.Color().setHSL(270/360, 0.40, 0.10); // Dark Violet
       
       material.color.setHSL(275/360, 0.60, 0.90); // Light lavender/silver for Cone
       material.metalness = 0.4;
       material.roughness = 0.5;
       
-      ambientLight.color.setHex(0xffffff); // White ambient
+      ambientLight.color.setHex(0xffffff);
       ambientLight.intensity = 0.3;
       
-      directionalLight.color.setHSL(270/360, 0.30, 0.35); // Muted purple directional light
+      directionalLight.color.setHSL(270/360, 0.30, 0.35); // Muted purple
       directionalLight.intensity = 0.7;
       directionalLight.position.set(-3, 3, 4).normalize();
       
-      accentLight.color.setHSL(300/360, 0.75, 0.75); // Magenta/violet accent
-      accentLight.intensity = 1.2; 
+      accentLight.color.setHSL(300/360, 0.75, 0.75); // Magenta/violet
+      accentLight.intensity = 1.2; // Increased intensity
+      accentLight.distance = 10; // Control light falloff
+      accentLight.decay = 2;
       accentLight.position.set(2.5, 2.5, 2.5);
 
-    } else {
-      // Light Theme: Light Purple
-      scene.background = new THREE.Color().setHSL(275/360, 0.80, 0.87); // Very light, almost white lavender for scene BG
+    } else { // Light Theme
+      console.log("ThreeScene: Applying LIGHT theme visuals.");
+      scene.background = new THREE.Color().setHSL(275/360, 0.80, 0.97); // Very light lavender
       
       material.color.setHSL(270/360, 0.65, 0.35); // Soft purple for Cube
       material.metalness = 0.2;
       material.roughness = 0.7;
 
-      ambientLight.color.setHex(0xffffff); // White ambient
+      ambientLight.color.setHex(0xffffff);
       ambientLight.intensity = 0.9;
 
       directionalLight.color.setHSL(275/360, 0.60, 0.90); // Light lavender light
@@ -215,18 +212,76 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
       directionalLight.position.set(3, 3, 4).normalize();
       
       accentLight.color.setHSL(285/360, 0.70, 0.80); // Pinkish purple accent
-      accentLight.intensity = 1.5; 
+      accentLight.intensity = 1.5; // Increased intensity
+      accentLight.distance = 10;
+      accentLight.decay = 2;
       accentLight.position.set(-2.5, 2.5, 2.5);
     }
     material.needsUpdate = true;
 
-  // IMPORTANT: Added all relevant refs to the dependency array to ensure this effect runs if they change.
-  // currentTheme is the primary driver.
-  }, [currentTheme, sceneRef, animatedObjectRef, ambientLightRef, directionalLightRef, accentLightRef]); 
+    // --- 6. Initial interpolation for object position ---
+    interpolateKeyframes(scrollPercentage, animatedObjectRef.current, activeKeyframes);
+
+    // --- 7. Animation loop ---
+    let animationFrameId: number;
+    const animate = () => {
+      animationFrameId = requestAnimationFrame(animate);
+      if (rendererRef.current && sceneRef.current && cameraRef.current) {
+        rendererRef.current.render(sceneRef.current, cameraRef.current);
+      }
+    };
+    animate();
+
+    // --- 8. Resize handler ---
+    const handleResize = () => {
+      if (mountRef.current && rendererRef.current && cameraRef.current) {
+        cameraRef.current.aspect = mountRef.current.clientWidth / mountRef.current.clientHeight;
+        cameraRef.current.updateProjectionMatrix();
+        rendererRef.current.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Call once to set initial size
+
+    // --- 9. Cleanup for this effect instance ---
+    return () => {
+      console.log(`ThreeScene: MAIN useEffect cleanup for theme: ${currentTheme}`);
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener('resize', handleResize);
+      
+      // More robust cleanup, assuming this entire effect re-runs on key change
+      if (rendererRef.current && mountRef.current && mountRef.current.contains(rendererRef.current.domElement)) {
+        mountRef.current.removeChild(rendererRef.current.domElement);
+      }
+      rendererRef.current?.dispose();
+      sceneRef.current?.traverse(object => {
+          if (object instanceof THREE.Mesh) {
+              object.geometry?.dispose();
+              if (object.material) {
+                  if (Array.isArray(object.material)) {
+                      object.material.forEach(mat => mat.dispose());
+                  } else {
+                      object.material.dispose();
+                  }
+              }
+          }
+      });
+      // Nullify refs to help garbage collection and prevent stale state
+      rendererRef.current = null;
+      sceneRef.current = null;
+      cameraRef.current = null;
+      animatedObjectRef.current = null;
+      ambientLightRef.current = null;
+      directionalLightRef.current = null;
+      accentLightRef.current = null;
+    };
+  // This effect depends on theme (via geometry/keyframes) and initial scrollPercentage.
+  // The key prop in layout.tsx forces a full remount which triggers this.
+  }, [objectGeometry, activeKeyframes, scrollPercentage, currentTheme]); // Added currentTheme to ensure it runs if only theme changes but not geometry/keyframes (though they should)
 
   // Effect for scroll-based animation of the object
   useEffect(() => {
-    if (animatedObjectRef.current) {
+    if (animatedObjectRef.current && activeKeyframes.length > 0) {
       interpolateKeyframes(scrollPercentage, animatedObjectRef.current, activeKeyframes);
     }
   }, [scrollPercentage, activeKeyframes]);
@@ -236,5 +291,3 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
 };
 
 export default ThreeScene;
-
-    
