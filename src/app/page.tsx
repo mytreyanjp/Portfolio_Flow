@@ -153,7 +153,8 @@ export default function PortfolioPage() {
 
   return (
     <>
-      <div className="relative z-10 space-y-12"> 
+      {/* No 3D scene rendered here, it's page-specific */}
+      <div className="relative z-10 space-y-12 mt-8"> {/* Added mt-8 for top margin */}
         <section
           aria-labelledby="welcome-heading"
           className={cn(
