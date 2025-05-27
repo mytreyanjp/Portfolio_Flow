@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Briefcase, MessageSquare, FileText, Brain, CodeXml, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import ThemeSwitcher from './ThemeSwitcher';
 
 const navItems = [
@@ -45,7 +45,7 @@ export default function Header() {
                 'justify-start text-base hover:bg-accent/80 hover:text-accent-foreground',
                 isMobile ? 'w-full my-1' : 'mx-1',
                 pathname === item.href && !isDisabled ? 'bg-accent text-accent-foreground font-semibold' : '',
-                isDisabled ? 'opacity-50' : '' 
+                isDisabled ? 'opacity-50' : ''
               )}
               aria-current={pathname === item.href && !isDisabled ? 'page' : undefined}
               disabled={isDisabled}
@@ -86,7 +86,13 @@ export default function Header() {
                   <span className="sr-only">Toggle navigation menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] sm:w-[400px] p-6">
+              <SheetContent side="right" className="w-[300px] sm:w-[400px] p-6 pt-10">
+                <SheetHeader className="mb-4 text-left">
+                  <SheetTitle>Navigation Menu</SheetTitle>
+                  <SheetDescription>
+                    Select a page to navigate to.
+                  </SheetDescription>
+                </SheetHeader>
                 <nav className="flex flex-col space-y-3">
                   <NavLinks isMobile={true} />
                 </nav>
