@@ -41,6 +41,7 @@ export default function RootLayout({
 
   useEffect(() => {
     setIsClient(true);
+    console.log('RootLayout: isClient set to true');
   }, []);
 
   useEffect(() => {
@@ -52,23 +53,32 @@ export default function RootLayout({
       const percentage = scrollHeight > 0 ? currentScrollY / scrollHeight : 0;
       setScrollPercentage(Math.min(1, Math.max(0, percentage)));
     };
-
+    console.log('RootLayout: Adding scroll listener');
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll(); // Initialize on mount
 
     return () => {
+      console.log('RootLayout: Removing scroll listener');
       window.removeEventListener('scroll', handleScroll);
     };
   }, [isClient]);
-
-  const currentThemeForScene: 'light' | 'dark' =
-    (resolvedTheme === 'light' || resolvedTheme === 'dark') ? resolvedTheme : 'light'; 
-
-  const threeSceneKey = resolvedTheme || 'initial-theme-key';
   
-  const pathsToHide3DModel: string[] = []; // No paths to hide model, it's global
+  // Logging for theme states
+  console.log('RootLayout Render: isClient is', isClient);
+  console.log('RootLayout Render: rawTheme (from useTheme) is', rawTheme);
+  console.log('RootLayout Render: resolvedTheme is', resolvedTheme);
+
+  const canRenderThreeScene = isClient; // Render as soon as client is ready
+  const currentThemeForScene = (resolvedTheme === 'light' || resolvedTheme === 'dark') ? resolvedTheme : 'light'; // Default to 'light' if undefined
+  const threeSceneKey = resolvedTheme || 'initial-theme-key'; // Key changes when resolvedTheme becomes defined
+
+  console.log('RootLayout Render: canRenderThreeScene is', canRenderThreeScene);
+  console.log('RootLayout Render: currentThemeForScene is', currentThemeForScene);
+  console.log('RootLayout Render: Key for ThreeScene will be', threeSceneKey);
+  
+  const pathsToHide3DModel: string[] = []; 
   const shouldRenderThreeSceneOnPage = !pathsToHide3DModel.includes(pathname);
-  const shouldRenderThreeScene = isClient && shouldRenderThreeSceneOnPage && (resolvedTheme === 'light' || resolvedTheme === 'dark');
+  const shouldRenderThreeScene = canRenderThreeScene && shouldRenderThreeSceneOnPage;
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -84,7 +94,7 @@ export default function RootLayout({
               currentTheme={currentThemeForScene}
             />
           )}
-          <div className="relative z-10 flex flex-col min-h-screen">
+          <div className="relative z-10 flex flex-col min-h-screen"> {/* Content on top */}
             <Header />
             <main className="flex-grow container mx-auto px-4 py-8">
               {children}

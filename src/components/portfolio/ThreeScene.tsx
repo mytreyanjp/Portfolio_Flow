@@ -6,11 +6,11 @@ import * as THREE from 'three';
 
 interface ThreeSceneProps {
   scrollPercentage: number;
-  currentTheme: 'light' | 'dark';
+  currentTheme: 'light' | 'dark'; // Will be used later for theme-specific colors
 }
 
-// Keyframes for the Cone (Light Theme)
-const lightThemeKeyframes = [
+// Keyframes for the Cube
+const cubeKeyframes = [
   { scroll: 0, position: [0, -0.2, 0], rotation: [0, 0, Math.PI / 4], scale: [0.7, 0.7, 0.7] },
   { scroll: 0.25, position: [0.3, 0.1, 0], rotation: [Math.PI / 8, Math.PI / 3, Math.PI / 2], scale: [0.85, 0.85, 0.85] },
   { scroll: 0.5, position: [0, 0.3, 0], rotation: [Math.PI / 4, Math.PI / 1.5, Math.PI * 0.75], scale: [1, 1, 1] },
@@ -18,20 +18,11 @@ const lightThemeKeyframes = [
   { scroll: 1, position: [0, -0.2, 0], rotation: [0, Math.PI * 2, Math.PI * 1.25], scale: [0.7, 0.7, 0.7] },
 ];
 
-// Keyframes for the Cube (Dark Theme)
-const darkThemeKeyframes = [
-  { scroll: 0, position: [0, -0.5, 0], rotation: [0, 0, 0], scale: [0.8, 0.8, 0.8] },
-  { scroll: 0.25, position: [0.5, 0, 0], rotation: [0, Math.PI / 2, 0], scale: [1, 1, 1] },
-  { scroll: 0.5, position: [0, 0.5, 0], rotation: [Math.PI / 2, Math.PI, Math.PI / 2], scale: [1.2, 1.2, 1.2] },
-  { scroll: 0.75, position: [-0.5, 0, 0], rotation: [Math.PI, Math.PI * 1.5, Math.PI], scale: [1, 1, 1] },
-  { scroll: 1, position: [0, -0.5, 0], rotation: [Math.PI * 2, Math.PI * 2, Math.PI * 2], scale: [0.8, 0.8, 0.8] },
-];
-
-
 const interpolateKeyframes = (
-    keyframes: typeof lightThemeKeyframes | typeof darkThemeKeyframes, 
+    keyframes: typeof cubeKeyframes, 
     scroll: number
   ) => {
+  // Default to first keyframe
   const current = {
     position: [...keyframes[0].position] as [number, number, number],
     rotation: [...keyframes[0].rotation] as [number, number, number],
@@ -49,8 +40,8 @@ const interpolateKeyframes = (
         current.rotation[j] = kf1.rotation[j] + (kf2.rotation[j] - kf1.rotation[j]) * t;
         current.scale[j] = kf1.scale[j] + (kf2.scale[j] - kf1.scale[j]) * t;
       }
-      break;
-    } else if (scroll > keyframes[keyframes.length - 1].scroll) {
+      break; // Found the segment
+    } else if (scroll > keyframes[keyframes.length - 1].scroll) { // If scroll is past the last keyframe
       current.position = [...keyframes[keyframes.length - 1].position] as [number, number, number];
       current.rotation = [...keyframes[keyframes.length - 1].rotation] as [number, number, number];
       current.scale = [...keyframes[keyframes.length - 1].scale] as [number, number, number];
@@ -65,129 +56,93 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const animatedObjectRef = useRef<THREE.Mesh | null>(null);
-  const lightsRef = useRef<{ ambientLight?: THREE.AmbientLight; directionalLight?: THREE.DirectionalLight; pointLight?: THREE.PointLight }>({});
+  const cubeRef = useRef<THREE.Mesh | null>(null);
   const animationFrameIdRef = useRef<number | null>(null);
+  const lightsRef = useRef<{ ambientLight?: THREE.AmbientLight; pointLight?: THREE.PointLight }>({});
 
-  const objectGeometry = useMemo(() => {
-    if (currentTheme === 'light') {
-      return new THREE.ConeGeometry(0.4, 0.8, 32); // Cone for light theme
-    } else {
-      return new THREE.BoxGeometry(0.7, 0.7, 0.7); // Cube for dark theme
-    }
-  }, [currentTheme]);
-
-  const activeKeyframes = useMemo(() => {
-    return currentTheme === 'light' ? lightThemeKeyframes : darkThemeKeyframes;
-  }, [currentTheme]);
 
   useEffect(() => {
-    console.log(`ThreeScene: useEffect triggered. Theme: ${currentTheme}, Scroll: ${scrollPercentage.toFixed(2)}`);
+    console.log(`ThreeScene: useEffect triggered. Current theme: ${currentTheme}, Scroll: ${scrollPercentage.toFixed(2)}`);
     if (!mountRef.current) {
       console.error("ThreeScene: Mount ref is null. Aborting setup.");
       return;
     }
     const currentMount = mountRef.current;
 
-    // Initialize core Three.js objects if they don't exist for this instance
-    if (!sceneRef.current) sceneRef.current = new THREE.Scene();
+    // Initialize Scene, Camera, Renderer if they don't exist
+    if (!sceneRef.current) {
+      sceneRef.current = new THREE.Scene();
+      console.log("ThreeScene: Scene created.");
+    }
     if (!cameraRef.current) {
-      cameraRef.current = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+      cameraRef.current = new THREE.PerspectiveCamera(75, currentMount.clientWidth / currentMount.clientHeight, 0.1, 1000);
       cameraRef.current.position.z = 2;
+      console.log("ThreeScene: Camera created.");
     }
     if (!rendererRef.current) {
       rendererRef.current = new THREE.WebGLRenderer({ antialias: true, alpha: true });
       rendererRef.current.setPixelRatio(window.devicePixelRatio);
       currentMount.appendChild(rendererRef.current.domElement);
-      console.log("ThreeScene: Renderer initialized and appended to DOM.");
+      console.log("ThreeScene: Renderer initialized and appended.");
     }
-    
-    rendererRef.current.setClearAlpha(0); // Transparent background for the canvas itself
+    rendererRef.current.setClearAlpha(0); // Make background transparent
 
     const mountWidth = currentMount.clientWidth;
     const mountHeight = currentMount.clientHeight;
 
     if (mountWidth > 0 && mountHeight > 0) {
-      rendererRef.current.setSize(mountWidth, mountHeight);
-      cameraRef.current.aspect = mountWidth / mountHeight;
-      cameraRef.current.updateProjectionMatrix();
-      console.log(`ThreeScene: Renderer and camera sized to: ${mountWidth}x${mountHeight}`);
+        rendererRef.current.setSize(mountWidth, mountHeight);
+        cameraRef.current.aspect = mountWidth / mountHeight;
+        cameraRef.current.updateProjectionMatrix();
+        console.log(`ThreeScene: Renderer and camera sized to: ${mountWidth}x${mountHeight}`);
     } else {
-      console.warn("ThreeScene: Mount dimensions are zero. Using fallback 300x150. Check CSS for mount point.");
-      rendererRef.current.setSize(300, 150);
-      cameraRef.current.aspect = 300/150;
-      cameraRef.current.updateProjectionMatrix();
-    }
-
-    // --- Theme-specific setup ---
-    let objectMaterialColor: THREE.Color;
-    let ambientLightColor: THREE.Color;
-    let directionalLightColor: THREE.Color;
-    let pointLightColor: THREE.Color;
-
-    if (currentTheme === 'light') {
-      // Light Purple Theme
-      objectMaterialColor = new THREE.Color().setHSL(270 / 360, 0.65, 0.75); // Soft purple for cone
-      ambientLightColor = new THREE.Color(0xffffff);
-      directionalLightColor = new THREE.Color().setHSL(275 / 360, 0.5, 0.8); // Soft lavender light
-      pointLightColor = new THREE.Color().setHSL(285 / 360, 0.7, 0.75); // Pinkish purple accent
-    } else {
-      // Royal Purple Dark Theme
-      objectMaterialColor = new THREE.Color().setHSL(280 / 360, 0.70, 0.60); // Rich royal purple for cube
-      ambientLightColor = new THREE.Color(0x404040); // Dimmer ambient for dark
-      directionalLightColor = new THREE.Color().setHSL(270 / 360, 0.30, 0.35); // Muted purple/blueish
-      pointLightColor = new THREE.Color().setHSL(300 / 360, 0.75, 0.70); // Magenta/violet accent
-    }
-
-    // Cleanup previous object if it exists
-    if (animatedObjectRef.current) {
-      if (animatedObjectRef.current.geometry) animatedObjectRef.current.geometry.dispose();
-      if (animatedObjectRef.current.material) {
-        (animatedObjectRef.current.material as THREE.Material).dispose();
-      }
-      sceneRef.current.remove(animatedObjectRef.current);
-      animatedObjectRef.current = null;
+        console.warn("ThreeScene: Mount dimensions are zero. Using fallback 300x150 for renderer.");
+        rendererRef.current.setSize(300, 150); // Fallback size
+        cameraRef.current.aspect = 300/150;
+        cameraRef.current.updateProjectionMatrix();
     }
     
-    const material = new THREE.MeshStandardMaterial({
-      color: objectMaterialColor,
-      metalness: currentTheme === 'light' ? 0.2 : 0.4,
-      roughness: currentTheme === 'light' ? 0.7 : 0.5,
-    });
-    animatedObjectRef.current = new THREE.Mesh(objectGeometry, material);
-    sceneRef.current.add(animatedObjectRef.current);
-    console.log(`ThreeScene: ${currentTheme === 'light' ? 'Cone' : 'Cube'} created and added.`);
+    // Cube setup
+    if (!cubeRef.current) {
+      const geometry = new THREE.BoxGeometry(0.8, 0.8, 0.8); // Cube
+      // Light purple color for the cube, works with light theme
+      const material = new THREE.MeshStandardMaterial({ 
+        color: new THREE.Color().setHSL(270 / 360, 0.65, 0.75), // Light Purple
+        metalness: 0.3,
+        roughness: 0.6,
+      });
+      cubeRef.current = new THREE.Mesh(geometry, material);
+      sceneRef.current.add(cubeRef.current);
+      console.log("ThreeScene: Light purple cube created and added.");
+    }
 
-    // Cleanup previous lights
-    if (lightsRef.current.ambientLight) sceneRef.current.remove(lightsRef.current.ambientLight);
-    if (lightsRef.current.directionalLight) sceneRef.current.remove(lightsRef.current.directionalLight);
-    if (lightsRef.current.pointLight) sceneRef.current.remove(lightsRef.current.pointLight);
+    // Lighting setup
+    if (!lightsRef.current.ambientLight) {
+        lightsRef.current.ambientLight = new THREE.AmbientLight(0xffffff, 0.8); // Soft white light
+        sceneRef.current.add(lightsRef.current.ambientLight);
+        console.log("ThreeScene: Ambient light added.");
+    }
+    if(!lightsRef.current.pointLight) {
+        lightsRef.current.pointLight = new THREE.PointLight(0xffffff, 1, 100);
+        lightsRef.current.pointLight.position.set(2, 2, 2);
+        sceneRef.current.add(lightsRef.current.pointLight);
+        console.log("ThreeScene: Point light added.");
+    }
 
-    lightsRef.current.ambientLight = new THREE.AmbientLight(ambientLightColor, currentTheme === 'light' ? 0.8 : 0.6);
-    sceneRef.current.add(lightsRef.current.ambientLight);
-
-    lightsRef.current.directionalLight = new THREE.DirectionalLight(directionalLightColor, currentTheme === 'light' ? 1.2 : 1.0);
-    lightsRef.current.directionalLight.position.set(1, 1, 1);
-    sceneRef.current.add(lightsRef.current.directionalLight);
-
-    lightsRef.current.pointLight = new THREE.PointLight(pointLightColor, currentTheme === 'light' ? 1.5 : 1.2, 10);
-    lightsRef.current.pointLight.position.set(currentTheme === 'light' ? -1 : 0.5, -0.5, 1);
-    sceneRef.current.add(lightsRef.current.pointLight);
-    console.log("ThreeScene: Lights configured for theme:", currentTheme);
 
     // Animation loop
     const animate = () => {
-      if (!animatedObjectRef.current || !rendererRef.current || !sceneRef.current || !cameraRef.current) {
-        if (animationFrameIdRef.current) cancelAnimationFrame(animationFrameIdRef.current);
-        animationFrameIdRef.current = requestAnimationFrame(animate); // keep trying if refs not ready
+      if (!cubeRef.current || !rendererRef.current || !sceneRef.current || !cameraRef.current) {
+        console.warn("ThreeScene: Animate called but refs not ready.");
+        animationFrameIdRef.current = requestAnimationFrame(animate); // Keep trying if refs not ready
         return;
       }
       animationFrameIdRef.current = requestAnimationFrame(animate);
 
-      const interpolated = interpolateKeyframes(activeKeyframes, scrollPercentage);
-      animatedObjectRef.current.position.set(...interpolated.position);
-      animatedObjectRef.current.rotation.set(...interpolated.rotation);
-      animatedObjectRef.current.scale.set(...interpolated.scale);
+      const interpolated = interpolateKeyframes(cubeKeyframes, scrollPercentage);
+      cubeRef.current.position.set(...interpolated.position);
+      cubeRef.current.rotation.set(...interpolated.rotation);
+      cubeRef.current.scale.set(...interpolated.scale);
 
       rendererRef.current.render(sceneRef.current, cameraRef.current);
     };
@@ -195,12 +150,13 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
     if (animationFrameIdRef.current) {
       cancelAnimationFrame(animationFrameIdRef.current);
     }
-    if (mountWidth > 0 && mountHeight > 0) {
-        animate();
-        console.log("ThreeScene: Animation loop started.");
+    if (mountWidth > 0 && mountHeight > 0) { // Only start animation if canvas has dimensions
+      animate();
+      console.log("ThreeScene: Animation loop started.");
     } else {
-        console.warn("ThreeScene: Animation loop NOT started due to zero mount dimensions. Will attempt on resize.");
+      console.warn("ThreeScene: Animation loop NOT started due to zero mount dimensions.");
     }
+
 
     // Resize Handler
     const handleResize = () => {
@@ -212,50 +168,70 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
           cameraRef.current.aspect = width / height;
           cameraRef.current.updateProjectionMatrix();
           console.log("ThreeScene: Resized to", width, "x", height);
-           if (!animationFrameIdRef.current && animatedObjectRef.current) { 
+           if (!animationFrameIdRef.current && cubeRef.current) { // If animation wasn't running
             animate(); // restart animation if it wasn't running and object exists
-            console.log("ThreeScene: Animation loop started on resize.");
+            console.log("ThreeScene: Animation loop (re)started on resize.");
           }
+        } else {
+            console.warn("ThreeScene: Resize event, but new dimensions are zero.");
         }
       }
     };
     window.addEventListener('resize', handleResize);
     if (mountWidth > 0 && mountHeight > 0) { // Call once if dimensions are already good
-        handleResize();
+        handleResize(); // Initial size update
     }
-    
+
     return () => {
-      console.log(`ThreeScene: useEffect cleanup for theme: ${currentTheme}`);
+      console.log("ThreeScene: useEffect cleanup initiated.");
       if (animationFrameIdRef.current) {
         cancelAnimationFrame(animationFrameIdRef.current);
         animationFrameIdRef.current = null;
+        console.log("ThreeScene: Animation frame cancelled.");
       }
       window.removeEventListener('resize', handleResize);
+      console.log("ThreeScene: Resize listener removed.");
 
-      if (animatedObjectRef.current) {
-        if (animatedObjectRef.current.geometry) animatedObjectRef.current.geometry.dispose();
-        if (animatedObjectRef.current.material) {
-          (animatedObjectRef.current.material as THREE.Material).dispose();
+      // More thorough cleanup for when the component instance is fully unmounted by React
+      // This is important when the `key` prop changes in RootLayout
+      if (cubeRef.current) {
+        if (cubeRef.current.geometry) cubeRef.current.geometry.dispose();
+        if (cubeRef.current.material) {
+            if (Array.isArray(cubeRef.current.material)) {
+                cubeRef.current.material.forEach(m => m.dispose());
+            } else {
+                (cubeRef.current.material as THREE.Material).dispose();
+            }
         }
-        if(sceneRef.current) sceneRef.current.remove(animatedObjectRef.current);
-        animatedObjectRef.current = null;
+        if(sceneRef.current) sceneRef.current.remove(cubeRef.current);
+        cubeRef.current = null;
+        console.log("ThreeScene: Cube disposed and removed.");
       }
-      if(lightsRef.current.ambientLight && sceneRef.current) sceneRef.current.remove(lightsRef.current.ambientLight);
-      if(lightsRef.current.directionalLight && sceneRef.current) sceneRef.current.remove(lightsRef.current.directionalLight);
-      if(lightsRef.current.pointLight && sceneRef.current) sceneRef.current.remove(lightsRef.current.pointLight);
-      lightsRef.current = {};
       
-      // Full cleanup if component is truly unmounting (due to key change)
-      if (rendererRef.current && currentMount && rendererRef.current.domElement.parentNode === currentMount) {
+      if(lightsRef.current.ambientLight && sceneRef.current) {
+        sceneRef.current.remove(lightsRef.current.ambientLight);
+        lightsRef.current.ambientLight.dispose(); // AmbientLight doesn't have dispose in older three, but good practice
+        lightsRef.current.ambientLight = undefined;
+         console.log("ThreeScene: Ambient light removed.");
+      }
+      if(lightsRef.current.pointLight && sceneRef.current) {
+        sceneRef.current.remove(lightsRef.current.pointLight);
+        lightsRef.current.pointLight.dispose();
+        lightsRef.current.pointLight = undefined;
+        console.log("ThreeScene: Point light removed.");
+      }
+      
+      if (rendererRef.current && rendererRef.current.domElement.parentNode === currentMount) {
          currentMount.removeChild(rendererRef.current.domElement);
+         console.log("ThreeScene: Renderer DOM element removed.");
       }
       rendererRef.current?.dispose();
-      rendererRef.current = null; // Allow re-creation
-      sceneRef.current = null;
-      cameraRef.current = null;
-      console.log("ThreeScene: Full cleanup complete.");
+      rendererRef.current = null;
+      sceneRef.current = null; // Scene is disposed by renderer.dispose() typically
+      cameraRef.current = null; // Camera doesn't have dispose method.
+      console.log("ThreeScene: Renderer, Scene, Camera refs nulled. Full cleanup complete.");
     };
-  }, [currentTheme, objectGeometry, activeKeyframes, scrollPercentage]); // scrollPercentage re-triggers for animation
+  }, [scrollPercentage, currentTheme]); // scrollPercentage re-triggers for animation, currentTheme for remount logic from layout
 
   return <div ref={mountRef} className="fixed inset-0 -z-10 w-screen h-screen bg-transparent" />;
 };
