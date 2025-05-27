@@ -162,7 +162,13 @@ export default function PortfolioPage() {
 
   return (
     <>
-      {isClient && <ThreeScene scrollPercentage={scrollPercentage} currentTheme={resolvedTheme as ('light' | 'dark' | undefined)} />}
+      {isClient && resolvedTheme && (
+        <ThreeScene
+          key={resolvedTheme} /* Force re-mount on theme change */
+          scrollPercentage={scrollPercentage}
+          currentTheme={resolvedTheme as ('light' | 'dark')}
+        />
+      )}
       <div className="relative z-10 space-y-12">
         <section
           aria-labelledby="welcome-heading"

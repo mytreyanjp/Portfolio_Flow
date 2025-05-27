@@ -102,7 +102,7 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
 
     // Initial background color based on currentTheme
     if (currentTheme === 'dark') {
-      scene.background = new THREE.Color().setHSL(270/360, 0.40, 0.10); // Dark Violet - Matches user image
+      scene.background = new THREE.Color().setHSL(270/360, 0.40, 0.10); // Dark Violet
     } else {
       scene.background = new THREE.Color().setHSL(275/360, 0.80, 0.97); // Very Light Lavender
     }
@@ -118,8 +118,8 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
     rendererRef.current = renderer;
 
     const initialMaterialColor = currentTheme === 'dark'
-        ? new THREE.Color().setHSL(275/360, 0.60, 0.90) // Light lavender for Cone
-        : new THREE.Color().setHSL(270/360, 0.65, 0.75); // Soft purple for Cube
+        ? new THREE.Color().setHSL(275/360, 0.60, 0.90) // Light lavender for Cone (Dark theme object)
+        : new THREE.Color().setHSL(270/360, 0.65, 0.75); // Soft purple for Cube (Light theme object)
 
     const material = new THREE.MeshStandardMaterial({
         color: initialMaterialColor,
@@ -188,20 +188,23 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
         }
       }
     };
-  }, [currentTheme, objectGeometry, activeKeyframes]);
+  }, [currentTheme, objectGeometry, activeKeyframes]); // Primary effect for scene creation/re-creation
 
+  // Secondary effect for explicit color updates when theme changes,
+  // might be redundant if primary effect always re-creates fully, but acts as a safeguard.
   useEffect(() => {
     if (!sceneRef.current || !animatedObjectRef.current || !cameraRef.current) return;
 
     const targetSceneBackgroundColor = currentTheme === 'dark'
-        ? new THREE.Color().setHSL(270/360, 0.40, 0.10) // Dark Violet - Matches user image
+        ? new THREE.Color().setHSL(270/360, 0.40, 0.10) // Dark Violet
         : new THREE.Color().setHSL(275/360, 0.80, 0.97); // Very Light Lavender
         
     if (sceneRef.current.background instanceof THREE.Color) {
+        // Check if the color is different before copying to avoid unnecessary updates
         if (!sceneRef.current.background.equals(targetSceneBackgroundColor)) {
             sceneRef.current.background.copy(targetSceneBackgroundColor);
         }
-    } else {
+    } else { // If background was null or texture, set it.
          sceneRef.current.background = targetSceneBackgroundColor;
     }
 
@@ -256,3 +259,4 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
 };
 
 export default ThreeScene;
+
