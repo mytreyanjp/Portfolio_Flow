@@ -8,13 +8,13 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTheme } from 'next-themes';
 import dynamic from 'next/dynamic';
+import { cn } from '@/lib/utils';
 
 const ThreeScene = dynamic(() => import('@/components/portfolio/ThreeScene'), {
   ssr: false,
-  // Placeholder for ThreeScene during dynamic import, covers the screen
   loading: () => <div style={{ height: '100vh', width: '100vw', position: 'fixed', top: 0, left: 0, zIndex: -1, backgroundColor: 'transparent' }} />,
 });
 
@@ -28,6 +28,8 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
+const FADE_DURATION_MS = 300; // Duration for one phase of the fade
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -35,16 +37,17 @@ export default function RootLayout({
 }>) {
   const [scrollPercentage, setScrollPercentage] = useState(0);
   const [isClient, setIsClient] = useState(false);
-  const { resolvedTheme, theme: rawTheme } = useTheme(); // Using 'rawTheme' to distinguish from resolvedTheme
+  const { setTheme, resolvedTheme, theme: rawTheme } = useTheme();
+  const [isThemeChanging, setIsThemeChanging] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-    console.log("RootLayout useEffect: isClient set to true");
+    // console.log("RootLayout useEffect: isClient set to true");
   }, []);
 
   useEffect(() => {
-    if (!isClient) return; 
-    console.log("RootLayout useEffect: Adding scroll listener");
+    if (!isClient) return;
+    // console.log("RootLayout useEffect: Adding scroll listener");
 
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
@@ -57,42 +60,59 @@ export default function RootLayout({
     handleScroll(); // Initialize on mount
 
     return () => {
-      console.log("RootLayout useEffect: Removing scroll listener");
+      // console.log("RootLayout useEffect: Removing scroll listener");
       window.removeEventListener('scroll', handleScroll);
     };
   }, [isClient]);
 
-  // Render-phase logging
-  console.log("RootLayout Render: isClient is", isClient);
-  console.log("RootLayout Render: rawTheme (from useTheme) is", rawTheme);
-  console.log("RootLayout Render: resolvedTheme is", resolvedTheme);
+  const handleThemeToggle = useCallback(() => {
+    if (isThemeChanging || !resolvedTheme) return;
 
-  // Determine the theme to pass to ThreeScene. Default to 'light' if resolvedTheme is undefined.
-  const currentThemeForScene: 'light' | 'dark' = 
+    setIsThemeChanging(true); // Start fade out
+
+    setTimeout(() => {
+      setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
+      // Theme changes, ThreeScene will re-key and remount
+    }, FADE_DURATION_MS);
+
+    setTimeout(() => {
+      setIsThemeChanging(false); // Transition complete, content fades back in
+    }, FADE_DURATION_MS * 2);
+  }, [isThemeChanging, resolvedTheme, setTheme]);
+
+
+  // console.log("RootLayout Render: isClient is", isClient);
+  // console.log("RootLayout Render: rawTheme (from useTheme) is", rawTheme);
+  // console.log("RootLayout Render: resolvedTheme is", resolvedTheme);
+
+  const currentThemeForScene: 'light' | 'dark' =
     (resolvedTheme === 'light' || resolvedTheme === 'dark') ? resolvedTheme : 'light';
 
-  // Condition to render ThreeScene: must be client-side.
-  // ThreeScene will receive a valid 'currentThemeForScene' and remount via key prop when resolvedTheme changes.
-  const canRenderThreeScene = isClient;
+  const canRenderThreeScene = isClient && (resolvedTheme === 'light' || resolvedTheme === 'dark');
 
-  console.log("RootLayout Render: canRenderThreeScene is", canRenderThreeScene);
-  console.log("RootLayout Render: currentThemeForScene is", currentThemeForScene);
-  console.log("RootLayout Render: Key for ThreeScene will be", resolvedTheme || 'initial-theme-key');
+  // console.log("RootLayout Render: canRenderThreeScene is", canRenderThreeScene);
+  // console.log("RootLayout Render: currentThemeForScene is", currentThemeForScene);
+  // console.log("RootLayout Render: Key for ThreeScene will be", resolvedTheme || 'initial-theme-key');
 
+  const currentHtmlClass = resolvedTheme || ''; // Use resolvedTheme for html class, or empty if undefined initially
 
   return (
-    <html lang="en" suppressHydrationWarning className={resolvedTheme || ''}>
+    <html lang="en" suppressHydrationWarning className={currentHtmlClass}>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-background`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {canRenderThreeScene && (
             <ThreeScene
-              key={resolvedTheme || 'initial-theme-key'} // Force re-mount on resolvedTheme change (including from undefined)
+              key={resolvedTheme || 'initial-theme-key'}
               scrollPercentage={scrollPercentage}
-              currentTheme={currentThemeForScene} 
+              currentTheme={currentThemeForScene}
             />
           )}
-          <div className="relative z-10 flex flex-col min-h-screen"> {/* Wrapper to sit above ThreeScene */}
-            <Header />
+          <div className={cn(
+            "relative z-10 flex flex-col min-h-screen transition-opacity ease-in-out",
+            `duration-${FADE_DURATION_MS}`, // Ensure this duration class is available or use fixed e.g. 'duration-300'
+            isThemeChanging ? "opacity-0" : "opacity-100"
+          )}>
+            <Header onThemeToggle={handleThemeToggle} isThemeChanging={isThemeChanging} />
             <main className="flex-grow container mx-auto px-4 py-8">
               {children}
             </main>

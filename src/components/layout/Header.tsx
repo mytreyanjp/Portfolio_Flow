@@ -3,11 +3,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Briefcase, MessageSquare, FileText, Brain, CodeXml, Menu } from 'lucide-react'; 
+import { Briefcase, MessageSquare, FileText, Brain, CodeXml, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import ThemeSwitcher from './ThemeSwitcher'; // Added ThemeSwitcher import
+import ThemeSwitcher from './ThemeSwitcher';
 
 const navItems = [
   { href: '/', label: 'Portfolio', icon: Briefcase },
@@ -16,13 +16,18 @@ const navItems = [
   { href: '/ai-intro', label: 'AI Intro', icon: Brain, disabled: true },
 ];
 
-export default function Header() {
+interface HeaderProps {
+  onThemeToggle: () => void;
+  isThemeChanging: boolean;
+}
+
+export default function Header({ onThemeToggle, isThemeChanging }: HeaderProps) {
   const pathname = usePathname();
 
   const NavLinks = ({isMobile = false}: {isMobile?: boolean}) => (
     <>
       {navItems.map((item) => {
-        const isDisabled = !!item.disabled; 
+        const isDisabled = !!item.disabled;
 
         return (
           <Link
@@ -31,7 +36,7 @@ export default function Header() {
             passHref
             onClick={(e) => {
               if (isDisabled) {
-                e.preventDefault(); 
+                e.preventDefault();
               }
             }}
             aria-disabled={isDisabled}
@@ -44,7 +49,8 @@ export default function Header() {
               className={cn(
                 'justify-start text-base hover:bg-accent/80 hover:text-accent-foreground',
                 isMobile ? 'w-full my-1' : 'mx-1',
-                pathname === item.href && !isDisabled ? 'bg-accent text-accent-foreground font-semibold' : ''
+                pathname === item.href && !isDisabled ? 'bg-accent text-accent-foreground font-semibold' : '',
+                isDisabled ? 'opacity-50' : '' // Added for visual cue if needed, but button disabled handles it
               )}
               aria-current={pathname === item.href && !isDisabled ? 'page' : undefined}
               disabled={isDisabled}
@@ -67,20 +73,20 @@ export default function Header() {
           <CodeXml className="h-7 w-7" />
           <span>PortfolioFlow</span>
         </Link>
-        
+
         <div className="flex items-center space-x-2">
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-1">
             <NavLinks />
           </nav>
 
-          <ThemeSwitcher /> {/* Added ThemeSwitcher component */}
+          <ThemeSwitcher onThemeToggle={onThemeToggle} isThemeChanging={isThemeChanging} />
 
           {/* Mobile Navigation */}
           <div className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" disabled={isThemeChanging}>
                   <Menu className="h-6 w-6" />
                   <span className="sr-only">Toggle navigation menu</span>
                 </Button>
