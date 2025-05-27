@@ -9,11 +9,6 @@ import Image from 'next/image';
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
-// export const metadata: Metadata = { // Metadata needs to be exported from server components or moved to layout
-//   title: 'My Resume',
-//   description: 'View and download my professional resume, detailing my skills, experience, and education.',
-// };
-
 const skills = [
   { name: 'JavaScript (ES6+)', level: 90 },
   { name: 'TypeScript', level: 90 },
@@ -30,6 +25,8 @@ const skills = [
 export default function ResumePage() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
+  const parallaxSensitivity = 15;
 
   useEffect(() => {
     const observerOptions = {
@@ -46,12 +43,25 @@ export default function ResumePage() {
       observer.observe(sectionRef.current);
     }
 
+    const handleMouseMove = (event: MouseEvent) => {
+      const x = (event.clientX / window.innerWidth - 0.5) * parallaxSensitivity;
+      const y = (event.clientY / window.innerHeight - 0.5) * parallaxSensitivity;
+      setParallaxOffset({ x: -x, y: -y });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+
     return () => {
       if (sectionRef.current) {
         observer.unobserve(sectionRef.current);
       }
+      window.removeEventListener('mousemove', handleMouseMove);
     };
-  }, []);
+  }, [parallaxSensitivity]);
+
+  const parallaxStyle = {
+    transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`,
+    transition: 'transform 0.1s ease-out'
+  };
 
   return (
     <div 
@@ -62,7 +72,12 @@ export default function ResumePage() {
       )}
     >
       <header className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-primary mb-4">My Professional Profile</h1>
+        <h1 
+          className="text-4xl font-bold text-primary mb-4"
+          style={parallaxStyle}
+        >
+          My Professional Profile
+        </h1>
         <p className="text-lg text-muted-foreground">A snapshot of my journey, skills, and achievements.</p>
       </header>
 
@@ -85,7 +100,7 @@ export default function ResumePage() {
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-2 shadow-lg">
+        <Card className="md:col-span-2 shadow-lg" style={parallaxStyle}>
           <CardHeader>
             <CardTitle className="text-2xl flex items-center"><Lightbulb className="mr-2 h-6 w-6 text-primary"/> Summary</CardTitle>
           </CardHeader>
@@ -98,7 +113,7 @@ export default function ResumePage() {
       </div>
 
       <div className="space-y-10">
-        <Card className="shadow-lg">
+        <Card className="shadow-lg" style={parallaxStyle}>
           <CardHeader>
             <CardTitle className="text-2xl flex items-center"><CheckCircle className="mr-2 h-6 w-6 text-primary"/> Key Skills</CardTitle>
           </CardHeader>
@@ -119,7 +134,7 @@ export default function ResumePage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg">
+        <Card className="shadow-lg" style={parallaxStyle}>
           <CardHeader>
             <CardTitle className="text-2xl flex items-center"><Briefcase className="mr-2 h-6 w-6 text-primary"/> Experience (Placeholder)</CardTitle>
           </CardHeader>
@@ -144,7 +159,7 @@ export default function ResumePage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg">
+        <Card className="shadow-lg" style={parallaxStyle}>
           <CardHeader>
             <CardTitle className="text-2xl flex items-center"><GraduationCap className="mr-2 h-6 w-6 text-primary"/> Education (Placeholder)</CardTitle>
           </CardHeader>
@@ -157,7 +172,7 @@ export default function ResumePage() {
           </CardContent>
         </Card>
         
-        <Card className="shadow-lg">
+        <Card className="shadow-lg" style={parallaxStyle}>
           <CardHeader>
             <CardTitle className="text-2xl flex items-center"><Award className="mr-2 h-6 w-6 text-primary"/> Awards & Certifications (Placeholder)</CardTitle>
           </CardHeader>

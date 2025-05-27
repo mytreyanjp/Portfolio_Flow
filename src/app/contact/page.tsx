@@ -8,14 +8,11 @@ import { Mail, Phone, MapPin } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
-// export const metadata: Metadata = { // Metadata needs to be exported from server components or moved to layout
-//   title: 'Contact Me',
-//   description: 'Get in touch with me for collaborations, inquiries, or just to say hi.',
-// };
-
 export default function ContactPage() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
+  const parallaxSensitivity = 15;
 
   useEffect(() => {
     const observerOptions = {
@@ -32,12 +29,20 @@ export default function ContactPage() {
       observer.observe(sectionRef.current);
     }
 
+    const handleMouseMove = (event: MouseEvent) => {
+      const x = (event.clientX / window.innerWidth - 0.5) * parallaxSensitivity;
+      const y = (event.clientY / window.innerHeight - 0.5) * parallaxSensitivity;
+      setParallaxOffset({ x: -x, y: -y });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+
     return () => {
       if (sectionRef.current) {
         observer.unobserve(sectionRef.current);
       }
+      window.removeEventListener('mousemove', handleMouseMove);
     };
-  }, []);
+  }, [parallaxSensitivity]);
 
   return (
     <div 
@@ -47,7 +52,12 @@ export default function ContactPage() {
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
       )}
     >
-      <h1 className="text-4xl font-bold text-center mb-12 text-primary">Let's Connect</h1>
+      <h1 
+        className="text-4xl font-bold text-center mb-12 text-primary"
+        style={{ transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`, transition: 'transform 0.1s ease-out' }}
+      >
+        Let's Connect
+      </h1>
       
       <div className="grid md:grid-cols-2 gap-12 items-start">
         <section aria-labelledby="contact-form-section">
@@ -64,7 +74,13 @@ export default function ContactPage() {
         </section>
 
         <section aria-labelledby="contact-info-section" className="space-y-8">
-           <h2 id="contact-info-section" className="text-2xl font-semibold mb-6 text-center md:text-left">Contact Information</h2>
+           <h2 
+            id="contact-info-section" 
+            className="text-2xl font-semibold mb-6 text-center md:text-left"
+            style={{ transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`, transition: 'transform 0.1s ease-out' }}
+           >
+            Contact Information
+           </h2>
           <Card className="shadow-lg">
             <CardContent className="pt-6 space-y-4">
               <div className="flex items-start space-x-4">

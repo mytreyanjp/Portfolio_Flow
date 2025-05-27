@@ -8,14 +8,11 @@ import { Sparkles } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
-// export const metadata: Metadata = { // Metadata needs to be exported from server components or moved to layout
-//   title: 'AI Intro Generator',
-//   description: 'Generate personalized introductory messages for potential employers using AI.',
-// };
-
 export default function AiIntroPage() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
+  const parallaxSensitivity = 15;
 
   useEffect(() => {
     const observerOptions = {
@@ -31,13 +28,26 @@ export default function AiIntroPage() {
     if (sectionRef.current) {
       observer.observe(sectionRef.current);
     }
+    
+    const handleMouseMove = (event: MouseEvent) => {
+      const x = (event.clientX / window.innerWidth - 0.5) * parallaxSensitivity;
+      const y = (event.clientY / window.innerHeight - 0.5) * parallaxSensitivity;
+      setParallaxOffset({ x: -x, y: -y });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
 
     return () => {
       if (sectionRef.current) {
         observer.unobserve(sectionRef.current);
       }
+      window.removeEventListener('mousemove', handleMouseMove);
     };
-  }, []);
+  }, [parallaxSensitivity]);
+  
+  const parallaxStyle = {
+    transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`,
+    transition: 'transform 0.1s ease-out'
+  };
 
   return (
     <div 
@@ -48,8 +58,10 @@ export default function AiIntroPage() {
       )}
     >
       <header className="text-center mb-12">
-        <Sparkles className="h-16 w-16 text-primary mx-auto mb-4 animate-pulse" />
-        <h1 className="text-4xl font-bold text-primary mb-4">AI-Powered Introduction Generator</h1>
+        <div style={parallaxStyle}>
+          <Sparkles className="h-16 w-16 text-primary mx-auto mb-4 animate-pulse" />
+          <h1 className="text-4xl font-bold text-primary mb-4">AI-Powered Introduction Generator</h1>
+        </div>
         <p className="text-lg text-muted-foreground">
           Craft the perfect first impression. Let AI help you create tailored introductory messages 
           for potential employers.
@@ -70,7 +82,12 @@ export default function AiIntroPage() {
       </Card>
       
       <div className="mt-10 p-6 bg-card border border-border rounded-lg shadow-md">
-        <h3 className="text-xl font-semibold text-foreground mb-3">How it Works:</h3>
+        <h3 
+          className="text-xl font-semibold text-foreground mb-3"
+          style={parallaxStyle}
+        >
+          How it Works:
+        </h3>
         <ol className="list-decimal list-inside space-y-2 text-foreground/80">
           <li>Enter the employer's name and the job title.</li>
           <li>List your key skills relevant to the role.</li>

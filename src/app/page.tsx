@@ -11,7 +11,7 @@ import { ArrowDown, Loader2, AlertTriangle, X as XIcon, Mail, FileText } from 'l
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import Link from 'next/link'; // Import Link
+import Link from 'next/link';
 
 export default function PortfolioPage() {
   const [filters, setFilters] = useState<Filters>({ category: '', technologies: [] });
@@ -21,13 +21,14 @@ export default function PortfolioPage() {
   const [noProjectsMessageVisible, setNoProjectsMessageVisible] = useState(false);
 
   const welcomeSectionRef = useRef<HTMLElement>(null);
-  const quickNavSectionRef = useRef<HTMLElement>(null); // Ref for new section
+  const quickNavSectionRef = useRef<HTMLElement>(null);
   const projectsSectionRef = useRef<HTMLElement>(null);
   const [isWelcomeVisible, setIsWelcomeVisible] = useState(false);
-  const [isQuickNavVisible, setIsQuickNavVisible] = useState(false); // State for new section
+  const [isQuickNavVisible, setIsQuickNavVisible] = useState(false);
   const [isProjectsVisible, setIsProjectsVisible] = useState(false);
 
   const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
+  const parallaxSensitivity = 15; // Adjusted for subtlety
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -70,14 +71,10 @@ export default function PortfolioPage() {
       return { observer, ref };
     });
     
-    // Mouse move listener for parallax effect on welcome section
     const handleMouseMove = (event: MouseEvent) => {
-      if (welcomeSectionRef.current) {
-        const sensitivity = 20; // Max pixels to move
-        const x = (event.clientX / window.innerWidth - 0.5) * sensitivity;
-        const y = (event.clientY / window.innerHeight - 0.5) * sensitivity;
-        setParallaxOffset({ x: -x, y: -y }); // Invert for natural parallax
-      }
+      const x = (event.clientX / window.innerWidth - 0.5) * parallaxSensitivity;
+      const y = (event.clientY / window.innerHeight - 0.5) * parallaxSensitivity;
+      setParallaxOffset({ x: -x, y: -y }); 
     };
     window.addEventListener('mousemove', handleMouseMove);
 
@@ -89,7 +86,7 @@ export default function PortfolioPage() {
       });
       window.removeEventListener('mousemove', handleMouseMove);
     };
-  }, []);
+  }, [parallaxSensitivity]);
 
 
   const filteredProjects = useMemo(() => {
@@ -153,12 +150,11 @@ export default function PortfolioPage() {
 
   return (
     <>
-      {/* No 3D scene rendered here, it's page-specific */}
       <div className="space-y-12">
         <section
           aria-labelledby="welcome-heading"
           className={cn(
-            "text-center py-12 md:py-16 transition-all duration-700 ease-in-out", // Changed from text-left to text-center
+            "text-center py-12 md:py-16 transition-all duration-700 ease-in-out",
             isWelcomeVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
           )}
           ref={welcomeSectionRef}
@@ -167,7 +163,7 @@ export default function PortfolioPage() {
             transition: 'transform 0.1s ease-out' 
           }}
         >
-          <div className="max-w-3xl mx-auto"> {/* Changed from ml-0 mr-auto to mx-auto */}
+          <div className="max-w-3xl mx-auto">
             <h1 id="welcome-heading" className="text-7xl md:text-7xl font-bold mb-2 text-primary">
               Hi
             </h1>
@@ -191,7 +187,11 @@ export default function PortfolioPage() {
           )}
           ref={quickNavSectionRef}
         >
-          <h2 id="quick-navigation-heading" className="text-2xl font-semibold mb-6 text-foreground">
+          <h2 
+            id="quick-navigation-heading" 
+            className="text-2xl font-semibold mb-6 text-foreground"
+            style={{ transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`, transition: 'transform 0.1s ease-out' }}
+          >
             Connect & Explore
           </h2>
           <div className="flex justify-center space-x-4">
@@ -219,7 +219,11 @@ export default function PortfolioPage() {
           )}
           ref={projectsSectionRef}
         >
-          <h2 id="projects-heading" className="text-3xl font-semibold mb-8 text-center">
+          <h2 
+            id="projects-heading" 
+            className="text-3xl font-semibold mb-8 text-center"
+            style={{ transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`, transition: 'transform 0.1s ease-out' }}
+          >
             My Projects
           </h2>
           <ProjectFilter
