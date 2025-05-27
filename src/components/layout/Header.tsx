@@ -2,13 +2,14 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image'; // Import next/image
 import { usePathname } from 'next/navigation';
-import { Briefcase, MessageSquare, FileText, Brain, CodeXml, Menu } from 'lucide-react';
+import { Briefcase, MessageSquare, FileText, Brain, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import ThemeSwitcher from './ThemeSwitcher';
-import React, { useState, useEffect } from 'react'; // Added for mounted state
+import React, { useState, useEffect } from 'react';
 
 const navItems = [
   { href: '/', label: 'Portfolio', icon: Briefcase },
@@ -19,7 +20,7 @@ const navItems = [
 
 export default function Header() {
   const pathname = usePathname();
-  const [mounted, setMounted] = useState(false); // For client-side only rendering of mobile nav
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -71,7 +72,13 @@ export default function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
         <Link href="/" className="flex items-center space-x-2 text-xl font-bold text-primary">
-          <CodeXml className="h-7 w-7" />
+          <Image 
+            src="/favicon22.png" 
+            alt="Myth Logo" 
+            width={28} // Adjust width as needed
+            height={28} // Adjust height as needed
+            className="h-7 w-7" // Tailwind class for consistency if needed, or remove if width/height is enough
+          />
           <span>Myth</span>
         </Link>
 
