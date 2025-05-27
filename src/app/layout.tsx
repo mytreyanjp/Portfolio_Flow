@@ -1,7 +1,7 @@
 
 'use client'; // Make layout a client component to use hooks
 
-import type { Metadata } from 'next'; // Metadata can still be defined, but in a client component, it's more for static parts or needs specific handling for dynamic updates.
+// import type { Metadata } from 'next'; // Metadata can still be defined, but in a client component, it's more for static parts or needs specific handling for dynamic updates.
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import Header from '@/components/layout/Header';
@@ -45,7 +45,7 @@ export default function RootLayout({
 }>) {
   const [scrollPercentage, setScrollPercentage] = useState(0);
   const [isClient, setIsClient] = useState(false);
-  const { resolvedTheme } = useTheme();
+  const { resolvedTheme } = useTheme(); // useTheme needs to be called within ThemeProvider, but its usage here for ThreeScene is okay as ThemeProvider is its parent in the tree.
 
   useEffect(() => {
     setIsClient(true);
@@ -72,7 +72,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}>
-        <ThemeProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {isClient && resolvedTheme && (
             <ThreeScene
               key={resolvedTheme} /* Force re-mount on theme change */
