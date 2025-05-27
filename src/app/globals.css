@@ -48,8 +48,8 @@ body {
   }
 
   .dark {
-    /* Royal Purple Dark Theme */
-    --background: 270 40% 10%; /* Very dark purple */
+    /* Royal Purple Dark Theme / Dark Violet */
+    --background: 270 40% 10%; /* Very dark purple - Matches user image */
     --foreground: 275 60% 90%; /* Light lavender/silver */
     --card: 270 35% 18%; /* Slightly lighter dark purple */
     --card-foreground: 275 60% 90%;
