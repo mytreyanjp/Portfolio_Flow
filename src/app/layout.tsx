@@ -12,6 +12,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useTheme } from 'next-themes';
 import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
+import { usePathname } from 'next/navigation'; // Import usePathname
 
 const ThreeScene = dynamic(() => import('@/components/portfolio/ThreeScene'), {
   ssr: false,
@@ -28,6 +29,8 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
+const pathsToHide3DBackground = ['/contact', '/resume']; // Define paths where 3D background should be hidden
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -36,15 +39,16 @@ export default function RootLayout({
   const [scrollPercentage, setScrollPercentage] = useState(0);
   const [isClient, setIsClient] = useState(false);
   const { theme: rawTheme, resolvedTheme } = useTheme();
+  const pathname = usePathname(); // Get current pathname
 
   useEffect(() => {
     setIsClient(true);
-    console.log("RootLayout: isClient set to true");
+    // console.log("RootLayout: isClient set to true");
   }, []);
 
   useEffect(() => {
     if (!isClient) return;
-    console.log("RootLayout: Adding scroll listener");
+    // console.log("RootLayout: Adding scroll listener");
 
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
@@ -57,28 +61,28 @@ export default function RootLayout({
     handleScroll(); // Initialize on mount
 
     return () => {
-      console.log("RootLayout: Removing scroll listener");
+      // console.log("RootLayout: Removing scroll listener");
       window.removeEventListener('scroll', handleScroll);
     };
   }, [isClient]);
 
-  // Log current theme state for diagnostics
-  console.log("RootLayout Render: isClient is", isClient);
-  console.log("RootLayout Render: rawTheme (from useTheme) is", rawTheme);
-  console.log("RootLayout Render: resolvedTheme is", resolvedTheme);
+  // console.log("RootLayout Render: isClient is", isClient);
+  // console.log("RootLayout Render: rawTheme (from useTheme) is", rawTheme);
+  // console.log("RootLayout Render: resolvedTheme is", resolvedTheme);
 
-  // Determine if ThreeScene can be rendered and what theme to pass
-  // Allow rendering if isClient is true, and pass a default theme if resolvedTheme is undefined initially.
-  const canRenderThreeScene = isClient; 
+  const canRenderThreeScene = isClient;
   const currentThemeForScene: 'light' | 'dark' =
-    (resolvedTheme === 'light' || resolvedTheme === 'dark') ? resolvedTheme : 'light'; // Default to 'light' if undefined
+    (resolvedTheme === 'light' || resolvedTheme === 'dark') ? resolvedTheme : 'light';
 
-  console.log("RootLayout Render: canRenderThreeScene is", canRenderThreeScene);
-  console.log("RootLayout Render: currentThemeForScene is", currentThemeForScene);
-  // The key ensures ThreeScene remounts when resolvedTheme changes from undefined to a value, or between light/dark.
   const threeSceneKey = resolvedTheme || 'initial-theme-key';
-  console.log("RootLayout Render: Key for ThreeScene will be", threeSceneKey);
+  // console.log("RootLayout Render: canRenderThreeScene is", canRenderThreeScene);
+  // console.log("RootLayout Render: currentThemeForScene is", currentThemeForScene);
+  // console.log("RootLayout Render: Key for ThreeScene will be", threeSceneKey);
 
+  const shouldRenderThreeScene =
+    canRenderThreeScene &&
+    (resolvedTheme === 'light' || resolvedTheme === 'dark') &&
+    !pathsToHide3DBackground.includes(pathname); // Check against pathname
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -87,9 +91,9 @@ export default function RootLayout({
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {canRenderThreeScene && (
+          {shouldRenderThreeScene && ( // Use the new condition
             <ThreeScene
-              key={threeSceneKey} // Force remount on theme change (including from undefined)
+              key={threeSceneKey}
               scrollPercentage={scrollPercentage}
               currentTheme={currentThemeForScene}
             />
