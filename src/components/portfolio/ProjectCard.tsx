@@ -5,10 +5,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowUpRight, Github } from 'lucide-react';
-import React, { useRef, useEffect } from 'react'; // Import useEffect
+import React, { useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 
-// Dynamically import ProjectModelViewer to ensure Three.js is client-side only
 const ProjectModelViewer = dynamic(() => import('./ProjectModelViewer'), {
   ssr: false,
   loading: () => <div className="w-full h-48 bg-muted rounded-t-md animate-pulse" />,
@@ -20,11 +19,11 @@ interface ProjectCardProps {
 }
 
 export default function ProjectCard({ project, index }: ProjectCardProps) {
-  const cardRef = useRef<HTMLDivElement>(null); // Ref for the card itself
+  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    console.log(`ProjectCard: Rendering project "${project.title}" with modelUrl: ${project.modelUrl}`);
-    if (project.modelUrl) {
+    console.log(`ProjectCard: Rendering project "${project.title}" with model: ${project.model}`);
+    if (project.model) {
       console.log(`ProjectCard: Attempting to render ProjectModelViewer for "${project.title}"`);
     } else if (project.imageUrl) {
       console.log(`ProjectCard: Rendering fallback image for "${project.title}"`);
@@ -35,13 +34,13 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
 
   return (
     <Card 
-      ref={cardRef} // Assign ref to the card
+      ref={cardRef}
       className="flex flex-col h-full overflow-hidden transform transition-all duration-300 hover:shadow-xl hover:scale-[1.02] animate-fadeInUpScale"
       style={{ animationDelay: `${index * 100}ms` }}
     >
       <div className="relative w-full h-48 mb-4 rounded-t-md overflow-hidden group bg-muted">
-        {project.modelUrl ? (
-          <ProjectModelViewer modelUrl={project.modelUrl} containerRef={cardRef} />
+        {project.model ? (
+          <ProjectModelViewer model={project.model} containerRef={cardRef} />
         ) : project.imageUrl ? (
           <img 
             src={project.imageUrl}

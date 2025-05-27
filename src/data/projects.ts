@@ -4,8 +4,8 @@ export type Project = {
   title: string;
   description: string;
   longDescription?: string;
-  imageUrl: string; // Kept for potential fallback or other uses, but card will prioritize model
-  modelUrl?: string; // New field for the 3D model path
+  imageUrl: string;
+  model?: string; // Renamed from modelUrl
   dataAiHint: string;
   category: 'Web Development' | '3D Graphics' | 'AI Integration' | 'Mobile App';
   technologies: string[];
