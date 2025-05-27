@@ -53,7 +53,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelUrl, conta
       const currentMount = mountRef.current;
 
       sceneRef.current = new THREE.Scene();
-      // sceneRef.current.background = new THREE.Color(0xeeeeee); // Removed for transparency
+      // sceneRef.current.background = new THREE.Color(0xeeeeee); // Set to light gray for visibility during debugging
 
       cameraRef.current = new THREE.PerspectiveCamera(50, currentMount.clientWidth / currentMount.clientHeight, 0.1, 100);
       cameraRef.current.position.z = 3;
@@ -127,9 +127,9 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelUrl, conta
           modelGroupRef.current.position.sub(scaledCenter);
           console.log(`ProjectModelViewer (${modelUrl}): Model positioned at world origin.`);
 
-          // Apply initial Z-axis rotation
-          modelGroupRef.current.rotation.z = Math.PI / 4; // 45 degrees
-          console.log(`ProjectModelViewer (${modelUrl}): Applied initial Z rotation of 45 degrees.`);
+          // Apply initial Y-axis rotation
+          modelGroupRef.current.rotation.y = Math.PI / 4; // 45 degrees
+          console.log(`ProjectModelViewer (${modelUrl}): Applied initial Y rotation of 45 degrees.`);
           
           cameraRef.current!.lookAt(0, 0, 0);
           setIsLoading(false);
