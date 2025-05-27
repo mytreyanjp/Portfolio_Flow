@@ -35,7 +35,7 @@ export default function RootLayout({
 }>) {
   const [scrollPercentage, setScrollPercentage] = useState(0);
   const [isClient, setIsClient] = useState(false);
-  const { theme: rawTheme, resolvedTheme } = useTheme(); // `theme` is the set theme, `resolvedTheme` is the actual applied theme
+  const { theme: rawTheme, resolvedTheme } = useTheme();
 
   useEffect(() => {
     setIsClient(true);
@@ -67,28 +67,29 @@ export default function RootLayout({
   console.log("RootLayout Render: rawTheme (from useTheme) is", rawTheme);
   console.log("RootLayout Render: resolvedTheme is", resolvedTheme);
 
-
   // Determine if ThreeScene can be rendered and what theme to pass
-  const canRenderThreeScene = isClient && (resolvedTheme === 'light' || resolvedTheme === 'dark');
+  // Allow rendering if isClient is true, and pass a default theme if resolvedTheme is undefined initially.
+  const canRenderThreeScene = isClient; 
   const currentThemeForScene: 'light' | 'dark' =
-    (resolvedTheme === 'light' || resolvedTheme === 'dark') ? resolvedTheme : 'light'; // Default to 'light' if undefined briefly
+    (resolvedTheme === 'light' || resolvedTheme === 'dark') ? resolvedTheme : 'light'; // Default to 'light' if undefined
 
   console.log("RootLayout Render: canRenderThreeScene is", canRenderThreeScene);
   console.log("RootLayout Render: currentThemeForScene is", currentThemeForScene);
-  console.log("RootLayout Render: Key for ThreeScene will be", resolvedTheme || 'initial-theme-key');
+  // The key ensures ThreeScene remounts when resolvedTheme changes from undefined to a value, or between light/dark.
+  const threeSceneKey = resolvedTheme || 'initial-theme-key';
+  console.log("RootLayout Render: Key for ThreeScene will be", threeSceneKey);
 
 
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={cn(
           `${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-background`,
-          // resolvedTheme || '' // Dynamically add 'light' or 'dark' class if themeProvider doesn't
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {canRenderThreeScene && (
             <ThreeScene
-              key={resolvedTheme || 'initial-theme-key'} // Force remount on theme change
+              key={threeSceneKey} // Force remount on theme change (including from undefined)
               scrollPercentage={scrollPercentage}
               currentTheme={currentThemeForScene}
             />
