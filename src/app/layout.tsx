@@ -28,11 +28,6 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
-// export const metadata: Metadata = { // Typically static metadata goes here or in page.tsx if server component
-//   title: 'PortfolioFlow',
-//   description: 'A dynamic portfolio built with Next.js, Three.js, and Tailwind CSS.',
-// };
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -40,16 +35,16 @@ export default function RootLayout({
 }>) {
   const [scrollPercentage, setScrollPercentage] = useState(0);
   const [isClient, setIsClient] = useState(false);
-  const { theme: rawTheme, resolvedTheme } = useTheme();
+  const { theme: rawTheme, resolvedTheme } = useTheme(); // `theme` is the set theme, `resolvedTheme` is the actual applied theme
 
   useEffect(() => {
     setIsClient(true);
-    // console.log("RootLayout useEffect: isClient set to true");
+    console.log("RootLayout: isClient set to true");
   }, []);
 
   useEffect(() => {
     if (!isClient) return;
-    // console.log("RootLayout useEffect: Adding scroll listener");
+    console.log("RootLayout: Adding scroll listener");
 
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
@@ -62,30 +57,32 @@ export default function RootLayout({
     handleScroll(); // Initialize on mount
 
     return () => {
-      // console.log("RootLayout useEffect: Removing scroll listener");
+      console.log("RootLayout: Removing scroll listener");
       window.removeEventListener('scroll', handleScroll);
     };
   }, [isClient]);
 
-  // console.log("RootLayout Render: isClient is", isClient);
-  // console.log("RootLayout Render: rawTheme (from useTheme) is", rawTheme);
-  // console.log("RootLayout Render: resolvedTheme is", resolvedTheme);
+  // Log current theme state for diagnostics
+  console.log("RootLayout Render: isClient is", isClient);
+  console.log("RootLayout Render: rawTheme (from useTheme) is", rawTheme);
+  console.log("RootLayout Render: resolvedTheme is", resolvedTheme);
 
+
+  // Determine if ThreeScene can be rendered and what theme to pass
   const canRenderThreeScene = isClient && (resolvedTheme === 'light' || resolvedTheme === 'dark');
   const currentThemeForScene: 'light' | 'dark' =
     (resolvedTheme === 'light' || resolvedTheme === 'dark') ? resolvedTheme : 'light'; // Default to 'light' if undefined briefly
 
-  // console.log("RootLayout Render: canRenderThreeScene is", canRenderThreeScene);
-  // console.log("RootLayout Render: currentThemeForScene is", currentThemeForScene);
-  // console.log("RootLayout Render: Key for ThreeScene will be", resolvedTheme || 'initial-theme-key');
-  
-  // const currentHtmlClass = resolvedTheme || ''; 
-  // suppressHydrationWarning is needed if html class is manipulated by client-side theme provider
+  console.log("RootLayout Render: canRenderThreeScene is", canRenderThreeScene);
+  console.log("RootLayout Render: currentThemeForScene is", currentThemeForScene);
+  console.log("RootLayout Render: Key for ThreeScene will be", resolvedTheme || 'initial-theme-key');
+
 
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={cn(
           `${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-background`,
+          // resolvedTheme || '' // Dynamically add 'light' or 'dark' class if themeProvider doesn't
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
