@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowUpRight, Github } from 'lucide-react';
-import React, { useRef } from 'react'; // Import useRef
+import React, { useRef, useEffect } from 'react'; // Import useEffect
 import dynamic from 'next/dynamic';
 
 // Dynamically import ProjectModelViewer to ensure Three.js is client-side only
@@ -22,6 +22,17 @@ interface ProjectCardProps {
 export default function ProjectCard({ project, index }: ProjectCardProps) {
   const cardRef = useRef<HTMLDivElement>(null); // Ref for the card itself
 
+  useEffect(() => {
+    console.log(`ProjectCard: Rendering project "${project.title}" with modelUrl: ${project.modelUrl}`);
+    if (project.modelUrl) {
+      console.log(`ProjectCard: Attempting to render ProjectModelViewer for "${project.title}"`);
+    } else if (project.imageUrl) {
+      console.log(`ProjectCard: Rendering fallback image for "${project.title}"`);
+    } else {
+      console.log(`ProjectCard: No model or image URL for "${project.title}", showing 'No preview'.`);
+    }
+  }, [project]);
+
   return (
     <Card 
       ref={cardRef} // Assign ref to the card
@@ -32,8 +43,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
         {project.modelUrl ? (
           <ProjectModelViewer modelUrl={project.modelUrl} containerRef={cardRef} />
         ) : project.imageUrl ? (
-          // Fallback to image if modelUrl is not provided
-          <img // Using <img> for simplicity, next/image can be used if needed
+          <img 
             src={project.imageUrl}
             alt={project.title}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
