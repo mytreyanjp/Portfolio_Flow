@@ -2,41 +2,30 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-// import dynamic from 'next/dynamic'; // ThreeScene is now in layout
 import ProjectCard from '@/components/portfolio/ProjectCard';
 import ProjectFilter, { Filters } from '@/components/portfolio/ProjectFilter';
 import type { Project } from '@/data/projects';
 import { getProjects } from '@/services/projectsService';
 import { Button } from '@/components/ui/button';
-import { ArrowDown, Loader2, AlertTriangle } from 'lucide-react';
-// import { useTheme } from 'next-themes'; // Only needed if page.tsx uses theme for other things
+import { ArrowDown, Loader2, AlertTriangle, X as XIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
-// ThreeScene is no longer imported or rendered here
-// const ThreeScene = dynamic(() => import('@/components/portfolio/ThreeScene'), {
-//   ssr: false,
-//   loading: () => <div style={{ height: '100vh', width: '100vw', position: 'fixed' }} />,
-// });
 
 export default function PortfolioPage() {
   const [filters, setFilters] = useState<Filters>({ category: '', technologies: [] });
-  // const [scrollPercentage, setScrollPercentage] = useState(0); // Moved to layout
-  // const [isClient, setIsClient] = useState(false); // Moved to layout or not needed if only for ThreeScene
-  // const { resolvedTheme } = useTheme(); // Keep if theme is used for page-specific logic, otherwise remove
-
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [noProjectsMessageVisible, setNoProjectsMessageVisible] = useState(true);
+
 
   const welcomeSectionRef = useRef<HTMLElement>(null);
   const projectsSectionRef = useRef<HTMLElement>(null);
   const [isWelcomeVisible, setIsWelcomeVisible] = useState(false);
   const [isProjectsVisible, setIsProjectsVisible] = useState(false);
 
-  // useEffect(() => { // isClient state setup, moved to layout
-  //   setIsClient(true);
-  // }, []);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -52,18 +41,9 @@ export default function PortfolioPage() {
         setIsLoading(false);
       }
     };
-    // if (isClient) { // Fetch projects based on a general client-side check if needed, or just directly
     fetchProjects();
-    // }
-  }, []); // Removed isClient dependency if it was only for ThreeScene
+  }, []);
 
-  // Scroll percentage calculation moved to layout
-  // useEffect(() => {
-  //   const handleScroll = () => { /* ... */ };
-  //   window.addEventListener('scroll', handleScroll, { passive: true });
-  //   handleScroll();
-  //   return () => window.removeEventListener('scroll', handleScroll);
-  // }, []);
 
   useEffect(() => {
     const observerOptions = {
@@ -101,21 +81,32 @@ export default function PortfolioPage() {
 
   const filteredProjects = useMemo(() => {
     if (isLoading || error) return [];
-    return projects.filter(project => {
+    const results = projects.filter(project => {
       const categoryMatch = filters.category ? project.category === filters.category : true;
       const techMatch = filters.technologies.length > 0
         ? filters.technologies.every(tech => project.technologies.includes(tech))
         : true;
       return categoryMatch && techMatch;
     });
+    // Show the message if filters are active and results are empty
+    setNoProjectsMessageVisible(results.length === 0 && (filters.category !== '' || filters.technologies.length > 0));
+    return results;
   }, [filters, projects, isLoading, error]);
 
   const handleFilterChange = (newFilters: Filters) => {
     setFilters(newFilters);
+    // If new filters lead to results, or if filters are cleared, ensure message visibility is reset if needed
+    // The check is mainly handled by filteredProjects useMemo, but explicitly show if filters are reset
+    if (newFilters.category === '' && newFilters.technologies.length === 0) {
+      setNoProjectsMessageVisible(false); // No message if filters are cleared and projects might exist
+    } else {
+      // Visibility will be determined by filteredProjects effect
+    }
   };
 
   const handleResetFilters = () => {
     setFilters({ category: '', technologies: [] });
+    setNoProjectsMessageVisible(false); // Hide message when filters are reset
   };
 
   const scrollToProjects = () => {
@@ -154,8 +145,6 @@ export default function PortfolioPage() {
 
   return (
     <>
-      {/* ThreeScene component is removed from here; it's now in RootLayout */}
-      {/* The main content div now doesn't need z-10 if the layout handles global background layering */}
       <div className="space-y-12">
         <section
           aria-labelledby="welcome-heading"
@@ -222,9 +211,26 @@ export default function PortfolioPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-center text-muted-foreground py-8 animate-fadeInUpScale" style={{ animationDelay: '0s' }}>
-                  No projects match the current filters. Try adjusting your selection or reset filters.
-              </p>
+              noProjectsMessageVisible && (
+                <Alert 
+                  variant="destructive" 
+                  className="relative py-8 text-center animate-fadeInUpScale"
+                  style={{ animationDelay: '0s' }}
+                >
+                  <button 
+                    onClick={() => setNoProjectsMessageVisible(false)} 
+                    className="absolute top-2 right-2 p-1 rounded-md hover:bg-destructive/20 transition-colors"
+                    aria-label="Dismiss message"
+                  >
+                    <XIcon className="h-5 w-5" />
+                  </button>
+                  <AlertTriangle className="h-8 w-8 mx-auto mb-3" />
+                  <AlertTitle className="font-semibold text-lg mb-2">No Projects Found</AlertTitle>
+                  <AlertDescription>
+                    No projects match the current filters. Try adjusting your selection or reset filters.
+                  </AlertDescription>
+                </Alert>
+              )
             )
           )}
         </section>
