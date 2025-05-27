@@ -1,33 +1,51 @@
-import Image from 'next/image';
+
 import Link from 'next/link';
 import type { Project } from '@/data/projects';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowUpRight, Github } from 'lucide-react';
+import React, { useRef } from 'react'; // Import useRef
+import dynamic from 'next/dynamic';
+
+// Dynamically import ProjectModelViewer to ensure Three.js is client-side only
+const ProjectModelViewer = dynamic(() => import('./ProjectModelViewer'), {
+  ssr: false,
+  loading: () => <div className="w-full h-48 bg-muted rounded-t-md animate-pulse" />,
+});
 
 interface ProjectCardProps {
   project: Project;
-  index: number; // Added index for animation delay
+  index: number;
 }
 
 export default function ProjectCard({ project, index }: ProjectCardProps) {
+  const cardRef = useRef<HTMLDivElement>(null); // Ref for the card itself
+
   return (
     <Card 
+      ref={cardRef} // Assign ref to the card
       className="flex flex-col h-full overflow-hidden transform transition-all duration-300 hover:shadow-xl hover:scale-[1.02] animate-fadeInUpScale"
-      style={{ animationDelay: `${index * 100}ms` }} // Staggered animation
+      style={{ animationDelay: `${index * 100}ms` }}
     >
-      <CardHeader>
-        <div className="relative w-full h-48 mb-4 rounded-t-md overflow-hidden group"> {/* Added group for image scale on card hover */}
-          <Image
+      <div className="relative w-full h-48 mb-4 rounded-t-md overflow-hidden group bg-muted">
+        {project.modelUrl ? (
+          <ProjectModelViewer modelUrl={project.modelUrl} containerRef={cardRef} />
+        ) : project.imageUrl ? (
+          // Fallback to image if modelUrl is not provided
+          <img // Using <img> for simplicity, next/image can be used if needed
             src={project.imageUrl}
             alt={project.title}
-            layout="fill"
-            objectFit="cover"
-            className="transition-transform duration-300 group-hover:scale-105" // Image scales on card hover now
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             data-ai-hint={project.dataAiHint}
           />
-        </div>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+            No preview available
+          </div>
+        )}
+      </div>
+      <CardHeader className="pt-0">
         <CardTitle className="text-xl font-semibold">{project.title}</CardTitle>
         <CardDescription className="text-sm h-16 overflow-hidden">{project.description}</CardDescription>
       </CardHeader>
