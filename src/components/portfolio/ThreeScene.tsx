@@ -96,33 +96,45 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
     return currentTheme === 'dark' ? darkThemeKeyframes : lightThemeKeyframes;
   }, [currentTheme]);
 
+  // Effect for scene setup (ran once on mount or when geometry/keyframes force re-creation)
   useEffect(() => {
     if (typeof window === 'undefined' || !mountRef.current) return;
     const currentMount = mountRef.current;
 
     // Initialize scene, camera, renderer
-    sceneRef.current = new THREE.Scene();
-    cameraRef.current = new THREE.PerspectiveCamera(75, currentMount.clientWidth / currentMount.clientHeight, 0.1, 1000);
-    cameraRef.current.position.z = 3;
-    rendererRef.current = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    rendererRef.current.setSize(currentMount.clientWidth, currentMount.clientHeight);
-    rendererRef.current.setPixelRatio(window.devicePixelRatio);
-    currentMount.appendChild(rendererRef.current.domElement);
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
 
-    // Material and Object
+    const camera = new THREE.PerspectiveCamera(75, currentMount.clientWidth / currentMount.clientHeight, 0.1, 1000);
+    camera.position.z = 3;
+    cameraRef.current = camera;
+    
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    rendererRef.current = renderer;
+    currentMount.appendChild(renderer.domElement);
+
+    // Material and Object (geometry changes based on theme via useMemo)
     const material = new THREE.MeshStandardMaterial();
-    animatedObjectRef.current = new THREE.Mesh(objectGeometry, material);
-    sceneRef.current.add(animatedObjectRef.current);
+    const animatedObject = new THREE.Mesh(objectGeometry, material);
+    animatedObjectRef.current = animatedObject;
+    scene.add(animatedObject);
 
     // Lights
-    ambientLightRef.current = new THREE.AmbientLight();
-    sceneRef.current.add(ambientLightRef.current);
-    directionalLightRef.current = new THREE.DirectionalLight();
-    sceneRef.current.add(directionalLightRef.current);
-    accentLightRef.current = new THREE.PointLight();
-    sceneRef.current.add(accentLightRef.current);
+    const ambientLight = new THREE.AmbientLight();
+    ambientLightRef.current = ambientLight;
+    scene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight();
+    directionalLightRef.current = directionalLight;
+    scene.add(directionalLight);
     
-    // Initial interpolation
+    const accentLight = new THREE.PointLight();
+    accentLightRef.current = accentLight;
+    scene.add(accentLight);
+    
+    // Initial interpolation for object position
     interpolateKeyframes(0, animatedObjectRef.current, activeKeyframes);
 
     const animate = () => {
@@ -153,46 +165,49 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
         animatedObjectRef.current.geometry?.dispose();
         (animatedObjectRef.current.material as THREE.Material)?.dispose();
       }
-      // Dispose lights if needed, though usually not critical unless they have complex resources
     };
-  }, [objectGeometry, activeKeyframes]); // Main effect for scene creation/re-creation based on geometry/keyframes
+  }, [objectGeometry, activeKeyframes]); // Key dependencies for scene recreation
 
-  // Effect for theme-dependent color and lighting updates
+  // Effect for THEME-DEPENDENT visual updates (colors, lighting properties)
   useEffect(() => {
-    if (!sceneRef.current || !animatedObjectRef.current || !ambientLightRef.current || !directionalLightRef.current || !accentLightRef.current) return;
-
     const scene = sceneRef.current;
-    const material = animatedObjectRef.current.material as THREE.MeshStandardMaterial;
+    const material = animatedObjectRef.current?.material as THREE.MeshStandardMaterial | undefined;
     const ambientLight = ambientLightRef.current;
     const directionalLight = directionalLightRef.current;
     const accentLight = accentLightRef.current;
 
+    if (!scene || !material || !ambientLight || !directionalLight || !accentLight) {
+      return; 
+    }
+
     if (currentTheme === 'dark') {
       // Dark Theme: Royal Purple
       scene.background = new THREE.Color().setHSL(270/360, 0.40, 0.10); // INTENDED VERY DARK VIOLET
+      
       material.color.setHSL(275/360, 0.60, 0.90); // Light lavender/silver for Cone
       material.metalness = 0.4;
       material.roughness = 0.5;
       
-      ambientLight.color.setHex(0xffffff);
+      ambientLight.color.setHex(0xffffff); // White ambient
       ambientLight.intensity = 0.6;
       
-      directionalLight.color.setHSL(270/360, 0.30, 0.35); // Muted purple light (THIS IS THE COLOR THAT WAS APPEARING AS BG)
+      directionalLight.color.setHSL(270/360, 0.30, 0.35); // Muted purple directional light
       directionalLight.intensity = 0.7;
       directionalLight.position.set(-3, 3, 4).normalize();
       
       accentLight.color.setHSL(300/360, 0.75, 0.75); // Magenta/violet accent
-      accentLight.intensity = 1.2;
+      accentLight.intensity = 1.2; 
       accentLight.position.set(2.5, 2.5, 2.5);
 
     } else {
       // Light Theme: Light Purple
       scene.background = new THREE.Color().setHSL(275/360, 0.80, 0.97); // Very light, almost white lavender for scene BG
+      
       material.color.setHSL(270/360, 0.65, 0.75); // Soft purple for Cube
       material.metalness = 0.2;
       material.roughness = 0.7;
 
-      ambientLight.color.setHex(0xffffff);
+      ambientLight.color.setHex(0xffffff); // White ambient
       ambientLight.intensity = 0.9;
 
       directionalLight.color.setHSL(275/360, 0.60, 0.90); // Light lavender light
@@ -200,14 +215,16 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
       directionalLight.position.set(3, 3, 4).normalize();
       
       accentLight.color.setHSL(285/360, 0.70, 0.80); // Pinkish purple accent
-      accentLight.intensity = 1.5;
+      accentLight.intensity = 1.5; 
       accentLight.position.set(-2.5, 2.5, 2.5);
     }
     material.needsUpdate = true;
 
-  }, [currentTheme]); // Only depends on currentTheme
+  // IMPORTANT: Added all relevant refs to the dependency array to ensure this effect runs if they change.
+  // currentTheme is the primary driver.
+  }, [currentTheme, sceneRef, animatedObjectRef, ambientLightRef, directionalLightRef, accentLightRef]); 
 
-  // Effect for scroll-based animation
+  // Effect for scroll-based animation of the object
   useEffect(() => {
     if (animatedObjectRef.current) {
       interpolateKeyframes(scrollPercentage, animatedObjectRef.current, activeKeyframes);
@@ -219,3 +236,5 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
 };
 
 export default ThreeScene;
+
+    
