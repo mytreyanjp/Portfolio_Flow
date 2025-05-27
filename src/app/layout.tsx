@@ -12,7 +12,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useTheme } from 'next-themes';
 import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
-import { usePathname } from 'next/navigation'; // Import usePathname
 
 const ThreeScene = dynamic(() => import('@/components/portfolio/ThreeScene'), {
   ssr: false,
@@ -29,8 +28,6 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
-const pathsToHide3DBackground = ['/contact', '/resume']; // Define paths where 3D background should be hidden
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -39,7 +36,6 @@ export default function RootLayout({
   const [scrollPercentage, setScrollPercentage] = useState(0);
   const [isClient, setIsClient] = useState(false);
   const { theme: rawTheme, resolvedTheme } = useTheme();
-  const pathname = usePathname(); // Get current pathname
 
   useEffect(() => {
     setIsClient(true);
@@ -72,17 +68,15 @@ export default function RootLayout({
 
   const canRenderThreeScene = isClient;
   const currentThemeForScene: 'light' | 'dark' =
-    (resolvedTheme === 'light' || resolvedTheme === 'dark') ? resolvedTheme : 'light';
+    (resolvedTheme === 'light' || resolvedTheme === 'dark') ? resolvedTheme : 'light'; // Default to 'light' if undefined
 
   const threeSceneKey = resolvedTheme || 'initial-theme-key';
   // console.log("RootLayout Render: canRenderThreeScene is", canRenderThreeScene);
   // console.log("RootLayout Render: currentThemeForScene is", currentThemeForScene);
   // console.log("RootLayout Render: Key for ThreeScene will be", threeSceneKey);
+  
+  const shouldRenderThreeScene = canRenderThreeScene && (resolvedTheme === 'light' || resolvedTheme === 'dark');
 
-  const shouldRenderThreeScene =
-    canRenderThreeScene &&
-    (resolvedTheme === 'light' || resolvedTheme === 'dark') &&
-    !pathsToHide3DBackground.includes(pathname); // Check against pathname
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -91,7 +85,7 @@ export default function RootLayout({
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {shouldRenderThreeScene && ( // Use the new condition
+          {shouldRenderThreeScene && (
             <ThreeScene
               key={threeSceneKey}
               scrollPercentage={scrollPercentage}
