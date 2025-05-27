@@ -45,7 +45,7 @@ export default function RootLayout({
 }>) {
   const [scrollPercentage, setScrollPercentage] = useState(0);
   const [isClient, setIsClient] = useState(false);
-  const { resolvedTheme } = useTheme();
+  const { resolvedTheme } = useTheme(); // resolvedTheme can be undefined initially
 
   useEffect(() => {
     setIsClient(true);
@@ -73,20 +73,24 @@ export default function RootLayout({
   }, [isClient]);
 
   useEffect(() => {
+    // This log helps debug the resolvedTheme value
     if (isClient) {
       console.log("RootLayout: resolvedTheme is", resolvedTheme);
     }
   }, [isClient, resolvedTheme]);
 
+  // Determine if ThreeScene can be rendered
+  const canRenderThreeScene = isClient && (resolvedTheme === 'light' || resolvedTheme === 'dark');
+
   return (
-    <html lang="en" suppressHydrationWarning className={resolvedTheme}>
+    <html lang="en" suppressHydrationWarning className={resolvedTheme || ''}>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-background`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {isClient && resolvedTheme && (
+          {canRenderThreeScene && (
             <ThreeScene
               key={resolvedTheme} /* Force re-mount on theme change */
               scrollPercentage={scrollPercentage}
-              currentTheme={resolvedTheme as ('light' | 'dark')}
+              currentTheme={resolvedTheme as ('light' | 'dark')} // We've ensured it's 'light' or 'dark'
             />
           )}
           <div className="relative z-10 flex flex-col min-h-screen"> {/* Wrapper to sit above ThreeScene */}
