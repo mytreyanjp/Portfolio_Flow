@@ -1,7 +1,7 @@
 
 'use client';
 
-// import type { Metadata } from 'next';
+// import type { Metadata } from 'next'; // Metadata typically in server components or static
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import Header from '@/components/layout/Header';
@@ -28,6 +28,11 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
+// export const metadata: Metadata = { // Typically static metadata goes here or in page.tsx if server component
+//   title: 'PortfolioFlow',
+//   description: 'A dynamic portfolio built with Next.js, Three.js, and Tailwind CSS.',
+// };
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -35,7 +40,7 @@ export default function RootLayout({
 }>) {
   const [scrollPercentage, setScrollPercentage] = useState(0);
   const [isClient, setIsClient] = useState(false);
-  const { theme: rawTheme, resolvedTheme } = useTheme(); // theme is raw, resolvedTheme is the actual applied theme
+  const { theme: rawTheme, resolvedTheme } = useTheme();
 
   useEffect(() => {
     setIsClient(true);
@@ -66,7 +71,6 @@ export default function RootLayout({
   // console.log("RootLayout Render: rawTheme (from useTheme) is", rawTheme);
   // console.log("RootLayout Render: resolvedTheme is", resolvedTheme);
 
-  // Determine if ThreeScene can be rendered and what theme to pass
   const canRenderThreeScene = isClient && (resolvedTheme === 'light' || resolvedTheme === 'dark');
   const currentThemeForScene: 'light' | 'dark' =
     (resolvedTheme === 'light' || resolvedTheme === 'dark') ? resolvedTheme : 'light'; // Default to 'light' if undefined briefly
@@ -75,10 +79,11 @@ export default function RootLayout({
   // console.log("RootLayout Render: currentThemeForScene is", currentThemeForScene);
   // console.log("RootLayout Render: Key for ThreeScene will be", resolvedTheme || 'initial-theme-key');
   
-  const currentHtmlClass = resolvedTheme || ''; 
+  // const currentHtmlClass = resolvedTheme || ''; 
+  // suppressHydrationWarning is needed if html class is manipulated by client-side theme provider
 
   return (
-    <html lang="en" suppressHydrationWarning className={currentHtmlClass}>
+    <html lang="en" suppressHydrationWarning>
       <body className={cn(
           `${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-background`,
         )}
