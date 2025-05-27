@@ -81,6 +81,10 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const animatedObjectRef = useRef<THREE.Mesh | null>(null);
+  const ambientLightRef = useRef<THREE.AmbientLight | null>(null);
+  const directionalLightRef = useRef<THREE.DirectionalLight | null>(null);
+  const accentLightRef = useRef<THREE.PointLight | null>(null);
+
 
   const objectGeometry = useMemo(() => {
     return currentTheme === 'dark'
@@ -94,69 +98,35 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
 
   useEffect(() => {
     if (typeof window === 'undefined' || !mountRef.current) return;
-
     const currentMount = mountRef.current;
 
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
+    // Initialize scene, camera, renderer
+    sceneRef.current = new THREE.Scene();
+    cameraRef.current = new THREE.PerspectiveCamera(75, currentMount.clientWidth / currentMount.clientHeight, 0.1, 1000);
+    cameraRef.current.position.z = 3;
+    rendererRef.current = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    rendererRef.current.setSize(currentMount.clientWidth, currentMount.clientHeight);
+    rendererRef.current.setPixelRatio(window.devicePixelRatio);
+    currentMount.appendChild(rendererRef.current.domElement);
 
-    // Initial background color based on currentTheme
-    if (currentTheme === 'dark') {
-      scene.background = new THREE.Color().setHSL(270/360, 0.40, 0.10); // Dark Violet
-    } else {
-      scene.background = new THREE.Color().setHSL(275/360, 0.80, 0.97); // Very Light Lavender
-    }
+    // Material and Object
+    const material = new THREE.MeshStandardMaterial();
+    animatedObjectRef.current = new THREE.Mesh(objectGeometry, material);
+    sceneRef.current.add(animatedObjectRef.current);
 
-    const camera = new THREE.PerspectiveCamera(75, currentMount.clientWidth / currentMount.clientHeight, 0.1, 1000);
-    camera.position.z = 3;
-    cameraRef.current = camera;
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    currentMount.appendChild(renderer.domElement);
-    rendererRef.current = renderer;
-
-    const initialMaterialColor = currentTheme === 'dark'
-        ? new THREE.Color().setHSL(275/360, 0.60, 0.90) // Light lavender for Cone (Dark theme object)
-        : new THREE.Color().setHSL(270/360, 0.65, 0.75); // Soft purple for Cube (Light theme object)
-
-    const material = new THREE.MeshStandardMaterial({
-        color: initialMaterialColor,
-        metalness: currentTheme === 'dark' ? 0.4 : 0.2,
-        roughness: currentTheme === 'dark' ? 0.5 : 0.7,
-    });
-    const animatedObject = new THREE.Mesh(objectGeometry, material);
-    scene.add(animatedObject);
-    animatedObjectRef.current = animatedObject;
-
-    const ambientLight = new THREE.AmbientLight(0xffffff, currentTheme === 'dark' ? 0.6 : 0.9);
-    scene.add(ambientLight);
-
-    const directionalLight = new THREE.DirectionalLight();
-    directionalLight.intensity = currentTheme === 'dark' ? 0.7 : 0.8;
-    directionalLight.color.setHSL(
-        currentTheme === 'dark' ? 270/360 : 275/360,
-        currentTheme === 'dark' ? 0.30 : 0.60,
-        currentTheme === 'dark' ? 0.35 : 0.90
-    );
-    directionalLight.position.set(currentTheme === 'dark' ? -3 : 3, 3, 4).normalize();
-    scene.add(directionalLight);
-
-    const accentLight = new THREE.PointLight();
-    accentLight.intensity = currentTheme === 'dark' ? 1.2 : 1.5;
-    accentLight.color.setHSL(
-        currentTheme === 'dark' ? 300/360 : 285/360,
-        currentTheme === 'dark' ? 0.75 : 0.70,
-        currentTheme === 'dark' ? 0.75 : 0.80
-    );
-    accentLight.position.set(currentTheme === 'dark' ? 2.5 : -2.5, 2.5, 2.5);
-    scene.add(accentLight);
+    // Lights
+    ambientLightRef.current = new THREE.AmbientLight();
+    sceneRef.current.add(ambientLightRef.current);
+    directionalLightRef.current = new THREE.DirectionalLight();
+    sceneRef.current.add(directionalLightRef.current);
+    accentLightRef.current = new THREE.PointLight();
+    sceneRef.current.add(accentLightRef.current);
     
+    // Initial interpolation
     interpolateKeyframes(0, animatedObjectRef.current, activeKeyframes);
 
     const animate = () => {
-      if (!rendererRef.current || !sceneRef.current || !cameraRef.current || !animatedObjectRef.current) return;
+      if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return;
       requestAnimationFrame(animate);
       rendererRef.current.render(sceneRef.current, cameraRef.current);
     };
@@ -180,74 +150,64 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
       }
       rendererRef.current?.dispose();
       if (animatedObjectRef.current) {
-        if(animatedObjectRef.current.geometry) animatedObjectRef.current.geometry.dispose();
-        if(Array.isArray(animatedObjectRef.current.material)) {
-            animatedObjectRef.current.material.forEach(mat => mat.dispose());
-        } else if (animatedObjectRef.current.material) {
-            (animatedObjectRef.current.material as THREE.Material).dispose();
-        }
+        animatedObjectRef.current.geometry?.dispose();
+        (animatedObjectRef.current.material as THREE.Material)?.dispose();
       }
+      // Dispose lights if needed, though usually not critical unless they have complex resources
     };
-  }, [currentTheme, objectGeometry, activeKeyframes]); // Primary effect for scene creation/re-creation
+  }, [objectGeometry, activeKeyframes]); // Main effect for scene creation/re-creation based on geometry/keyframes
 
-  // Secondary effect for explicit color updates when theme changes,
-  // might be redundant if primary effect always re-creates fully, but acts as a safeguard.
+  // Effect for theme-dependent color and lighting updates
   useEffect(() => {
-    if (!sceneRef.current || !animatedObjectRef.current || !cameraRef.current) return;
+    if (!sceneRef.current || !animatedObjectRef.current || !ambientLightRef.current || !directionalLightRef.current || !accentLightRef.current) return;
 
-    const targetSceneBackgroundColor = currentTheme === 'dark'
-        ? new THREE.Color().setHSL(270/360, 0.40, 0.10) // Dark Violet
-        : new THREE.Color().setHSL(275/360, 0.80, 0.97); // Very Light Lavender
-        
-    if (sceneRef.current.background instanceof THREE.Color) {
-        // Check if the color is different before copying to avoid unnecessary updates
-        if (!sceneRef.current.background.equals(targetSceneBackgroundColor)) {
-            sceneRef.current.background.copy(targetSceneBackgroundColor);
-        }
-    } else { // If background was null or texture, set it.
-         sceneRef.current.background = targetSceneBackgroundColor;
-    }
-
+    const scene = sceneRef.current;
     const material = animatedObjectRef.current.material as THREE.MeshStandardMaterial;
-    const targetMaterialColor = currentTheme === 'dark'
-        ? new THREE.Color().setHSL(275/360, 0.60, 0.90) 
-        : new THREE.Color().setHSL(270/360, 0.65, 0.75); 
-    
-    if (!material.color.equals(targetMaterialColor)) {
-        material.color.copy(targetMaterialColor);
+    const ambientLight = ambientLightRef.current;
+    const directionalLight = directionalLightRef.current;
+    const accentLight = accentLightRef.current;
+
+    if (currentTheme === 'dark') {
+      // Dark Theme: Royal Purple
+      scene.background = new THREE.Color().setHSL(270/360, 0.40, 0.10); // INTENDED VERY DARK VIOLET
+      material.color.setHSL(275/360, 0.60, 0.90); // Light lavender/silver for Cone
+      material.metalness = 0.4;
+      material.roughness = 0.5;
+      
+      ambientLight.color.setHex(0xffffff);
+      ambientLight.intensity = 0.6;
+      
+      directionalLight.color.setHSL(270/360, 0.30, 0.35); // Muted purple light (THIS IS THE COLOR THAT WAS APPEARING AS BG)
+      directionalLight.intensity = 0.7;
+      directionalLight.position.set(-3, 3, 4).normalize();
+      
+      accentLight.color.setHSL(300/360, 0.75, 0.75); // Magenta/violet accent
+      accentLight.intensity = 1.2;
+      accentLight.position.set(2.5, 2.5, 2.5);
+
+    } else {
+      // Light Theme: Light Purple
+      scene.background = new THREE.Color().setHSL(275/360, 0.80, 0.97); // Very light, almost white lavender for scene BG
+      material.color.setHSL(270/360, 0.65, 0.75); // Soft purple for Cube
+      material.metalness = 0.2;
+      material.roughness = 0.7;
+
+      ambientLight.color.setHex(0xffffff);
+      ambientLight.intensity = 0.9;
+
+      directionalLight.color.setHSL(275/360, 0.60, 0.90); // Light lavender light
+      directionalLight.intensity = 0.8;
+      directionalLight.position.set(3, 3, 4).normalize();
+      
+      accentLight.color.setHSL(285/360, 0.70, 0.80); // Pinkish purple accent
+      accentLight.intensity = 1.5;
+      accentLight.position.set(-2.5, 2.5, 2.5);
     }
-    material.metalness = currentTheme === 'dark' ? 0.4 : 0.2;
-    material.roughness = currentTheme === 'dark' ? 0.5 : 0.7;
     material.needsUpdate = true;
 
-    const ambient = sceneRef.current.children.find(c => c instanceof THREE.AmbientLight) as THREE.AmbientLight | undefined;
-    if (ambient) ambient.intensity = currentTheme === 'dark' ? 0.6 : 0.9;
+  }, [currentTheme]); // Only depends on currentTheme
 
-    const directional = sceneRef.current.children.find(c => c instanceof THREE.DirectionalLight) as THREE.DirectionalLight | undefined;
-    if (directional) {
-        directional.intensity = currentTheme === 'dark' ? 0.7 : 0.8;
-        const targetDirectionalColor = currentTheme === 'dark'
-            ? new THREE.Color().setHSL(270/360, 0.30, 0.35)
-            : new THREE.Color().setHSL(275/360, 0.60, 0.90);
-        if (!directional.color.equals(targetDirectionalColor)) {
-            directional.color.copy(targetDirectionalColor);
-        }
-        directional.position.set(currentTheme === 'dark' ? -3 : 3, 3, 4).normalize();
-    }
-
-    const point = sceneRef.current.children.find(c => c instanceof THREE.PointLight) as THREE.PointLight | undefined;
-    if(point) {
-        const targetPointColor = currentTheme === 'dark'
-            ? new THREE.Color().setHSL(300/360, 0.75, 0.75)
-            : new THREE.Color().setHSL(285/360, 0.70, 0.80);
-        if (!point.color.equals(targetPointColor)) {
-            point.color.copy(targetPointColor);
-        }
-        point.intensity = currentTheme === 'dark' ? 1.2 : 1.5;
-        point.position.set(currentTheme === 'dark' ? 2.5 : -2.5, 2.5, 2.5);
-    }
-  }, [currentTheme]); 
-
+  // Effect for scroll-based animation
   useEffect(() => {
     if (animatedObjectRef.current) {
       interpolateKeyframes(scrollPercentage, animatedObjectRef.current, activeKeyframes);
@@ -259,4 +219,3 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
 };
 
 export default ThreeScene;
-
