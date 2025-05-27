@@ -11,6 +11,14 @@ import { ArrowDown, Loader2, AlertTriangle, X as XIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import dynamic from 'next/dynamic';
+import { useTheme } from 'next-themes';
+
+const ThreeScene = dynamic(() => import('@/components/portfolio/ThreeScene'), {
+  ssr: false,
+  // Basic div for loading placeholder, ThreeScene itself is fixed position.
+  loading: () => <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: -1 }} />,
+});
 
 
 export default function PortfolioPage() {
@@ -18,14 +26,42 @@ export default function PortfolioPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [noProjectsMessageVisible, setNoProjectsMessageVisible] = useState(true);
-
+  const [noProjectsMessageVisible, setNoProjectsMessageVisible] = useState(false);
 
   const welcomeSectionRef = useRef<HTMLElement>(null);
   const projectsSectionRef = useRef<HTMLElement>(null);
   const [isWelcomeVisible, setIsWelcomeVisible] = useState(false);
   const [isProjectsVisible, setIsProjectsVisible] = useState(false);
 
+  // State for ThreeScene
+  const [scrollPercentage, setScrollPercentage] = useState(0);
+  const [isClientForScene, setIsClientForScene] = useState(false);
+  const { resolvedTheme } = useTheme();
+
+  useEffect(() => {
+    setIsClientForScene(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClientForScene) return;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const percentage = scrollHeight > 0 ? currentScrollY / scrollHeight : 0;
+      setScrollPercentage(Math.min(1, Math.max(0, percentage)));
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll(); // Initialize on mount
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [isClientForScene]);
+
+  const currentThemeForScene = (resolvedTheme === 'light' || resolvedTheme === 'dark') ? resolvedTheme : 'light';
+  const threeSceneKey = resolvedTheme || 'initial-theme-key';
+  const canRenderThreeScene = isClientForScene && (resolvedTheme === 'light' || resolvedTheme === 'dark');
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -88,25 +124,20 @@ export default function PortfolioPage() {
         : true;
       return categoryMatch && techMatch;
     });
-    // Show the message if filters are active and results are empty
     setNoProjectsMessageVisible(results.length === 0 && (filters.category !== '' || filters.technologies.length > 0));
     return results;
   }, [filters, projects, isLoading, error]);
 
   const handleFilterChange = (newFilters: Filters) => {
     setFilters(newFilters);
-    // If new filters lead to results, or if filters are cleared, ensure message visibility is reset if needed
-    // The check is mainly handled by filteredProjects useMemo, but explicitly show if filters are reset
     if (newFilters.category === '' && newFilters.technologies.length === 0) {
-      setNoProjectsMessageVisible(false); // No message if filters are cleared and projects might exist
-    } else {
-      // Visibility will be determined by filteredProjects effect
+      setNoProjectsMessageVisible(false); 
     }
   };
 
   const handleResetFilters = () => {
     setFilters({ category: '', technologies: [] });
-    setNoProjectsMessageVisible(false); // Hide message when filters are reset
+    setNoProjectsMessageVisible(false);
   };
 
   const scrollToProjects = () => {
@@ -145,23 +176,31 @@ export default function PortfolioPage() {
 
   return (
     <>
-      <div className="space-y-12">
+      {canRenderThreeScene && (
+        <ThreeScene
+          key={threeSceneKey}
+          scrollPercentage={scrollPercentage}
+          currentTheme={currentThemeForScene}
+        />
+      )}
+      {/* This div ensures content is above the fixed ThreeScene */}
+      <div className="relative z-10 space-y-12"> 
         <section
           aria-labelledby="welcome-heading"
           className={cn(
-            "text-left py-12 md:py-16 transition-all duration-700 ease-in-out",
+            "text-left py-12 md:py-16 transition-all duration-700 ease-in-out", // Removed background specific classes
             isWelcomeVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
           )}
           ref={welcomeSectionRef}
         >
-          <div className="max-w-3xl ml-0 mr-auto">
+          <div className="max-w-3xl ml-0 mr-auto"> {/* Changed from mx-auto for left alignment */}
             <h1 id="welcome-heading" className="text-7xl md:text-7xl font-bold mb-2 text-primary">
               Hi
             </h1>
             <p className="text-3xl md:text-4xl font-semibold mb-4 text-primary">
-              Mytreyan here.
+              my name is Mytreyan.
             </p>
-            <p className="text-lg md:text-xl text-foreground mb-6">
+            <p className="text-lg md:text-xl text-foreground mb-6"> {/* Changed opacity from text-foreground/80 */}
               Can create light outta a blackhole
             </p>
             <Button size="lg" onClick={scrollToProjects} className="rounded-full shadow-lg hover:shadow-primary/30 transition-shadow">
@@ -169,8 +208,6 @@ export default function PortfolioPage() {
             </Button>
           </div>
         </section>
-
-         
 
         <section
           id="projects-section"
