@@ -200,7 +200,7 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
 
 
     // Load GLB Model
-    const modelPath = '/models/blind_man.glb'; 
+    const modelPath = '/models/wooden_crate.glb'; 
     console.log(`ThreeScene: Attempting to load GLB model from: ${modelPath}`);
 
     gltfLoader.load(

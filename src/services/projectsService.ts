@@ -9,10 +9,10 @@ const defaultProject: Project = {
   id: 'default-project-1',
   title: 'Sample Project: Interactive Model',
   description: 'This placeholder project showcases an interactive 3D model display.',
-  longDescription: 'This sample project demonstrates how 3D models can be displayed in project cards. It includes a title, description, model URL, category, and technologies. You can replace this with your actual projects from the Firestore database. This model is a simple cube.',
+  longDescription: 'This sample project demonstrates how 3D models can be displayed in project cards. It includes a title, description, model URL, category, and technologies. You can replace this with your actual projects from the Firestore database. This model is a simple wooden crate.',
   imageUrl: 'https://placehold.co/600x400.png', // Fallback image
-  modelUrl: '/models/default_cube.glb', // Path to a default/placeholder GLB model
-  dataAiHint: '3d cube',
+  modelUrl: '/models/wooden_crate.glb', // Path to a default/placeholder GLB model
+  dataAiHint: '3d crate',
   category: '3D Graphics',
   technologies: ['Three.js', 'React'],
   liveLink: '#',
