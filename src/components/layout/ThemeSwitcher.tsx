@@ -1,14 +1,14 @@
 
 'use client';
 
-import { useThemeTransition } from '@/components/providers/ThemeProvider';
+import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import { Moon, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function ThemeSwitcher() {
   const [mounted, setMounted] = useState(false);
-  const { triggerThemeChange, resolvedTheme, isTransitioning } = useThemeTransition();
+  const { setTheme, resolvedTheme } = useTheme();
 
   useEffect(() => {
     setMounted(true);
@@ -20,9 +20,7 @@ export default function ThemeSwitcher() {
   }
 
   const toggleTheme = () => {
-    if (resolvedTheme) {
-      triggerThemeChange(resolvedTheme === 'dark' ? 'light' : 'dark');
-    }
+    setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
   };
 
   return (
@@ -31,7 +29,6 @@ export default function ThemeSwitcher() {
       size="icon" 
       onClick={toggleTheme} 
       aria-label="Toggle theme"
-      disabled={isTransitioning} // Disable button during transition
     >
       {resolvedTheme === 'dark' ? (
         <Sun className="h-[1.2rem] w-[1.2rem]" />
