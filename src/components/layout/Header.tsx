@@ -72,7 +72,7 @@ export default function Header() {
       <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
         <Link href="/" className="flex items-center space-x-2 text-xl font-bold text-primary">
           <CodeXml className="h-7 w-7" />
-          <span>PortfolioFlow</span>
+          <span>Myth</span>
         </Link>
 
         <div className="flex items-center space-x-2">

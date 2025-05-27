@@ -155,11 +155,11 @@ export default function PortfolioPage() {
           ref={welcomeSectionRef}
         >
           <div className="max-w-3xl ml-0 mr-auto">
-            <h1 id="welcome-heading" className="text-6xl md:text-7xl font-bold mb-2 text-primary">
+            <h1 id="welcome-heading" className="text-7xl md:text-7xl font-bold mb-2 text-primary">
               Hi
             </h1>
             <p className="text-3xl md:text-4xl font-semibold mb-4 text-primary">
-              my name is Mytreyan.
+              Mytreyan here.
             </p>
             <p className="text-lg md:text-xl text-foreground mb-6">
               Can create light outta a blackhole
@@ -170,12 +170,7 @@ export default function PortfolioPage() {
           </div>
         </section>
 
-         <p className={cn(
-            "text-center -mt-8 text-muted-foreground text-sm transition-all duration-700 ease-in-out",
-            isWelcomeVisible ? "opacity-100" : "opacity-0"
-          )}>
-            The background animates as you scroll!
-          </p>
+         
 
         <section
           id="projects-section"
