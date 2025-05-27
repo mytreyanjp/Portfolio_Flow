@@ -154,7 +154,7 @@ export default function PortfolioPage() {
 
   return (
     <>
-      <div className="space-y-12 py-6 px-6"> {/* Added px-6 for horizontal padding */}
+      <div className="space-y-12 py-6 px-12"> {/* Increased px-6 to px-12 */}
         <section
           aria-labelledby="welcome-heading"
           className={cn(
