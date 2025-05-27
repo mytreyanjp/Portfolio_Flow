@@ -154,7 +154,7 @@ export default function PortfolioPage() {
 
   return (
     <>
-      <div className="space-y-12 py-6 px-12"> {/* Increased px-6 to px-12 */}
+      <div className="mt-8 space-y-12 py-6 px-12"> {/* Increased px-6 to px-12 */}
         <section
           aria-labelledby="welcome-heading"
           className={cn(
@@ -165,7 +165,7 @@ export default function PortfolioPage() {
           style={parallaxStyle}
         >
           <div className="max-w-3xl mx-auto">
-            <h1 id="welcome-heading" className="text-7xl md:text-7xl font-bold mb-2 text-primary">
+             <h1 id="welcome-heading" className="text-7xl md:text-7xl font-bold mb-2 text-primary">
               Hi
             </h1>
             <p className="text-3xl md:text-4xl font-semibold mb-4 text-primary">
