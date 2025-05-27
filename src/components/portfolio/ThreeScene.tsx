@@ -182,14 +182,14 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
 
     if (currentTheme === 'dark') {
       // Dark Theme: Royal Purple
-      scene.background = new THREE.Color().setHSL(270/360, 0.40, 0.10); // INTENDED VERY DARK VIOLET
+      scene.background = new THREE.Color().setHSL(270/360, 0.60, 0.015); // INTENDED VERY DARK VIOLET
       
       material.color.setHSL(275/360, 0.60, 0.90); // Light lavender/silver for Cone
       material.metalness = 0.4;
       material.roughness = 0.5;
       
       ambientLight.color.setHex(0xffffff); // White ambient
-      ambientLight.intensity = 0.6;
+      ambientLight.intensity = 0.3;
       
       directionalLight.color.setHSL(270/360, 0.30, 0.35); // Muted purple directional light
       directionalLight.intensity = 0.7;
@@ -201,9 +201,9 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
 
     } else {
       // Light Theme: Light Purple
-      scene.background = new THREE.Color().setHSL(275/360, 0.80, 0.97); // Very light, almost white lavender for scene BG
+      scene.background = new THREE.Color().setHSL(275/360, 0.80, 0.87); // Very light, almost white lavender for scene BG
       
-      material.color.setHSL(270/360, 0.65, 0.75); // Soft purple for Cube
+      material.color.setHSL(270/360, 0.65, 0.35); // Soft purple for Cube
       material.metalness = 0.2;
       material.roughness = 0.7;
 
