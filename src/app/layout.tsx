@@ -12,6 +12,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useTheme } from 'next-themes';
 import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
+import { usePathname } from 'next/navigation';
 
 const ThreeScene = dynamic(() => import('@/components/portfolio/ThreeScene'), {
   ssr: false,
@@ -35,16 +36,15 @@ export default function RootLayout({
 }>) {
   const [scrollPercentage, setScrollPercentage] = useState(0);
   const [isClient, setIsClient] = useState(false);
-  const { theme: rawTheme, resolvedTheme } = useTheme();
+  const { theme: rawTheme, resolvedTheme, setTheme } = useTheme();
+  const pathname = usePathname();
 
   useEffect(() => {
     setIsClient(true);
-    // console.log("RootLayout: isClient set to true");
   }, []);
 
   useEffect(() => {
     if (!isClient) return;
-    // console.log("RootLayout: Adding scroll listener");
 
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
@@ -57,26 +57,18 @@ export default function RootLayout({
     handleScroll(); // Initialize on mount
 
     return () => {
-      // console.log("RootLayout: Removing scroll listener");
       window.removeEventListener('scroll', handleScroll);
     };
   }, [isClient]);
 
-  // console.log("RootLayout Render: isClient is", isClient);
-  // console.log("RootLayout Render: rawTheme (from useTheme) is", rawTheme);
-  // console.log("RootLayout Render: resolvedTheme is", resolvedTheme);
-
-  const canRenderThreeScene = isClient;
   const currentThemeForScene: 'light' | 'dark' =
-    (resolvedTheme === 'light' || resolvedTheme === 'dark') ? resolvedTheme : 'light'; // Default to 'light' if undefined
+    (resolvedTheme === 'light' || resolvedTheme === 'dark') ? resolvedTheme : 'light'; 
 
   const threeSceneKey = resolvedTheme || 'initial-theme-key';
-  // console.log("RootLayout Render: canRenderThreeScene is", canRenderThreeScene);
-  // console.log("RootLayout Render: currentThemeForScene is", currentThemeForScene);
-  // console.log("RootLayout Render: Key for ThreeScene will be", threeSceneKey);
   
-  const shouldRenderThreeScene = canRenderThreeScene && (resolvedTheme === 'light' || resolvedTheme === 'dark');
-
+  const pathsToHide3DModel: string[] = []; // No paths to hide model, it's global
+  const shouldRenderThreeSceneOnPage = !pathsToHide3DModel.includes(pathname);
+  const shouldRenderThreeScene = isClient && shouldRenderThreeSceneOnPage && (resolvedTheme === 'light' || resolvedTheme === 'dark');
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -92,7 +84,7 @@ export default function RootLayout({
               currentTheme={currentThemeForScene}
             />
           )}
-          <div className="relative z-10 flex flex-col min-h-screen"> {/* Content must be above ThreeScene */}
+          <div className="relative z-10 flex flex-col min-h-screen">
             <Header />
             <main className="flex-grow container mx-auto px-4 py-8">
               {children}
