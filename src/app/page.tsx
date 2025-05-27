@@ -154,11 +154,11 @@ export default function PortfolioPage() {
   return (
     <>
       {/* No 3D scene rendered here, it's page-specific */}
-      <div className="relative z-10 space-y-12"> {/* Removed mt-8 */}
+      <div className="space-y-12">
         <section
           aria-labelledby="welcome-heading"
           className={cn(
-            "text-left py-12 md:py-16 transition-all duration-700 ease-in-out",
+            "text-center py-12 md:py-16 transition-all duration-700 ease-in-out", // Changed from text-left to text-center
             isWelcomeVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
           )}
           ref={welcomeSectionRef}
@@ -167,7 +167,7 @@ export default function PortfolioPage() {
             transition: 'transform 0.1s ease-out' 
           }}
         >
-          <div className="max-w-3xl ml-0 mr-auto"> 
+          <div className="max-w-3xl mx-auto"> {/* Changed from ml-0 mr-auto to mx-auto */}
             <h1 id="welcome-heading" className="text-7xl md:text-7xl font-bold mb-2 text-primary">
               Hi
             </h1>
@@ -186,7 +186,7 @@ export default function PortfolioPage() {
         <section
           aria-labelledby="quick-navigation-heading"
           className={cn(
-            "py-8 text-center transition-all duration-700 ease-in-out", // Removed mt-12
+            "py-8 text-center transition-all duration-700 ease-in-out",
             isQuickNavVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
           )}
           ref={quickNavSectionRef}
