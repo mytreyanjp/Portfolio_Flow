@@ -11,10 +11,6 @@ import { ArrowDown, Loader2, AlertTriangle, X as XIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-// import dynamic from 'next/dynamic'; // ThreeScene import removed
-// import { useTheme } from 'next-themes'; // useTheme import removed if only used for ThreeScene
-
-// ThreeScene component and related dynamic import removed
 
 export default function PortfolioPage() {
   const [filters, setFilters] = useState<Filters>({ category: '', technologies: [] });
@@ -28,7 +24,7 @@ export default function PortfolioPage() {
   const [isWelcomeVisible, setIsWelcomeVisible] = useState(false);
   const [isProjectsVisible, setIsProjectsVisible] = useState(false);
 
-  // State and effects for ThreeScene (scrollPercentage, isClientForScene, resolvedTheme usage for scene) removed
+  const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -71,6 +67,17 @@ export default function PortfolioPage() {
       projectsObserver.observe(projectsSectionRef.current);
     }
 
+    // Mouse move listener for parallax effect on welcome section
+    const handleMouseMove = (event: MouseEvent) => {
+      if (welcomeSectionRef.current) {
+        const sensitivity = 20; // Max pixels to move
+        const x = (event.clientX / window.innerWidth - 0.5) * sensitivity;
+        const y = (event.clientY / window.innerHeight - 0.5) * sensitivity;
+        setParallaxOffset({ x: -x, y: -y }); // Invert for natural parallax
+      }
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+
     return () => {
       if (welcomeSectionRef.current) {
         welcomeObserver.unobserve(welcomeSectionRef.current);
@@ -78,6 +85,7 @@ export default function PortfolioPage() {
       if (projectsSectionRef.current) {
         projectsObserver.unobserve(projectsSectionRef.current);
       }
+      window.removeEventListener('mousemove', handleMouseMove);
     };
   }, []);
 
@@ -91,7 +99,7 @@ export default function PortfolioPage() {
         : true;
       return categoryMatch && techMatch;
     });
-    setNoProjectsMessageVisible(results.length === 0 && (filters.category !== '' || filters.technologies.length > 0));
+    setNoProjectsMessageVisible(results.length === 0 && !isLoading && (filters.category !== '' || filters.technologies.length > 0));
     return results;
   }, [filters, projects, isLoading, error]);
 
@@ -143,17 +151,20 @@ export default function PortfolioPage() {
 
   return (
     <>
-      {/* ThreeScene rendering removed from here */}
       <div className="relative z-10 space-y-12"> 
         <section
           aria-labelledby="welcome-heading"
           className={cn(
-            "text-left py-12 md:py-16 transition-all duration-700 ease-in-out",
+            "text-center py-12 md:py-16 transition-all duration-700 ease-in-out", // Changed to text-center
             isWelcomeVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
           )}
           ref={welcomeSectionRef}
+          style={{ 
+            transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`,
+            transition: 'transform 0.1s ease-out' // Smooth out the transform
+          }}
         >
-          <div className="max-w-3xl ml-0 mr-auto">
+          <div className="max-w-3xl mx-auto"> {/* Changed to mx-auto */}
             <h1 id="welcome-heading" className="text-7xl md:text-7xl font-bold mb-2 text-primary">
               Hi
             </h1>
@@ -209,7 +220,7 @@ export default function PortfolioPage() {
               noProjectsMessageVisible && (
                 <Alert 
                   variant="destructive" 
-                  className="relative py-8 text-center animate-fadeInUpScale"
+                  className="relative py-8 text-center animate-fadeInUpScale bg-destructive/10" // Added bg-destructive/10
                   style={{ animationDelay: '0s' }}
                 >
                   <button 
