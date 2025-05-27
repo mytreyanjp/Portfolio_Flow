@@ -9,73 +9,55 @@ interface ThreeSceneProps {
   currentTheme: 'light' | 'dark';
 }
 
-// Define the structure for an animation keyframe
 interface Keyframe {
-  scroll: number; // Scroll percentage (0.0 to 1.0)
-  position: [number, number, number]; // [x, y, z]
-  rotation: [number, number, number]; // [x, y, z] in radians
-  scale: [number, number, number];    // [x, y, z]
+  scroll: number;
+  position: [number, number, number];
+  rotation: [number, number, number];
+  scale: [number, number, number];
 }
 
 // Keyframes for the Light Theme (Cone - Light Purple)
-// Modify these values to change the Cone's animation path in the light theme.
 const lightThemeKeyframes: Keyframe[] = [
-  { scroll: 0,    position: [0, -1, 0],    rotation: [0, 0, 0],                   scale: [0.8, 1.2, 0.8] },
-  { scroll: 0.25, position: [1, 0, -1],     rotation: [Math.PI / 4, Math.PI / 4, 0], scale: [1, 1.5, 1] },
-  { scroll: 0.5,  position: [0, 1, -2],     rotation: [Math.PI / 2, Math.PI / 2, Math.PI / 4], scale: [1.2, 1.8, 1.2] },
-  { scroll: 0.75, position: [-1, 0, -1],    rotation: [3 * Math.PI / 4, 3 * Math.PI / 4, Math.PI / 2], scale: [1, 1.5, 1] },
-  { scroll: 1,    position: [0, -1, 0],    rotation: [Math.PI, Math.PI, 3 * Math.PI / 4], scale: [0.8, 1.2, 0.8] },
+  // Example: A gentle sway and rotation for the Cone
+  { scroll: 0,    position: [0, -0.5, 0],    rotation: [0, 0, 0],                   scale: [0.8, 1.2, 0.8] },
+  { scroll: 0.25, position: [0.5, 0, -0.5],  rotation: [Math.PI / 8, Math.PI / 6, 0], scale: [0.9, 1.4, 0.9] },
+  { scroll: 0.5,  position: [0, 0.5, -1],    rotation: [Math.PI / 4, Math.PI / 3, Math.PI / 8], scale: [1, 1.5, 1] },
+  { scroll: 0.75, position: [-0.5, 0, -0.5], rotation: [3 * Math.PI / 8, Math.PI / 2, Math.PI / 4], scale: [0.9, 1.4, 0.9] },
+  { scroll: 1,    position: [0, -0.5, 0],    rotation: [Math.PI / 2, 2 * Math.PI / 3, 3 * Math.PI / 8], scale: [0.8, 1.2, 0.8] },
 ];
 
 // Keyframes for the Dark Theme (Cube - Royal Purple)
-// Modify these values to change the Cube's animation path in the dark theme.
 const darkThemeKeyframes: Keyframe[] = [
+  // Example: More dynamic rotation and movement for the Cube
   { scroll: 0,    position: [0, 0, 0],       rotation: [0, 0, 0],                         scale: [1, 1, 1] },
-  { scroll: 0.25, position: [-0.5, 0.5, -0.5], rotation: [0, Math.PI / 3, Math.PI / 6],   scale: [1.2, 1.2, 1.2] },
-  { scroll: 0.5,  position: [0, 0, -1.5],    rotation: [Math.PI / 4, Math.PI / 2, Math.PI / 4], scale: [1.5, 1.5, 1.5] },
-  { scroll: 0.75, position: [0.5, -0.5, -0.5], rotation: [Math.PI / 2, 2 * Math.PI / 3, Math.PI / 3], scale: [1.2, 1.2, 1.2] },
+  { scroll: 0.25, position: [-0.8, 0.5, -0.8], rotation: [0, Math.PI / 3, Math.PI / 6],   scale: [1.1, 1.1, 1.1] },
+  { scroll: 0.5,  position: [0, 0, -1.5],    rotation: [Math.PI / 4, Math.PI / 2, Math.PI / 4], scale: [1.3, 1.3, 1.3] },
+  { scroll: 0.75, position: [0.8, -0.5, -0.8], rotation: [Math.PI / 2, 2 * Math.PI / 3, Math.PI / 3], scale: [1.1, 1.1, 1.1] },
   { scroll: 1,    position: [0, 0, 0],       rotation: [Math.PI, Math.PI, Math.PI / 2], scale: [1, 1, 1] },
 ];
 
-
-// Interpolation function to calculate current state based on scroll percentage
 function interpolateKeyframes(scroll: number, keyframes: Keyframe[]): { position: THREE.Vector3; rotation: THREE.Euler; scale: THREE.Vector3 } {
   if (!keyframes || keyframes.length === 0) {
-    return {
-      position: new THREE.Vector3(0, 0, 0),
-      rotation: new THREE.Euler(0, 0, 0),
-      scale: new THREE.Vector3(1, 1, 1)
-    };
+    return { position: new THREE.Vector3(0,0,0), rotation: new THREE.Euler(0,0,0), scale: new THREE.Vector3(1,1,1) };
   }
   if (scroll <= keyframes[0].scroll) return {
     position: new THREE.Vector3(...keyframes[0].position),
-    rotation: new THREE.Euler(...keyframes[0].rotation as [number, number, number, (string | undefined)?]),
+    rotation: new THREE.Euler(...keyframes[0].rotation as [number,number,number, (string | undefined)?]),
     scale: new THREE.Vector3(...keyframes[0].scale)
   };
   if (scroll >= keyframes[keyframes.length - 1].scroll) return {
     position: new THREE.Vector3(...keyframes[keyframes.length - 1].position),
-    rotation: new THREE.Euler(...keyframes[keyframes.length - 1].rotation as [number, number, number, (string | undefined)?]),
+    rotation: new THREE.Euler(...keyframes[keyframes.length - 1].rotation as [number,number,number, (string | undefined)?]),
     scale: new THREE.Vector3(...keyframes[keyframes.length - 1].scale)
   };
 
   let i = 0;
-  while (keyframes[i + 1] && keyframes[i + 1].scroll < scroll) {
-    i++;
-  }
-
+  while (keyframes[i + 1] && keyframes[i + 1].scroll < scroll) { i++; }
   const k1 = keyframes[i];
   const k2 = keyframes[i + 1];
-
-  if (!k1 || !k2) {
-     return {
-      position: new THREE.Vector3(0, 0, 0),
-      rotation: new THREE.Euler(0, 0, 0),
-      scale: new THREE.Vector3(1, 1, 1)
-    };
-  }
+  if (!k1 || !k2) return { position: new THREE.Vector3(0,0,0), rotation: new THREE.Euler(0,0,0), scale: new THREE.Vector3(1,1,1) };
 
   const t = (scroll - k1.scroll) / (k2.scroll - k1.scroll);
-
   const position = new THREE.Vector3().lerpVectors(new THREE.Vector3(...k1.position), new THREE.Vector3(...k2.position), t);
   const rotation = new THREE.Euler(
     k1.rotation[0] + (k2.rotation[0] - k1.rotation[0]) * t,
@@ -83,10 +65,8 @@ function interpolateKeyframes(scroll: number, keyframes: Keyframe[]): { position
     k1.rotation[2] + (k2.rotation[2] - k1.rotation[2]) * t
   );
   const scale = new THREE.Vector3().lerpVectors(new THREE.Vector3(...k1.scale), new THREE.Vector3(...k2.scale), t);
-
   return { position, rotation, scale };
 }
-
 
 const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme }) => {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -97,57 +77,98 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
   const ambientLightRef = useRef<THREE.AmbientLight | null>(null);
   const directionalLightRef = useRef<THREE.DirectionalLight | null>(null);
   const accentLightRef = useRef<THREE.PointLight | null>(null);
-  const animationFrameIdRef = useRef<number | null>(null);
 
   const objectGeometry = useMemo(() => {
-    console.log("ThreeScene: Recalculating objectGeometry for theme:", currentTheme);
-    if (currentTheme === 'dark') {
-      return new THREE.BoxGeometry(1, 1, 1); // Cube for dark theme
-    } else {
-      return new THREE.ConeGeometry(0.7, 1.5, 32); // Cone for light theme
-    }
+    // console.log("ThreeScene: Recalculating objectGeometry for theme:", currentTheme);
+    return currentTheme === 'dark' ? new THREE.BoxGeometry(1, 1, 1) : new THREE.ConeGeometry(0.7, 1.5, 32);
   }, [currentTheme]);
 
   const activeKeyframes = useMemo(() => {
-    console.log("ThreeScene: Recalculating activeKeyframes for theme:", currentTheme);
+    // console.log("ThreeScene: Recalculating activeKeyframes for theme:", currentTheme);
     return currentTheme === 'dark' ? darkThemeKeyframes : lightThemeKeyframes;
   }, [currentTheme]);
 
-
   useEffect(() => {
     if (typeof window === 'undefined' || !mountRef.current) {
-      console.log("ThreeScene: useEffect - window or mountRef not available yet.");
+      // console.log("ThreeScene: useEffect - window or mountRef not available yet.");
       return;
     }
     const currentMount = mountRef.current;
-    console.log("ThreeScene: useEffect triggered. Theme:", currentTheme, "Scroll:", scrollPercentage);
-    console.log("ThreeScene: Mount dimensions:", currentMount.clientWidth, "x", currentMount.clientHeight);
+    // console.log("ThreeScene: useEffect triggered. Theme:", currentTheme, "Scroll:", scrollPercentage);
 
-    // Initialize Scene, Camera, Renderer, and Lights if they don't exist
-    if (!sceneRef.current) sceneRef.current = new THREE.Scene();
-    if (!cameraRef.current) {
-      cameraRef.current = new THREE.PerspectiveCamera(75, 1, 0.1, 1000); // Aspect ratio updated in resize
-      cameraRef.current.position.z = 3;
+    // Initialize Scene, Camera, Renderer, and Lights
+    sceneRef.current = new THREE.Scene();
+    cameraRef.current = new THREE.PerspectiveCamera(75, currentMount.clientWidth / Math.max(1, currentMount.clientHeight), 0.1, 1000);
+    cameraRef.current.position.z = 3;
+
+    rendererRef.current = new THREE.WebGLRenderer({ antialias: true, alpha: true }); // alpha: true for transparent background
+    rendererRef.current.setPixelRatio(window.devicePixelRatio);
+    rendererRef.current.setSize(currentMount.clientWidth, Math.max(1, currentMount.clientHeight));
+    rendererRef.current.setClearAlpha(0); // Make CSS background show through
+    currentMount.appendChild(rendererRef.current.domElement);
+    
+    ambientLightRef.current = new THREE.AmbientLight();
+    sceneRef.current.add(ambientLightRef.current);
+    directionalLightRef.current = new THREE.DirectionalLight();
+    sceneRef.current.add(directionalLightRef.current);
+    accentLightRef.current = new THREE.PointLight();
+    sceneRef.current.add(accentLightRef.current);
+
+    // Create Animated Object
+    const material = new THREE.MeshStandardMaterial();
+    animatedObjectRef.current = new THREE.Mesh(objectGeometry, material);
+    sceneRef.current.add(animatedObjectRef.current);
+    // console.log("ThreeScene: Animated object created/updated. Type:", currentTheme === 'dark' ? 'Cube' : 'Cone');
+
+    // Apply Theme Specifics
+    if (currentTheme === 'dark') { // Royal Purple Dark Theme (Cube)
+      // console.log("ThreeScene: Applying Dark Theme specifics");
+      if (animatedObjectRef.current.material instanceof THREE.MeshStandardMaterial) {
+        animatedObjectRef.current.material.color.set(0x9370DB); // Medium Purple
+        animatedObjectRef.current.material.metalness = 0.4;
+        animatedObjectRef.current.material.roughness = 0.5;
+      }
+      ambientLightRef.current.color.set(0x503075); 
+      ambientLightRef.current.intensity = 1.0; 
+      directionalLightRef.current.color.setHSL(280 / 360, 0.70, 0.60); 
+      directionalLightRef.current.intensity = 1.8; 
+      directionalLightRef.current.position.set(1, 2, 3);
+      accentLightRef.current.color.setHSL(300 / 360, 0.75, 0.70); 
+      accentLightRef.current.intensity = 30; // Increased
+      accentLightRef.current.distance = 50;
+      accentLightRef.current.position.set(-2, -1, 1);
+    } else { // Light Purple Theme (Cone)
+      // console.log("ThreeScene: Applying Light Theme specifics");
+       if (animatedObjectRef.current.material instanceof THREE.MeshStandardMaterial) {
+        animatedObjectRef.current.material.color.set(0xBDA0CB); // Soft purple / Light lavender
+        animatedObjectRef.current.material.metalness = 0.3;
+        animatedObjectRef.current.material.roughness = 0.6;
+      }
+      ambientLightRef.current.color.set(0xE0D8F0); 
+      ambientLightRef.current.intensity = 1.5;
+      directionalLightRef.current.color.setHSL(270 / 360, 0.65, 0.85);
+      directionalLightRef.current.intensity = 1.2;
+      directionalLightRef.current.position.set(-1, 2, 2);
+      accentLightRef.current.color.setHSL(285 / 360, 0.70, 0.80);
+      accentLightRef.current.intensity = 25; // Increased
+      accentLightRef.current.distance = 40;
+      accentLightRef.current.position.set(2, 1, 0);
     }
-    if (!rendererRef.current) {
-      rendererRef.current = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      rendererRef.current.setPixelRatio(window.devicePixelRatio);
-      rendererRef.current.setClearAlpha(0); // Make background transparent
-      currentMount.appendChild(rendererRef.current.domElement);
-    }
-    if (!ambientLightRef.current) {
-      ambientLightRef.current = new THREE.AmbientLight();
-      sceneRef.current.add(ambientLightRef.current);
-    }
-    if (!directionalLightRef.current) {
-      directionalLightRef.current = new THREE.DirectionalLight();
-      sceneRef.current.add(directionalLightRef.current);
-    }
-    if (!accentLightRef.current) {
-      accentLightRef.current = new THREE.PointLight();
-      sceneRef.current.add(accentLightRef.current);
+    if (animatedObjectRef.current?.material instanceof THREE.MeshStandardMaterial) {
+        animatedObjectRef.current.material.needsUpdate = true;
     }
     
+    // Animation Loop
+    const animate = () => {
+      if (!rendererRef.current || !sceneRef.current || !cameraRef.current || !animatedObjectRef.current) return;
+      const { position, rotation, scale } = interpolateKeyframes(scrollPercentage, activeKeyframes);
+      animatedObjectRef.current.position.copy(position);
+      animatedObjectRef.current.rotation.copy(rotation);
+      animatedObjectRef.current.scale.copy(scale);
+      rendererRef.current.render(sceneRef.current, cameraRef.current);
+    };
+    rendererRef.current.setAnimationLoop(animate);
+
     // Handle window resize
     const handleResize = () => {
       if (mountRef.current && rendererRef.current && cameraRef.current) {
@@ -157,110 +178,42 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
           cameraRef.current.aspect = width / height;
           cameraRef.current.updateProjectionMatrix();
           rendererRef.current.setSize(width, height);
-          console.log("ThreeScene: Resized to", width, "x", height);
+          // console.log("ThreeScene: Resized to", width, "x", height);
         }
       }
     };
     window.addEventListener('resize', handleResize);
     handleResize(); // Initial size set
 
-    // Manage Animated Object
-    if (animatedObjectRef.current && animatedObjectRef.current.geometry !== objectGeometry) {
-      sceneRef.current.remove(animatedObjectRef.current);
-      animatedObjectRef.current.geometry.dispose();
-      if (animatedObjectRef.current.material instanceof THREE.Material) {
-        animatedObjectRef.current.material.dispose();
-      }
-      animatedObjectRef.current = null;
-    }
-
-    if (!animatedObjectRef.current) {
-      const material = new THREE.MeshStandardMaterial();
-      animatedObjectRef.current = new THREE.Mesh(objectGeometry, material);
-      sceneRef.current.add(animatedObjectRef.current);
-      console.log("ThreeScene: New animated object created. Type:", currentTheme === 'dark' ? 'Cube' : 'Cone');
-    }
-
-    // Apply Theme Specifics
-    // Scene background is transparent (alpha: true for renderer, renderer.setClearAlpha(0))
-    sceneRef.current.background = null;
-
-    if (animatedObjectRef.current && animatedObjectRef.current.material instanceof THREE.MeshStandardMaterial) {
-      if (currentTheme === 'dark') { // Royal Purple Dark Theme (Cube)
-        console.log("ThreeScene: Applying Dark Theme specifics");
-        animatedObjectRef.current.material.color.set(0x9370DB); // Medium Purple for Cube
-        animatedObjectRef.current.material.metalness = 0.4;
-        animatedObjectRef.current.material.roughness = 0.5;
-        
-        ambientLightRef.current.color.set(0x503075); // Darker ambient for mood
-        ambientLightRef.current.intensity = 1.0; 
-        directionalLightRef.current.color.setHSL(280 / 360, 0.70, 0.60); // Royal purple main light
-        directionalLightRef.current.intensity = 1.8; 
-        directionalLightRef.current.position.set(1, 2, 3);
-        accentLightRef.current.color.setHSL(300 / 360, 0.75, 0.70); // Magenta/violet accent
-        accentLightRef.current.intensity = 25; 
-        accentLightRef.current.distance = 50;
-        accentLightRef.current.position.set(-2, -1, 1);
-
-      } else { // Light Purple Theme (Cone)
-        console.log("ThreeScene: Applying Light Theme specifics");
-        animatedObjectRef.current.material.color.set(0xBDA0CB); // Soft purple / Light lavender for Cone
-        animatedObjectRef.current.material.metalness = 0.3;
-        animatedObjectRef.current.material.roughness = 0.6;
-
-        ambientLightRef.current.color.set(0xE0D8F0); // Light lavender ambient
-        ambientLightRef.current.intensity = 1.5;
-        directionalLightRef.current.color.setHSL(270 / 360, 0.65, 0.85); // Main light purple
-        directionalLightRef.current.intensity = 1.2;
-        directionalLightRef.current.position.set(-1, 2, 2);
-        accentLightRef.current.color.setHSL(285 / 360, 0.70, 0.80); // Brighter purple accent
-        accentLightRef.current.intensity = 20;
-        accentLightRef.current.distance = 40;
-        accentLightRef.current.position.set(2, 1, 0);
-      }
-      animatedObjectRef.current.material.needsUpdate = true;
-    }
-
-    // Animation Loop
-    const animate = () => {
-      if (!rendererRef.current || !sceneRef.current || !cameraRef.current || !animatedObjectRef.current) {
-        return;
-      }
-      
-      const { position, rotation, scale } = interpolateKeyframes(scrollPercentage, activeKeyframes);
-      animatedObjectRef.current.position.copy(position);
-      animatedObjectRef.current.rotation.copy(rotation);
-      animatedObjectRef.current.scale.copy(scale);
-      
-      rendererRef.current.render(sceneRef.current, cameraRef.current);
-    };
-
-    // Use setAnimationLoop for better performance and WebXR compatibility
-    if (rendererRef.current) {
-        rendererRef.current.setAnimationLoop(animate);
-    }
-
     // Cleanup
     return () => {
-      console.log("ThreeScene: Cleanup for instance (theme:", currentTheme, ")");
+      // console.log("ThreeScene: Cleanup for instance (theme:", currentTheme, ")");
       window.removeEventListener('resize', handleResize);
-      
       if (rendererRef.current) {
-        rendererRef.current.setAnimationLoop(null); // Stop the animation loop
+        rendererRef.current.setAnimationLoop(null);
+        rendererRef.current.dispose(); // Dispose renderer
+        if (rendererRef.current.domElement.parentNode === currentMount) {
+             currentMount.removeChild(rendererRef.current.domElement); // Remove canvas
+        }
       }
-      // The key prop in RootLayout handles full unmount, so more aggressive cleanup here might be redundant
-      // unless specific issues arise from not disposing these on quick re-renders before unmount.
-      // For now, if animatedObjectRef is still valid, ensure it's removed from scene
-      // if (sceneRef.current && animatedObjectRef.current) {
-      //    sceneRef.current.remove(animatedObjectRef.current);
-      //    animatedObjectRef.current.geometry.dispose();
-      //    if (animatedObjectRef.current.material instanceof THREE.Material) {
-      //      animatedObjectRef.current.material.dispose();
-      //    }
-      //    animatedObjectRef.current = null;
-      // }
-      // Full disposal of renderer, scene, lights, etc., is best handled when the component
-      // is guaranteed to unmount, which the key prop helps ensure.
+      if (sceneRef.current) {
+        if (animatedObjectRef.current) {
+          sceneRef.current.remove(animatedObjectRef.current);
+          animatedObjectRef.current.geometry.dispose();
+          if (animatedObjectRef.current.material instanceof THREE.Material) {
+            animatedObjectRef.current.material.dispose();
+          }
+        }
+        // Dispose other scene children if necessary
+      }
+      // Nullify refs
+      rendererRef.current = null;
+      sceneRef.current = null;
+      cameraRef.current = null;
+      animatedObjectRef.current = null;
+      ambientLightRef.current = null;
+      directionalLightRef.current = null;
+      accentLightRef.current = null;
     };
   }, [currentTheme, scrollPercentage, objectGeometry, activeKeyframes]); // Key dependencies
 
@@ -268,5 +221,3 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ scrollPercentage, currentTheme 
 };
 
 export default ThreeScene;
-
-    
