@@ -154,7 +154,7 @@ export default function PortfolioPage() {
   return (
     <>
       {/* No 3D scene rendered here, it's page-specific */}
-      <div className="relative z-10 space-y-12 mt-8"> {/* Added mt-8 for top margin */}
+      <div className="relative z-10 space-y-12"> {/* Removed mt-8 */}
         <section
           aria-labelledby="welcome-heading"
           className={cn(
@@ -186,7 +186,7 @@ export default function PortfolioPage() {
         <section
           aria-labelledby="quick-navigation-heading"
           className={cn(
-            "py-8 text-center transition-all duration-700 ease-in-out mt-12", // Added mt-12 here
+            "py-8 text-center transition-all duration-700 ease-in-out", // Removed mt-12
             isQuickNavVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
           )}
           ref={quickNavSectionRef}
