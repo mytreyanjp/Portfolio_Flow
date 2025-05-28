@@ -181,13 +181,11 @@ export default function PortfolioPage() {
             </h1>
             <p 
               className="text-3xl md:text-4xl font-semibold mb-4 text-primary"
-               style={parallaxStyle}
             >
               my name is Mytreyan.
             </p>
             <p 
               className="text-lg md:text-xl text-foreground mb-4"
-               style={parallaxStyle}
             >
               Can create light outta a blackhole
             </p>
@@ -195,7 +193,6 @@ export default function PortfolioPage() {
               size="lg" 
               onClick={scrollToProjects} 
               className="rounded-full shadow-lg hover:shadow-primary/30 transition-shadow"
-               style={parallaxStyle}
             >
               View Projects <ArrowDown className="ml-2 h-5 w-5 animate-bounce" />
             </Button>
