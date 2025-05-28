@@ -44,7 +44,6 @@ export default function ResumePage() {
     }
 
     const handleMouseMove = (event: MouseEvent) => {
-      // Only apply parallax to the top heading "My Professional Profile"
       const headingElement = document.getElementById('resume-page-main-heading');
       if (headingElement && headingElement.contains(event.target as Node)) {
         const x = (event.clientX / window.innerWidth - 0.5) * parallaxSensitivity;

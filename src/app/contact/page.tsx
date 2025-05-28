@@ -30,7 +30,6 @@ export default function ContactPage() {
     }
 
     const handleMouseMove = (event: MouseEvent) => {
-      // Only apply parallax to the top heading "Let's Connect"
       const headingElement = document.getElementById('contact-page-main-heading');
       if (headingElement && headingElement.contains(event.target as Node)) {
         const x = (event.clientX / window.innerWidth - 0.5) * parallaxSensitivity;

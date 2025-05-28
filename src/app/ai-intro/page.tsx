@@ -30,7 +30,6 @@ export default function AiIntroPage() {
     }
     
     const handleMouseMove = (event: MouseEvent) => {
-      // Only apply parallax to the top heading "AI-Powered Introduction Generator"
       const headingElement = document.getElementById('ai-intro-page-main-heading');
       if (headingElement && headingElement.contains(event.target as Node)) {
         const x = (event.clientX / window.innerWidth - 0.5) * parallaxSensitivity;
@@ -64,7 +63,7 @@ export default function AiIntroPage() {
       )}
     >
       <header className="text-center mb-12">
-        <div style={parallaxStyle}>
+        <div style={parallaxStyle}> {/* Parallax applied to wrapper for icon + heading */}
           <Sparkles className="h-16 w-16 text-primary mx-auto mb-4 animate-pulse" />
           <h1 
             id="ai-intro-page-main-heading"

@@ -14,7 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 
 export default function PortfolioPage() {
-  const [filters, setFilters] = useState<Filters>({ category: '', technologies: [] });
+  const [filters, setFilters] = useState<Filters>({ category: ''});
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,8 +72,9 @@ export default function PortfolioPage() {
     });
     
     const handleMouseMove = (event: MouseEvent) => {
-      // Parallax for welcome section only
-      if (welcomeSectionRef.current?.contains(event.target as Node)) {
+      // Only apply parallax to the top heading "Hi"
+      const headingElement = document.getElementById('portfolio-page-main-heading');
+      if (headingElement && headingElement.contains(event.target as Node)) {
         const x = (event.clientX / window.innerWidth - 0.5) * parallaxSensitivity;
         const y = (event.clientY / window.innerHeight - 0.5) * parallaxSensitivity;
         setParallaxOffset({ x: -x, y: -y });
@@ -98,6 +99,7 @@ export default function PortfolioPage() {
     if (isLoading || error) return [];
     const results = projects.filter(project => {
       const categoryMatch = filters.category ? project.category === filters.category : true;
+      // Technology filter logic removed as per previous request
       return categoryMatch;
     });
     setNoProjectsMessageVisible(results.length === 0 && !isLoading && (filters.category !== ''));
@@ -106,13 +108,13 @@ export default function PortfolioPage() {
 
   const handleFilterChange = (newFilters: Filters) => {
     setFilters(newFilters);
-    if (newFilters.category === '' && newFilters.technologies.length === 0) {
+    if (newFilters.category === '') {
       setNoProjectsMessageVisible(false); 
     }
   };
 
   const handleResetFilters = () => {
-    setFilters({ category: '', technologies: [] });
+    setFilters({ category: ''});
     setNoProjectsMessageVisible(false);
   };
 
@@ -164,11 +166,10 @@ export default function PortfolioPage() {
             isWelcomeVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
           )}
           ref={welcomeSectionRef}
-          style={parallaxStyle}
         >
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-3xl mx-auto" style={parallaxStyle}> {/* Apply parallax to the container */}
              <h1 
-              id="welcome-heading" 
+              id="portfolio-page-main-heading" 
               className="text-7xl md:text-7xl font-bold mb-2 text-transparent bg-clip-text mix-blend-screen"
               style={{ backgroundImage: 'radial-gradient(circle at center, hsl(var(--primary)) 30%, hsl(var(--accent)) 100%)' }}
             >
@@ -197,9 +198,9 @@ export default function PortfolioPage() {
           <h2 
             id="quick-navigation-heading" 
             className="text-2xl font-semibold mb-6 text-foreground"
-          >
+           >
             Connect & Explore
-          </h2>
+           </h2>
           <div className="flex justify-center space-x-4">
             <Button asChild size="lg" variant="outline" className="shadow-md hover:shadow-lg transition-shadow">
               <Link href="/contact">
