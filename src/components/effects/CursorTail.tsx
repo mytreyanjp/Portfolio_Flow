@@ -3,9 +3,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
-const MAX_POINTS = 20;
+const MAX_POINTS = 15; // Reduced for a slightly stubbier, potentially "blotchier" feel
 const STROKE_COLOR = '#E070FF'; // Brighter purple for neon effect
-const STROKE_WIDTH = 1.5; // Thinner line
+const STROKE_WIDTH = 8; // Increased for thickness
 
 interface Point {
   x: number;
@@ -16,15 +16,12 @@ export default function CursorTail() {
   const [points, setPoints] = useState<Point[]>([]);
   const animationFrameId = useRef<number | null>(null);
   const mousePosition = useRef<Point>({ x: 0, y: 0 });
-  const [isVisible, setIsVisible] = useState(false); // To avoid rendering an empty SVG initially
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // console.log('[CursorTail] useEffect: Component did mount.');
-
     const handleMouseMove = (event: MouseEvent) => {
       mousePosition.current = { x: event.clientX, y: event.clientY };
-      if (!isVisible) setIsVisible(true); // Show tail once mouse moves
-      // console.log('[CursorTail] Mouse moved:', mousePosition.current);
+      if (!isVisible) setIsVisible(true);
     };
 
     const updateTrail = () => {
@@ -40,17 +37,12 @@ export default function CursorTail() {
     };
 
     window.addEventListener('mousemove', handleMouseMove);
-    // console.log('[CursorTail] useEffect: Added mousemove listener.');
-
     animationFrameId.current = requestAnimationFrame(updateTrail);
-    // console.log('[CursorTail] useEffect: Initialized animation frame loop.');
 
     return () => {
-      // console.log('[CursorTail] useEffect: Component will unmount. Cleaning up...');
       window.removeEventListener('mousemove', handleMouseMove);
       if (animationFrameId.current) {
         cancelAnimationFrame(animationFrameId.current);
-        // console.log('[CursorTail] useEffect: Canceled animation frame.');
       }
     };
   }, [isVisible]);
@@ -70,8 +62,8 @@ export default function CursorTail() {
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none',
-        zIndex: -1, // Positioned behind normal flow content
-        filter: `drop-shadow(0 0 2px ${STROKE_COLOR}) drop-shadow(0 0 5px ${STROKE_COLOR}70)`, // Adjusted Neon glow effect
+        zIndex: -1,
+        filter: `drop-shadow(0 0 10px ${STROKE_COLOR}B0) drop-shadow(0 0 20px ${STROKE_COLOR}80)`, // Increased blur and spread
       }}
       aria-hidden="true"
     >
@@ -82,7 +74,7 @@ export default function CursorTail() {
         strokeWidth={STROKE_WIDTH}
         strokeLinecap="round"
         strokeLinejoin="round"
-        style={{ opacity: 0.85 }} // Increased opacity
+        style={{ opacity: 0.65 }} // Reduced opacity for a softer, more diffused core line
       />
     </svg>
   );
