@@ -72,20 +72,10 @@ export default function PortfolioPage() {
     });
     
     const handleMouseMove = (event: MouseEvent) => {
-      const elementsToParallax = [
-        document.getElementById('portfolio-page-main-heading'), 
-        document.getElementById('quick-navigation-heading'), 
-        document.getElementById('projects-heading') 
-      ];
-
-      let applyParallaxToHeading = false;
-      elementsToParallax.forEach(element => {
-        if (element && element.contains(event.target as Node)) {
-          applyParallaxToHeading = true;
-        }
-      });
+      // Only apply parallax to the main welcome heading
+      const welcomeHeadingElement = document.getElementById('portfolio-page-main-heading');
       
-      if (applyParallaxToHeading) {
+      if (welcomeHeadingElement && welcomeHeadingElement.contains(event.target as Node)) {
         const x = (event.clientX / window.innerWidth - 0.5) * parallaxSensitivity;
         const y = (event.clientY / window.innerHeight - 0.5) * parallaxSensitivity;
         setParallaxOffset({ x: -x, y: -y });
@@ -218,7 +208,7 @@ export default function PortfolioPage() {
           <h2 
             id="quick-navigation-heading" 
             className="text-2xl font-semibold mb-6 text-foreground"
-            style={parallaxStyle}
+            // Removed style={parallaxStyle}
            >
             Connect & Explore
            </h2>
@@ -250,7 +240,7 @@ export default function PortfolioPage() {
           <h2 
             id="projects-heading" 
             className="text-3xl font-semibold mb-8 text-center text-foreground"
-            style={parallaxStyle}
+            // Removed style={parallaxStyle}
           >
             My Projects
           </h2>
