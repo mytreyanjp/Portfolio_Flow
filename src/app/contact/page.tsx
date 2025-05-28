@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 export default function ContactPage() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
-  // Parallax effect removed for heading hover effect
+  // Parallax effect state is not needed here if only top heading gets it
 
   useEffect(() => {
     const observerOptions = {
@@ -28,13 +28,10 @@ export default function ContactPage() {
       observer.observe(sectionRef.current);
     }
 
-    // Mousemove listener for parallax removed
-
     return () => {
       if (sectionRef.current) {
         observer.unobserve(sectionRef.current);
       }
-      // Mousemove listener removal removed
     };
   }, []);
   
@@ -50,9 +47,7 @@ export default function ContactPage() {
       <h1 
         id="contact-page-main-heading"
         className="text-4xl font-bold text-center mb-12 text-transparent bg-clip-text heading-hover-reveal relative overflow-hidden"
-        style={{ 
-          backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
-        }}
+        // Removed inline backgroundImage style
       >
         Let's Connect
       </h1>

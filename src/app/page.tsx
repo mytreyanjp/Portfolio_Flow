@@ -20,6 +20,8 @@ export default function PortfolioPage() {
   const [error, setError] = useState<string | null>(null);
   const [noProjectsMessageVisible, setNoProjectsMessageVisible] = useState(false);
 
+  const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
+
   const welcomeSectionRef = useRef<HTMLElement>(null);
   const quickNavSectionRef = useRef<HTMLElement>(null);
   const projectsSectionRef = useRef<HTMLElement>(null);
@@ -27,7 +29,23 @@ export default function PortfolioPage() {
   const [isQuickNavVisible, setIsQuickNavVisible] = useState(false);
   const [isProjectsVisible, setIsProjectsVisible] = useState(false);
 
-  // Parallax effect removed from this page for the heading hover effect
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      const { clientX, clientY } = event;
+      const x = (clientX / window.innerWidth - 0.5) * 2; // -1 to 1
+      const y = (clientY / window.innerHeight - 0.5) * 2; // -1 to 1
+      const sensitivity = 15; // Lower for more subtle effect
+      setParallaxOffset({ x: x * sensitivity, y: y * sensitivity });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  const parallaxStyle = {
+    transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`,
+    transition: 'transform 0.1s ease-out',
+  };
+
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -146,14 +164,16 @@ export default function PortfolioPage() {
             isWelcomeVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
           )}
           ref={welcomeSectionRef}
+          
         >
-          <div className="max-w-3xl mx-auto"> 
+          <div 
+            className="max-w-3xl mx-auto" 
+            style={parallaxStyle} // Parallax applied to the content block
+          > 
              <h1 
               id="portfolio-page-main-heading" 
-              className="text-7xl md:text-7xl font-bold mb-2 text-transparent bg-clip-text heading-hover-reveal relative overflow-hidden"
-              style={{ 
-                backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
-              }}
+              className="text-7xl font-bold text-transparent bg-clip-text mb-2 heading-hover-reveal relative overflow-hidden"
+              // Removed inline backgroundImage style
             >
               Hi
             </h1>

@@ -25,7 +25,7 @@ const skills = [
 export default function ResumePage() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
-  // Parallax effect removed for heading hover effect
+  // Parallax effect state is not needed here if only top heading gets it
 
   useEffect(() => {
     const observerOptions = {
@@ -42,13 +42,10 @@ export default function ResumePage() {
       observer.observe(sectionRef.current);
     }
 
-    // Mousemove listener for parallax removed
-
     return () => {
       if (sectionRef.current) {
         observer.unobserve(sectionRef.current);
       }
-      // Mousemove listener removal removed
     };
   }, []);
 
@@ -65,9 +62,7 @@ export default function ResumePage() {
         <h1 
           id="resume-page-main-heading"
           className="text-4xl font-bold text-transparent bg-clip-text mb-4 heading-hover-reveal relative overflow-hidden"
-          style={{ 
-            backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
-          }}
+          // Removed inline backgroundImage style
         >
           My Professional Profile
         </h1>

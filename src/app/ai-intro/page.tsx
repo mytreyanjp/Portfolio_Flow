@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 export default function AiIntroPage() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
-  // Parallax effect removed for heading hover effect
+  // Parallax effect state is not needed here if only top heading gets it
 
   useEffect(() => {
     const observerOptions = {
@@ -28,13 +28,10 @@ export default function AiIntroPage() {
       observer.observe(sectionRef.current);
     }
     
-    // Mousemove listener for parallax removed
-
     return () => {
       if (sectionRef.current) {
         observer.unobserve(sectionRef.current);
       }
-      // Mousemove listener removal removed
     };
   }, []);
   
@@ -48,13 +45,12 @@ export default function AiIntroPage() {
       )}
     >
       <header className="text-center mb-12">
-        {/* Parallax style removed from this div wrapper */}
         <div> 
           <Sparkles className="h-16 w-16 text-primary mx-auto mb-4 animate-pulse" />
           <h1 
             id="ai-intro-page-main-heading"
             className="text-4xl font-bold text-transparent bg-clip-text mb-4 heading-hover-reveal relative overflow-hidden"
-            style={{ backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)' }}
+            // Removed inline backgroundImage style
           >
             AI-Powered Introduction Generator
           </h1>
