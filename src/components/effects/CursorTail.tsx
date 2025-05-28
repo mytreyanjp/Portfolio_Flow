@@ -65,9 +65,23 @@ export default function CursorTail() {
 
   // Effect to start the animation loop once isVisible becomes true
   useEffect(() => {
+    let animId: number;
     if (isVisible && animationFrameId.current === null) {
         // console.log('[CursorTail] isVisible became true, ensuring animation loop starts.');
-        animationFrameId.current = requestAnimationFrame(updateTrail);
+        const updateTrailLoop = () => {
+          setPoints((prevPoints) => {
+            const newPoint = { ...mousePosition.current };
+            const updatedPoints = [...prevPoints, newPoint];
+            if (updatedPoints.length > MAX_POINTS) {
+              return updatedPoints.slice(updatedPoints.length - MAX_POINTS);
+            }
+            return updatedPoints;
+          });
+          animId = requestAnimationFrame(updateTrailLoop);
+          animationFrameId.current = animId; // Store the current animation frame ID
+        };
+        animId = requestAnimationFrame(updateTrailLoop);
+        animationFrameId.current = animId; // Store the initial animation frame ID
     }
     // No cleanup needed here for the animation frame itself as the main effect handles it
   }, [isVisible]);
