@@ -3,8 +3,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
-const CIRCLE_RADIUS = 75;
-const FILL_COLOR = 'rgba(140, 70, 200, 0.3)'; // A semi-transparent purple
+const CIRCLE_RADIUS = 150; // Doubled from 75
+const FILL_COLOR = 'rgba(107, 28, 117, 0.2)'; // A semi-transparent purple
 const BLUR_STD_DEVIATION = 10;
 
 interface Position {
