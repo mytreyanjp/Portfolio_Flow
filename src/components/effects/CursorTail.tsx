@@ -71,7 +71,7 @@ export default function CursorTail() {
         height: '100vh',
         pointerEvents: 'none',
         zIndex: -1, // Positioned behind normal flow content
-        filter: `drop-shadow(0 0 3px ${STROKE_COLOR}) drop-shadow(0 0 8px ${STROKE_COLOR}90)`, // Neon glow effect
+        filter: `drop-shadow(0 0 2px ${STROKE_COLOR}) drop-shadow(0 0 5px ${STROKE_COLOR}70)`, // Adjusted Neon glow effect
       }}
       aria-hidden="true"
     >
@@ -82,7 +82,7 @@ export default function CursorTail() {
         strokeWidth={STROKE_WIDTH}
         strokeLinecap="round"
         strokeLinejoin="round"
-        style={{ opacity: 0.75 }} // Slightly adjusted opacity for glow
+        style={{ opacity: 0.85 }} // Increased opacity
       />
     </svg>
   );
