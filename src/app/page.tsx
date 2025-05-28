@@ -14,7 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 
 export default function PortfolioPage() {
-  const [filters, setFilters] = useState<Filters>({ category: ''});
+  const [filters, setFilters] = useState<Filters>({ category: '' });
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,9 +32,9 @@ export default function PortfolioPage() {
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
       const { clientX, clientY } = event;
-      const x = (clientX / window.innerWidth - 0.5) * 2; // -1 to 1
-      const y = (clientY / window.innerHeight - 0.5) * 2; // -1 to 1
-      const sensitivity = 15; // Lower for more subtle effect
+      const x = (clientX / window.innerWidth - 0.5) * 2; 
+      const y = (clientY / window.innerHeight - 0.5) * 2; 
+      const sensitivity = 15; 
       setParallaxOffset({ x: x * sensitivity, y: y * sensitivity });
     };
     window.addEventListener('mousemove', handleMouseMove);
@@ -117,7 +117,7 @@ export default function PortfolioPage() {
   };
 
   const handleResetFilters = () => {
-    setFilters({ category: ''});
+    setFilters({ category: '' });
     setNoProjectsMessageVisible(false);
   };
 
@@ -156,7 +156,7 @@ export default function PortfolioPage() {
 
 
   return (
-    <div className="mt-8 space-y-12 py-6 px-12">
+    <div className="space-y-12 py-6 px-12 mt-8">
         <section
           aria-labelledby="welcome-heading"
           className={cn(
@@ -168,22 +168,26 @@ export default function PortfolioPage() {
         >
           <div 
             className="max-w-3xl mx-auto" 
-            style={parallaxStyle} // Parallax applied to the content block
           > 
              <h1 
               id="portfolio-page-main-heading" 
               className="text-7xl font-bold text-transparent bg-clip-text mb-2 heading-hover-reveal relative overflow-hidden"
-              // Removed inline backgroundImage style
+              style={{
+                ...parallaxStyle,
+                backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
+              }}
             >
               Hi
             </h1>
             <p 
               className="text-3xl md:text-4xl font-semibold mb-4 text-primary"
+               style={parallaxStyle}
             >
               my name is Mytreyan.
             </p>
             <p 
               className="text-lg md:text-xl text-foreground mb-4"
+               style={parallaxStyle}
             >
               Can create light outta a blackhole
             </p>
@@ -191,6 +195,7 @@ export default function PortfolioPage() {
               size="lg" 
               onClick={scrollToProjects} 
               className="rounded-full shadow-lg hover:shadow-primary/30 transition-shadow"
+               style={parallaxStyle}
             >
               View Projects <ArrowDown className="ml-2 h-5 w-5 animate-bounce" />
             </Button>

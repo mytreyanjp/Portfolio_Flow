@@ -11,7 +11,24 @@ import { cn } from '@/lib/utils';
 export default function ContactPage() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
-  // Parallax effect state is not needed here if only top heading gets it
+  const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      const { clientX, clientY } = event;
+      const x = (clientX / window.innerWidth - 0.5) * 2;
+      const y = (clientY / window.innerHeight - 0.5) * 2;
+      const sensitivity = 15;
+      setParallaxOffset({ x: x * sensitivity, y: y * sensitivity });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  const parallaxStyle = {
+    transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`,
+    transition: 'transform 0.1s ease-out',
+  };
 
   useEffect(() => {
     const observerOptions = {
@@ -47,7 +64,10 @@ export default function ContactPage() {
       <h1 
         id="contact-page-main-heading"
         className="text-4xl font-bold text-center mb-12 text-transparent bg-clip-text heading-hover-reveal relative overflow-hidden"
-        // Removed inline backgroundImage style
+        style={{
+          ...parallaxStyle,
+          backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
+        }}
       >
         Let's Connect
       </h1>

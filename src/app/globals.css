@@ -110,33 +110,31 @@ body {
 }
 
 /* Heading hover reveal effect */
+/* The H1 itself needs: text-transparent bg-clip-text and an inline style for its default backgroundImage */
 .heading-hover-reveal {
-  position: relative;
-  overflow: hidden; /* Important for containing pseudo-elements */
-  -webkit-text-fill-color: transparent !important; /* Ensure text is transparent */
-  color: transparent !important; /* Ensure text is transparent */
-  @apply bg-clip-text; /* Applies background-clip: text */
-  /* The H1 itself will NOT have an inline background-image style for the gradient text */
+  position: relative; /* For ::after positioning */
+  overflow: hidden;   /* To contain the ::after clip-path animation */
+  /* Ensure the h1 element itself has a defined size for ::after to fill */
+  display: inline-block; /* Or block, depending on layout needs. h1 is block by default. */
 }
 
-.heading-hover-reveal::before { /* DEFAULT GRADIENT LAYER */
+.heading-hover-reveal::after {
   content: '';
   position: absolute;
   inset: 0; /* Cover the parent H1 */
-  background-image: radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%); /* Default: accent in center */
-  z-index: 1; /* Base layer */
-  pointer-events: none;
-}
 
-.heading-hover-reveal::after { /* HOVER GRADIENT LAYER - REVEALED WITH CLIP-PATH */
-  content: '';
-  position: absolute;
-  inset: 0; /* Cover the parent H1 */
-  background-image: radial-gradient(circle at center, hsl(var(--primary)) 10%, hsl(var(--accent)) 90%); /* Hover: primary in center */
-  clip-path: circle(0% at 50% 50%);
+  /* This ::after pseudo-element will carry the HOVER gradient */
+  /* It also needs its background clipped to the text shape */
+  background-image: radial-gradient(circle at center, hsl(var(--primary)) 10%, hsl(var(--accent)) 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  /* Text on this layer must also be transparent for the gradient to show */
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+
+  clip-path: circle(0% at 50% 50%); /* Start fully clipped / invisible */
   transition: clip-path 0.4s ease-out;
-  z-index: 2; /* On top of ::before */
-  pointer-events: none;
+  pointer-events: none; /* Allows hover events to pass to the parent H1 */
 }
 
 .heading-hover-reveal:hover::after {
