@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -127,7 +128,7 @@ body {
   background-image: radial-gradient(circle at center, hsl(var(--primary)) 10%, hsl(var(--accent)) 90%); /* Hover state gradient */
   clip-path: circle(0% at 50% 50%);
   transition: clip-path 0.4s ease-out;
-  z-index: -1; /* Place behind the text's "window" */
+  /* z-index: -1; <--- REMOVED this line */
   pointer-events: none; /* Ensure it doesn't interfere with text selection or other interactions */
 }
 
