@@ -30,9 +30,15 @@ export default function AiIntroPage() {
     }
     
     const handleMouseMove = (event: MouseEvent) => {
-      const x = (event.clientX / window.innerWidth - 0.5) * parallaxSensitivity;
-      const y = (event.clientY / window.innerHeight - 0.5) * parallaxSensitivity;
-      setParallaxOffset({ x: -x, y: -y });
+      // Only apply parallax to the top heading "AI-Powered Introduction Generator"
+      const headingElement = document.getElementById('ai-intro-page-main-heading');
+      if (headingElement && headingElement.contains(event.target as Node)) {
+        const x = (event.clientX / window.innerWidth - 0.5) * parallaxSensitivity;
+        const y = (event.clientY / window.innerHeight - 0.5) * parallaxSensitivity;
+        setParallaxOffset({ x: -x, y: -y });
+      } else {
+        setParallaxOffset({ x: 0, y: 0 });
+      }
     };
     window.addEventListener('mousemove', handleMouseMove);
 
@@ -61,7 +67,8 @@ export default function AiIntroPage() {
         <div style={parallaxStyle}>
           <Sparkles className="h-16 w-16 text-primary mx-auto mb-4 animate-pulse" />
           <h1 
-            className="text-4xl font-bold text-transparent bg-clip-text mb-4"
+            id="ai-intro-page-main-heading"
+            className="text-4xl font-bold text-transparent bg-clip-text mb-4 mix-blend-screen"
             style={{ backgroundImage: 'radial-gradient(circle at center, hsl(var(--primary)) 30%, hsl(var(--accent)) 100%)' }}
           >
             AI-Powered Introduction Generator

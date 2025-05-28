@@ -7,7 +7,7 @@ import ProjectFilter, { Filters } from '@/components/portfolio/ProjectFilter';
 import type { Project } from '@/data/projects';
 import { getProjects } from '@/services/projectsService';
 import { Button } from '@/components/ui/button';
-import { ArrowDown, Loader2, AlertTriangle, X as XIcon, Mail, FileText } from 'lucide-react';
+import { ArrowDown, Mail, FileText, AlertTriangle, X as XIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -72,13 +72,13 @@ export default function PortfolioPage() {
     });
     
     const handleMouseMove = (event: MouseEvent) => {
+      // Parallax for welcome section only
       if (welcomeSectionRef.current?.contains(event.target as Node)) {
         const x = (event.clientX / window.innerWidth - 0.5) * parallaxSensitivity;
         const y = (event.clientY / window.innerHeight - 0.5) * parallaxSensitivity;
         setParallaxOffset({ x: -x, y: -y });
       } else {
-         // Optional: Reset or reduce effect when mouse is not over the target section
-        // setParallaxOffset({ x: 0, y: 0 }); 
+         setParallaxOffset({ x: 0, y: 0 }); 
       }
     };
     window.addEventListener('mousemove', handleMouseMove);
@@ -98,14 +98,9 @@ export default function PortfolioPage() {
     if (isLoading || error) return [];
     const results = projects.filter(project => {
       const categoryMatch = filters.category ? project.category === filters.category : true;
-      // Technology filter UI is removed, so techMatch is always true for now
-      // const techMatch = filters.technologies.length > 0
-      //   ? filters.technologies.every(tech => project.technologies.includes(tech))
-      //   : true;
-      // return categoryMatch && techMatch;
       return categoryMatch;
     });
-    setNoProjectsMessageVisible(results.length === 0 && !isLoading && (filters.category !== '' /* || filters.technologies.length > 0 */));
+    setNoProjectsMessageVisible(results.length === 0 && !isLoading && (filters.category !== ''));
     return results;
   }, [filters, projects, isLoading, error]);
 
@@ -174,7 +169,7 @@ export default function PortfolioPage() {
           <div className="max-w-3xl mx-auto">
              <h1 
               id="welcome-heading" 
-              className="text-7xl md:text-7xl font-bold mb-2 text-transparent bg-clip-text"
+              className="text-7xl md:text-7xl font-bold mb-2 text-transparent bg-clip-text mix-blend-screen"
               style={{ backgroundImage: 'radial-gradient(circle at center, hsl(var(--primary)) 30%, hsl(var(--accent)) 100%)' }}
             >
               Hi

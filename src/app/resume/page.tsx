@@ -44,9 +44,15 @@ export default function ResumePage() {
     }
 
     const handleMouseMove = (event: MouseEvent) => {
-      const x = (event.clientX / window.innerWidth - 0.5) * parallaxSensitivity;
-      const y = (event.clientY / window.innerHeight - 0.5) * parallaxSensitivity;
-      setParallaxOffset({ x: -x, y: -y });
+      // Only apply parallax to the top heading "My Professional Profile"
+      const headingElement = document.getElementById('resume-page-main-heading');
+      if (headingElement && headingElement.contains(event.target as Node)) {
+        const x = (event.clientX / window.innerWidth - 0.5) * parallaxSensitivity;
+        const y = (event.clientY / window.innerHeight - 0.5) * parallaxSensitivity;
+        setParallaxOffset({ x: -x, y: -y });
+      } else {
+        setParallaxOffset({ x: 0, y: 0 });
+      }
     };
     window.addEventListener('mousemove', handleMouseMove);
 
@@ -73,7 +79,8 @@ export default function ResumePage() {
     >
       <header className="text-center mb-12">
         <h1 
-          className="text-4xl font-bold text-transparent bg-clip-text mb-4"
+          id="resume-page-main-heading"
+          className="text-4xl font-bold text-transparent bg-clip-text mb-4 mix-blend-screen"
           style={{ 
             ...parallaxStyle, 
             backgroundImage: 'radial-gradient(circle at center, hsl(var(--primary)) 30%, hsl(var(--accent)) 100%)' 

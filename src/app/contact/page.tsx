@@ -30,9 +30,15 @@ export default function ContactPage() {
     }
 
     const handleMouseMove = (event: MouseEvent) => {
-      const x = (event.clientX / window.innerWidth - 0.5) * parallaxSensitivity;
-      const y = (event.clientY / window.innerHeight - 0.5) * parallaxSensitivity;
-      setParallaxOffset({ x: -x, y: -y });
+      // Only apply parallax to the top heading "Let's Connect"
+      const headingElement = document.getElementById('contact-page-main-heading');
+      if (headingElement && headingElement.contains(event.target as Node)) {
+        const x = (event.clientX / window.innerWidth - 0.5) * parallaxSensitivity;
+        const y = (event.clientY / window.innerHeight - 0.5) * parallaxSensitivity;
+        setParallaxOffset({ x: -x, y: -y });
+      } else {
+        setParallaxOffset({ x: 0, y: 0 });
+      }
     };
     window.addEventListener('mousemove', handleMouseMove);
 
@@ -58,7 +64,8 @@ export default function ContactPage() {
       )}
     >
       <h1 
-        className="text-4xl font-bold text-center mb-12 text-transparent bg-clip-text"
+        id="contact-page-main-heading"
+        className="text-4xl font-bold text-center mb-12 text-transparent bg-clip-text mix-blend-screen"
         style={{ 
           ...parallaxStyle, 
           backgroundImage: 'radial-gradient(circle at center, hsl(var(--primary)) 30%, hsl(var(--accent)) 100%)' 
