@@ -12,6 +12,7 @@ import { useTheme } from 'next-themes';
 import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
+import CursorTail from '@/components/effects/CursorTail'; // Import CursorTail
 
 const ThreeScene = dynamic(() => import('@/components/portfolio/ThreeScene'), {
   ssr: false,
@@ -91,12 +92,13 @@ export default function RootLayout({
           {canRenderThreeScene && (
             <Suspense fallback={<div style={{ height: '100vh', width: '100vw', position: 'fixed', top: 0, left: 0, zIndex: -1, backgroundColor: 'transparent' }} />}>
               <ThreeScene
-                key={threeSceneKey} // Force re-mount on theme change
+                key={threeSceneKey} 
                 scrollPercentage={scrollPercentage}
                 currentTheme={currentThemeForScene}
               />
             </Suspense>
           )}
+          <CursorTail /> {/* Add CursorTail here */}
           <div className="relative z-10 flex flex-col min-h-screen"> {/* Content wrapper above background */}
             <Header />
             <main className="flex-grow container mx-auto px-4 py-8">
