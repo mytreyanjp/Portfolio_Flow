@@ -3,98 +3,62 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
-const MAX_POINTS = 10; // Reduced for a shorter, more "beam-like" tail
-const STROKE_COLOR = '#D050FF'; // A vibrant purple
-const STROKE_WIDTH = 25; // Significantly increased for a thick beam
+const CIRCLE_RADIUS = 75;
+const FILL_COLOR = 'rgba(140, 70, 200, 0.3)'; // A semi-transparent purple
+const BLUR_STD_DEVIATION = 10;
 
-interface Point {
+interface Position {
   x: number;
   y: number;
 }
 
 export default function CursorTail() {
-  const [points, setPoints] = useState<Point[]>([]);
+  const [position, setPosition] = useState<Position>({ x: -1000, y: -1000 }); // Start off-screen
   const animationFrameId = useRef<number | null>(null);
-  const mousePosition = useRef<Point>({ x: 0, y: 0 });
+  const targetPosition = useRef<Position>({ x: -1000, y: -1000 });
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // console.log('[CursorTail] useEffect triggered. isVisible:', isVisible);
     const handleMouseMove = (event: MouseEvent) => {
-      mousePosition.current = { x: event.clientX, y: event.clientY };
+      targetPosition.current = { x: event.clientX, y: event.clientY };
       if (!isVisible) {
-        // console.log('[CursorTail] Mouse moved, setting isVisible to true');
         setIsVisible(true);
+        // Initialize position to current mouse position to avoid jump
+        setPosition({ x: event.clientX, y: event.clientY }); 
       }
     };
 
-    const updateTrail = () => {
-      setPoints((prevPoints) => {
-        const newPoint = { ...mousePosition.current };
-        const updatedPoints = [...prevPoints, newPoint];
-        if (updatedPoints.length > MAX_POINTS) {
-          return updatedPoints.slice(updatedPoints.length - MAX_POINTS);
-        }
-        return updatedPoints;
+    window.addEventListener('mousemove', handleMouseMove);
+
+    const updatePosition = () => {
+      setPosition((prevPosition) => {
+        // Smooth transition to the target position
+        const newX = prevPosition.x + (targetPosition.current.x - prevPosition.x) * 0.2;
+        const newY = prevPosition.y + (targetPosition.current.y - prevPosition.y) * 0.2;
+        return { x: newX, y: newY };
       });
-      animationFrameId.current = requestAnimationFrame(updateTrail);
+      animationFrameId.current = requestAnimationFrame(updatePosition);
     };
 
-    // console.log('[CursorTail] Adding mousemove listener');
-    window.addEventListener('mousemove', handleMouseMove);
-    
-    // Start animation loop only if component is visible (mouse has moved once)
-    // This was part of a previous debug, let's ensure it starts if isVisible is true or becomes true
     if (isVisible) {
-        // console.log('[CursorTail] isVisible is true, starting animation loop.');
-        if (animationFrameId.current === null) { // Ensure it only starts once
-            animationFrameId.current = requestAnimationFrame(updateTrail);
+        if (animationFrameId.current === null) {
+            animationFrameId.current = requestAnimationFrame(updatePosition);
         }
     }
 
-
     return () => {
-      // console.log('[CursorTail] Cleanup: Removing mousemove listener and canceling animation frame');
       window.removeEventListener('mousemove', handleMouseMove);
       if (animationFrameId.current) {
         cancelAnimationFrame(animationFrameId.current);
         animationFrameId.current = null;
       }
     };
-  }, [isVisible]); // Re-run effect if isVisible changes
-
-  // Effect to start the animation loop once isVisible becomes true
-  useEffect(() => {
-    let animId: number;
-    if (isVisible && animationFrameId.current === null) {
-        // console.log('[CursorTail] isVisible became true, ensuring animation loop starts.');
-        const updateTrailLoop = () => {
-          setPoints((prevPoints) => {
-            const newPoint = { ...mousePosition.current };
-            const updatedPoints = [...prevPoints, newPoint];
-            if (updatedPoints.length > MAX_POINTS) {
-              return updatedPoints.slice(updatedPoints.length - MAX_POINTS);
-            }
-            return updatedPoints;
-          });
-          animId = requestAnimationFrame(updateTrailLoop);
-          animationFrameId.current = animId; // Store the current animation frame ID
-        };
-        animId = requestAnimationFrame(updateTrailLoop);
-        animationFrameId.current = animId; // Store the initial animation frame ID
-    }
-    // No cleanup needed here for the animation frame itself as the main effect handles it
   }, [isVisible]);
 
-
-  const polylinePoints = points.map((p) => `${p.x},${p.y}`).join(' ');
-
-  if (!isVisible || points.length < 2) {
-    // console.log('[CursorTail] Not rendering: isVisible is false or points length < 2');
+  if (!isVisible) {
     return null;
   }
 
-  // console.log('[CursorTail] Rendering SVG with points:', polylinePoints);
   return (
     <svg
       style={{
@@ -104,19 +68,24 @@ export default function CursorTail() {
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none',
-        zIndex: -1, // Ensure it's behind page content
-        filter: `drop-shadow(0 0 15px ${STROKE_COLOR}C0) drop-shadow(0 0 30px ${STROKE_COLOR}A0) drop-shadow(0 0 45px ${STROKE_COLOR}80)`, // Enhanced glow
+        zIndex: -1, 
       }}
       aria-hidden="true"
     >
-      <polyline
-        points={polylinePoints}
-        fill="none"
-        stroke={STROKE_COLOR}
-        strokeWidth={STROKE_WIDTH}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        style={{ opacity: 0.85 }} // Increased opacity for a less transparent core beam
+      <defs>
+        <filter id="cursorBlurFilter" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation={BLUR_STD_DEVIATION} />
+        </filter>
+      </defs>
+      <circle
+        cx={position.x}
+        cy={position.y}
+        r={CIRCLE_RADIUS}
+        fill={FILL_COLOR}
+        filter="url(#cursorBlurFilter)"
+        style={{
+          transition: 'transform 0.05s ease-out', // Optional: for smoother visual updates if direct pos updates are jerky
+        }}
       />
     </svg>
   );
