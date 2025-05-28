@@ -28,7 +28,7 @@ export default function PortfolioPage() {
   const [isProjectsVisible, setIsProjectsVisible] = useState(false);
 
   const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
-  const parallaxSensitivity = 15; 
+  const parallaxSensitivity = 15;
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -72,9 +72,14 @@ export default function PortfolioPage() {
     });
     
     const handleMouseMove = (event: MouseEvent) => {
-      const x = (event.clientX / window.innerWidth - 0.5) * parallaxSensitivity;
-      const y = (event.clientY / window.innerHeight - 0.5) * parallaxSensitivity;
-      setParallaxOffset({ x: -x, y: -y }); 
+      if (welcomeSectionRef.current?.contains(event.target as Node)) {
+        const x = (event.clientX / window.innerWidth - 0.5) * parallaxSensitivity;
+        const y = (event.clientY / window.innerHeight - 0.5) * parallaxSensitivity;
+        setParallaxOffset({ x: -x, y: -y });
+      } else {
+         // Optional: Reset or reduce effect when mouse is not over the target section
+        // setParallaxOffset({ x: 0, y: 0 }); 
+      }
     };
     window.addEventListener('mousemove', handleMouseMove);
 
@@ -93,12 +98,14 @@ export default function PortfolioPage() {
     if (isLoading || error) return [];
     const results = projects.filter(project => {
       const categoryMatch = filters.category ? project.category === filters.category : true;
-      const techMatch = filters.technologies.length > 0
-        ? filters.technologies.every(tech => project.technologies.includes(tech))
-        : true;
-      return categoryMatch && techMatch;
+      // Technology filter UI is removed, so techMatch is always true for now
+      // const techMatch = filters.technologies.length > 0
+      //   ? filters.technologies.every(tech => project.technologies.includes(tech))
+      //   : true;
+      // return categoryMatch && techMatch;
+      return categoryMatch;
     });
-    setNoProjectsMessageVisible(results.length === 0 && !isLoading && (filters.category !== '' || filters.technologies.length > 0));
+    setNoProjectsMessageVisible(results.length === 0 && !isLoading && (filters.category !== '' /* || filters.technologies.length > 0 */));
     return results;
   }, [filters, projects, isLoading, error]);
 
@@ -165,7 +172,11 @@ export default function PortfolioPage() {
           style={parallaxStyle}
         >
           <div className="max-w-3xl mx-auto">
-             <h1 id="welcome-heading" className="text-7xl md:text-7xl font-bold mb-2 text-primary">
+             <h1 
+              id="welcome-heading" 
+              className="text-7xl md:text-7xl font-bold mb-2 text-transparent bg-clip-text"
+              style={{ backgroundImage: 'radial-gradient(circle at center, hsl(var(--primary)) 30%, hsl(var(--accent)) 100%)' }}
+            >
               Hi
             </h1>
             <p className="text-3xl md:text-4xl font-semibold mb-4 text-primary">
@@ -191,7 +202,6 @@ export default function PortfolioPage() {
           <h2 
             id="quick-navigation-heading" 
             className="text-2xl font-semibold mb-6 text-foreground"
-            // Removed parallaxStyle from here
           >
             Connect & Explore
           </h2>
@@ -222,8 +232,7 @@ export default function PortfolioPage() {
         >
           <h2 
             id="projects-heading" 
-            className="text-3xl font-semibold mb-8 text-center"
-            // Removed parallaxStyle from here
+            className="text-3xl font-semibold mb-8 text-center text-foreground"
           >
             My Projects
           </h2>

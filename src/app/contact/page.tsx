@@ -58,8 +58,11 @@ export default function ContactPage() {
       )}
     >
       <h1 
-        className="text-4xl font-bold text-center mb-12 text-primary"
-        style={parallaxStyle}
+        className="text-4xl font-bold text-center mb-12 text-transparent bg-clip-text"
+        style={{ 
+          ...parallaxStyle, 
+          backgroundImage: 'radial-gradient(circle at center, hsl(var(--primary)) 30%, hsl(var(--accent)) 100%)' 
+        }}
       >
         Let's Connect
       </h1>
@@ -81,8 +84,7 @@ export default function ContactPage() {
         <section aria-labelledby="contact-info-section" className="space-y-8">
            <h2 
             id="contact-info-section" 
-            className="text-2xl font-semibold mb-6 text-center md:text-left"
-            // Removed parallaxStyle from here
+            className="text-2xl font-semibold mb-6 text-center md:text-left text-foreground"
            >
             Contact Information
            </h2>

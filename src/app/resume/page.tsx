@@ -73,8 +73,11 @@ export default function ResumePage() {
     >
       <header className="text-center mb-12">
         <h1 
-          className="text-4xl font-bold text-primary mb-4"
-          style={parallaxStyle}
+          className="text-4xl font-bold text-transparent bg-clip-text mb-4"
+          style={{ 
+            ...parallaxStyle, 
+            backgroundImage: 'radial-gradient(circle at center, hsl(var(--primary)) 30%, hsl(var(--accent)) 100%)' 
+          }}
         >
           My Professional Profile
         </h1>
@@ -100,9 +103,9 @@ export default function ResumePage() {
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-2 shadow-lg" /* Removed parallaxStyle from here */ >
+        <Card className="md:col-span-2 shadow-lg">
           <CardHeader>
-            <CardTitle className="text-2xl flex items-center"><Lightbulb className="mr-2 h-6 w-6 text-primary"/> Summary</CardTitle>
+            <CardTitle className="text-2xl flex items-center text-foreground"><Lightbulb className="mr-2 h-6 w-6 text-primary"/> Summary</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-foreground/80 leading-relaxed">
@@ -113,9 +116,9 @@ export default function ResumePage() {
       </div>
 
       <div className="space-y-10">
-        <Card className="shadow-lg" /* Removed parallaxStyle from here */ >
+        <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle className="text-2xl flex items-center"><CheckCircle className="mr-2 h-6 w-6 text-primary"/> Key Skills</CardTitle>
+            <CardTitle className="text-2xl flex items-center text-foreground"><CheckCircle className="mr-2 h-6 w-6 text-primary"/> Key Skills</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -134,13 +137,13 @@ export default function ResumePage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg" /* Removed parallaxStyle from here */ >
+        <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle className="text-2xl flex items-center"><Briefcase className="mr-2 h-6 w-6 text-primary"/> Experience (Placeholder)</CardTitle>
+            <CardTitle className="text-2xl flex items-center text-foreground"><Briefcase className="mr-2 h-6 w-6 text-primary"/> Experience (Placeholder)</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
-              <h3 className="font-semibold text-lg">Senior Developer at Tech Solutions Inc.</h3>
+              <h3 className="font-semibold text-lg text-foreground">Senior Developer at Tech Solutions Inc.</h3>
               <p className="text-sm text-muted-foreground">Jan 2021 - Present</p>
               <ul className="list-disc list-inside mt-2 text-foreground/80 space-y-1">
                 <li>Led development of key features for a flagship product, improving performance by 20%.</li>
@@ -149,7 +152,7 @@ export default function ResumePage() {
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold text-lg">Web Developer at Creative Agency</h3>
+              <h3 className="font-semibold text-lg text-foreground">Web Developer at Creative Agency</h3>
               <p className="text-sm text-muted-foreground">Jun 2018 - Dec 2020</p>
               <ul className="list-disc list-inside mt-2 text-foreground/80 space-y-1">
                 <li>Developed and maintained client websites using React and Node.js.</li>
@@ -159,22 +162,22 @@ export default function ResumePage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg" /* Removed parallaxStyle from here */ >
+        <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle className="text-2xl flex items-center"><GraduationCap className="mr-2 h-6 w-6 text-primary"/> Education (Placeholder)</CardTitle>
+            <CardTitle className="text-2xl flex items-center text-foreground"><GraduationCap className="mr-2 h-6 w-6 text-primary"/> Education (Placeholder)</CardTitle>
           </CardHeader>
           <CardContent>
             <div>
-              <h3 className="font-semibold text-lg">M.S. in Computer Science</h3>
+              <h3 className="font-semibold text-lg text-foreground">M.S. in Computer Science</h3>
               <p className="text-sm text-muted-foreground">University of Technology - Graduated 2018</p>
               <p className="mt-1 text-foreground/80">Specialized in Human-Computer Interaction and Graphics.</p>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="shadow-lg" /* Removed parallaxStyle from here */ >
+        <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle className="text-2xl flex items-center"><Award className="mr-2 h-6 w-6 text-primary"/> Awards & Certifications (Placeholder)</CardTitle>
+            <CardTitle className="text-2xl flex items-center text-foreground"><Award className="mr-2 h-6 w-6 text-primary"/> Awards & Certifications (Placeholder)</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <p className="text-foreground/80">Certified Next.js Developer - 2022</p>

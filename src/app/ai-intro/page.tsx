@@ -60,7 +60,12 @@ export default function AiIntroPage() {
       <header className="text-center mb-12">
         <div style={parallaxStyle}>
           <Sparkles className="h-16 w-16 text-primary mx-auto mb-4 animate-pulse" />
-          <h1 className="text-4xl font-bold text-primary mb-4">AI-Powered Introduction Generator</h1>
+          <h1 
+            className="text-4xl font-bold text-transparent bg-clip-text mb-4"
+            style={{ backgroundImage: 'radial-gradient(circle at center, hsl(var(--primary)) 30%, hsl(var(--accent)) 100%)' }}
+          >
+            AI-Powered Introduction Generator
+          </h1>
         </div>
         <p className="text-lg text-muted-foreground">
           Craft the perfect first impression. Let AI help you create tailored introductory messages 
@@ -70,7 +75,7 @@ export default function AiIntroPage() {
 
       <Card className="shadow-xl">
         <CardHeader>
-          <CardTitle className="text-2xl">Generate Your Custom Intro</CardTitle>
+          <CardTitle className="text-2xl text-foreground">Generate Your Custom Intro</CardTitle>
           <CardDescription>
             Provide some details about yourself and the job you're applying for, 
             and our AI will whip up a personalized message.
@@ -84,7 +89,6 @@ export default function AiIntroPage() {
       <div className="mt-10 p-6 bg-card border border-border rounded-lg shadow-md">
         <h3 
           className="text-xl font-semibold text-foreground mb-3"
-          // Removed parallaxStyle from here
         >
           How it Works:
         </h3>
