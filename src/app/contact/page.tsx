@@ -64,7 +64,7 @@ export default function ContactPage() {
     >
       <h1 
         id="contact-page-main-heading"
-        className="text-4xl font-bold text-center mb-12 text-transparent bg-clip-text mix-blend-screen"
+        className="text-4xl font-bold text-center mb-12 text-transparent bg-clip-text"
         style={{ 
           ...parallaxStyle, 
           backgroundImage: 'radial-gradient(circle at center, hsl(var(--primary)) 30%, hsl(var(--accent)) 100%)' 

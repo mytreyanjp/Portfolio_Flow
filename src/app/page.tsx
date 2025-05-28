@@ -28,7 +28,7 @@ export default function PortfolioPage() {
   const [isProjectsVisible, setIsProjectsVisible] = useState(false);
 
   const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
-  const parallaxSensitivity = 15; // Keep sensitivity for other elements if re-enabled
+  const parallaxSensitivity = 15; 
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -72,11 +72,21 @@ export default function PortfolioPage() {
     });
     
     const handleMouseMove = (event: MouseEvent) => {
-      const headingElement = document.getElementById('portfolio-page-main-heading');
-      // Apply parallax only if the element is the target heading
-      // For this test, we are removing parallax from the main "Hi" heading, 
-      // so this condition might not be met for it, or you can adjust which elements it applies to.
-      if (headingElement && headingElement.contains(event.target as Node)) {
+      // Apply parallax to elements targeted by their specific IDs or classes
+      const elementsToParallax = [
+        document.getElementById('portfolio-page-main-heading'), // Main "Hi" heading
+        document.getElementById('quick-navigation-heading'), // "Connect & Explore" heading
+        document.getElementById('projects-heading') // "My Projects" heading
+      ];
+
+      let applyParallax = false;
+      elementsToParallax.forEach(element => {
+        if (element && element.contains(event.target as Node)) {
+          applyParallax = true;
+        }
+      });
+      
+      if (applyParallax) {
         const x = (event.clientX / window.innerWidth - 0.5) * parallaxSensitivity;
         const y = (event.clientY / window.innerHeight - 0.5) * parallaxSensitivity;
         setParallaxOffset({ x: -x, y: -y });
@@ -164,32 +174,29 @@ export default function PortfolioPage() {
         <section
           aria-labelledby="welcome-heading"
           className={cn(
-            "text-center transition-all duration-700 ease-in-out", // text-center for centering content
+            "text-center transition-all duration-700 ease-in-out", 
             isWelcomeVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
           )}
           ref={welcomeSectionRef}
         >
-          {/* Removed parallaxStyle from this div for testing blend mode on H1 */}
           <div className="max-w-3xl mx-auto"> 
              <h1 
               id="portfolio-page-main-heading" 
-              className="text-7xl md:text-7xl font-bold mb-2 text-transparent bg-clip-text mix-blend-screen" // mix-blend-screen applied
+              className="text-7xl md:text-7xl font-bold mb-2 text-transparent bg-clip-text"
               style={{ 
+                ...parallaxStyle,
                 backgroundImage: 'radial-gradient(circle at center, hsl(var(--primary)) 30%, hsl(var(--accent)) 100%)',
-                // Parallax style removed for this h1 for testing
               }}
             >
               Hi
             </h1>
             <p 
               className="text-3xl md:text-4xl font-semibold mb-4 text-primary"
-              style={parallaxStyle} // Parallax can remain on other elements if desired
             >
               my name is Mytreyan.
             </p>
             <p 
               className="text-lg md:text-xl text-foreground mb-4"
-              style={parallaxStyle} // Parallax can remain on other elements if desired
             >
               Can create light outta a blackhole
             </p>
@@ -197,7 +204,6 @@ export default function PortfolioPage() {
               size="lg" 
               onClick={scrollToProjects} 
               className="rounded-full shadow-lg hover:shadow-primary/30 transition-shadow"
-              style={parallaxStyle} // Parallax can remain on other elements if desired
             >
               View Projects <ArrowDown className="ml-2 h-5 w-5 animate-bounce" />
             </Button>
@@ -303,4 +309,3 @@ export default function PortfolioPage() {
     </>
   );
 }
-

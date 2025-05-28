@@ -67,7 +67,7 @@ export default function AiIntroPage() {
           <Sparkles className="h-16 w-16 text-primary mx-auto mb-4 animate-pulse" />
           <h1 
             id="ai-intro-page-main-heading"
-            className="text-4xl font-bold text-transparent bg-clip-text mb-4 mix-blend-screen"
+            className="text-4xl font-bold text-transparent bg-clip-text mb-4"
             style={{ backgroundImage: 'radial-gradient(circle at center, hsl(var(--primary)) 30%, hsl(var(--accent)) 100%)' }}
           >
             AI-Powered Introduction Generator

@@ -79,7 +79,7 @@ export default function ResumePage() {
       <header className="text-center mb-12">
         <h1 
           id="resume-page-main-heading"
-          className="text-4xl font-bold text-transparent bg-clip-text mb-4 mix-blend-screen"
+          className="text-4xl font-bold text-transparent bg-clip-text mb-4"
           style={{ 
             ...parallaxStyle, 
             backgroundImage: 'radial-gradient(circle at center, hsl(var(--primary)) 30%, hsl(var(--accent)) 100%)' 
