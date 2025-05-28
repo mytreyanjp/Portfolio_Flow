@@ -43,6 +43,11 @@ export default function ContactPage() {
       window.removeEventListener('mousemove', handleMouseMove);
     };
   }, [parallaxSensitivity]);
+  
+  const parallaxStyle = {
+    transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`,
+    transition: 'transform 0.1s ease-out'
+  };
 
   return (
     <div 
@@ -54,7 +59,7 @@ export default function ContactPage() {
     >
       <h1 
         className="text-4xl font-bold text-center mb-12 text-primary"
-        style={{ transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`, transition: 'transform 0.1s ease-out' }}
+        style={parallaxStyle}
       >
         Let's Connect
       </h1>
@@ -77,7 +82,7 @@ export default function ContactPage() {
            <h2 
             id="contact-info-section" 
             className="text-2xl font-semibold mb-6 text-center md:text-left"
-            style={{ transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`, transition: 'transform 0.1s ease-out' }}
+            // Removed parallaxStyle from here
            >
             Contact Information
            </h2>

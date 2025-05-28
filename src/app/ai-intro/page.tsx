@@ -84,7 +84,7 @@ export default function AiIntroPage() {
       <div className="mt-10 p-6 bg-card border border-border rounded-lg shadow-md">
         <h3 
           className="text-xl font-semibold text-foreground mb-3"
-          style={parallaxStyle}
+          // Removed parallaxStyle from here
         >
           How it Works:
         </h3>

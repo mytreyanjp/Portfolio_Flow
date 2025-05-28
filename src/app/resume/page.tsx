@@ -100,7 +100,7 @@ export default function ResumePage() {
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-2 shadow-lg" style={parallaxStyle}>
+        <Card className="md:col-span-2 shadow-lg" /* Removed parallaxStyle from here */ >
           <CardHeader>
             <CardTitle className="text-2xl flex items-center"><Lightbulb className="mr-2 h-6 w-6 text-primary"/> Summary</CardTitle>
           </CardHeader>
@@ -113,7 +113,7 @@ export default function ResumePage() {
       </div>
 
       <div className="space-y-10">
-        <Card className="shadow-lg" style={parallaxStyle}>
+        <Card className="shadow-lg" /* Removed parallaxStyle from here */ >
           <CardHeader>
             <CardTitle className="text-2xl flex items-center"><CheckCircle className="mr-2 h-6 w-6 text-primary"/> Key Skills</CardTitle>
           </CardHeader>
@@ -134,7 +134,7 @@ export default function ResumePage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg" style={parallaxStyle}>
+        <Card className="shadow-lg" /* Removed parallaxStyle from here */ >
           <CardHeader>
             <CardTitle className="text-2xl flex items-center"><Briefcase className="mr-2 h-6 w-6 text-primary"/> Experience (Placeholder)</CardTitle>
           </CardHeader>
@@ -159,7 +159,7 @@ export default function ResumePage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg" style={parallaxStyle}>
+        <Card className="shadow-lg" /* Removed parallaxStyle from here */ >
           <CardHeader>
             <CardTitle className="text-2xl flex items-center"><GraduationCap className="mr-2 h-6 w-6 text-primary"/> Education (Placeholder)</CardTitle>
           </CardHeader>
@@ -172,7 +172,7 @@ export default function ResumePage() {
           </CardContent>
         </Card>
         
-        <Card className="shadow-lg" style={parallaxStyle}>
+        <Card className="shadow-lg" /* Removed parallaxStyle from here */ >
           <CardHeader>
             <CardTitle className="text-2xl flex items-center"><Award className="mr-2 h-6 w-6 text-primary"/> Awards & Certifications (Placeholder)</CardTitle>
           </CardHeader>

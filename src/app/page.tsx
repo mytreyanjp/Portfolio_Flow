@@ -154,7 +154,7 @@ export default function PortfolioPage() {
 
   return (
     <>
-      <div className="mt-8 space-y-12 py-6 px-12"> {/* Increased px-6 to px-12 */}
+      <div className="mt-8 space-y-12 py-6 px-12">
         <section
           aria-labelledby="welcome-heading"
           className={cn(
@@ -191,7 +191,7 @@ export default function PortfolioPage() {
           <h2 
             id="quick-navigation-heading" 
             className="text-2xl font-semibold mb-6 text-foreground"
-            style={parallaxStyle}
+            // Removed parallaxStyle from here
           >
             Connect & Explore
           </h2>
@@ -223,7 +223,7 @@ export default function PortfolioPage() {
           <h2 
             id="projects-heading" 
             className="text-3xl font-semibold mb-8 text-center"
-            style={parallaxStyle}
+            // Removed parallaxStyle from here
           >
             My Projects
           </h2>
@@ -279,4 +279,3 @@ export default function PortfolioPage() {
     </>
   );
 }
-
