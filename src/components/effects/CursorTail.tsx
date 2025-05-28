@@ -3,9 +3,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
-const MAX_POINTS = 15; // Reduced for a slightly stubbier, potentially "blotchier" feel
-const STROKE_COLOR = '#E070FF'; // Brighter purple for neon effect
-const STROKE_WIDTH = 8; // Increased for thickness
+const MAX_POINTS = 10; // Reduced for a shorter, more "beam-like" tail
+const STROKE_COLOR = '#D050FF'; // A vibrant purple
+const STROKE_WIDTH = 25; // Significantly increased for a thick beam
 
 interface Point {
   x: number;
@@ -19,9 +19,13 @@ export default function CursorTail() {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    // console.log('[CursorTail] useEffect triggered. isVisible:', isVisible);
     const handleMouseMove = (event: MouseEvent) => {
       mousePosition.current = { x: event.clientX, y: event.clientY };
-      if (!isVisible) setIsVisible(true);
+      if (!isVisible) {
+        // console.log('[CursorTail] Mouse moved, setting isVisible to true');
+        setIsVisible(true);
+      }
     };
 
     const updateTrail = () => {
@@ -36,23 +40,47 @@ export default function CursorTail() {
       animationFrameId.current = requestAnimationFrame(updateTrail);
     };
 
+    // console.log('[CursorTail] Adding mousemove listener');
     window.addEventListener('mousemove', handleMouseMove);
-    animationFrameId.current = requestAnimationFrame(updateTrail);
+    
+    // Start animation loop only if component is visible (mouse has moved once)
+    // This was part of a previous debug, let's ensure it starts if isVisible is true or becomes true
+    if (isVisible) {
+        // console.log('[CursorTail] isVisible is true, starting animation loop.');
+        if (animationFrameId.current === null) { // Ensure it only starts once
+            animationFrameId.current = requestAnimationFrame(updateTrail);
+        }
+    }
+
 
     return () => {
+      // console.log('[CursorTail] Cleanup: Removing mousemove listener and canceling animation frame');
       window.removeEventListener('mousemove', handleMouseMove);
       if (animationFrameId.current) {
         cancelAnimationFrame(animationFrameId.current);
+        animationFrameId.current = null;
       }
     };
+  }, [isVisible]); // Re-run effect if isVisible changes
+
+  // Effect to start the animation loop once isVisible becomes true
+  useEffect(() => {
+    if (isVisible && animationFrameId.current === null) {
+        // console.log('[CursorTail] isVisible became true, ensuring animation loop starts.');
+        animationFrameId.current = requestAnimationFrame(updateTrail);
+    }
+    // No cleanup needed here for the animation frame itself as the main effect handles it
   }, [isVisible]);
+
 
   const polylinePoints = points.map((p) => `${p.x},${p.y}`).join(' ');
 
   if (!isVisible || points.length < 2) {
+    // console.log('[CursorTail] Not rendering: isVisible is false or points length < 2');
     return null;
   }
 
+  // console.log('[CursorTail] Rendering SVG with points:', polylinePoints);
   return (
     <svg
       style={{
@@ -62,8 +90,8 @@ export default function CursorTail() {
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none',
-        zIndex: -1,
-        filter: `drop-shadow(0 0 10px ${STROKE_COLOR}B0) drop-shadow(0 0 20px ${STROKE_COLOR}80)`, // Increased blur and spread
+        zIndex: -1, // Ensure it's behind page content
+        filter: `drop-shadow(0 0 15px ${STROKE_COLOR}C0) drop-shadow(0 0 30px ${STROKE_COLOR}A0) drop-shadow(0 0 45px ${STROKE_COLOR}80)`, // Enhanced glow
       }}
       aria-hidden="true"
     >
@@ -74,7 +102,7 @@ export default function CursorTail() {
         strokeWidth={STROKE_WIDTH}
         strokeLinecap="round"
         strokeLinejoin="round"
-        style={{ opacity: 0.65 }} // Reduced opacity for a softer, more diffused core line
+        style={{ opacity: 0.85 }} // Increased opacity for a less transparent core beam
       />
     </svg>
   );
