@@ -72,21 +72,20 @@ export default function PortfolioPage() {
     });
     
     const handleMouseMove = (event: MouseEvent) => {
-      // Apply parallax to elements targeted by their specific IDs or classes
       const elementsToParallax = [
-        document.getElementById('portfolio-page-main-heading'), // Main "Hi" heading
-        document.getElementById('quick-navigation-heading'), // "Connect & Explore" heading
-        document.getElementById('projects-heading') // "My Projects" heading
+        document.getElementById('portfolio-page-main-heading'), 
+        document.getElementById('quick-navigation-heading'), 
+        document.getElementById('projects-heading') 
       ];
 
-      let applyParallax = false;
+      let applyParallaxToHeading = false;
       elementsToParallax.forEach(element => {
         if (element && element.contains(event.target as Node)) {
-          applyParallax = true;
+          applyParallaxToHeading = true;
         }
       });
       
-      if (applyParallax) {
+      if (applyParallaxToHeading) {
         const x = (event.clientX / window.innerWidth - 0.5) * parallaxSensitivity;
         const y = (event.clientY / window.innerHeight - 0.5) * parallaxSensitivity;
         setParallaxOffset({ x: -x, y: -y });
@@ -162,15 +161,13 @@ export default function PortfolioPage() {
     </div>
   );
 
-  // Parallax style for elements that should have it
   const parallaxStyle = {
     transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`,
     transition: 'transform 0.1s ease-out' 
   };
 
   return (
-    <>
-      <div className="mt-8 space-y-12 py-6 px-12">
+    <div className="mt-8 space-y-12 py-6 px-12">
         <section
           aria-labelledby="welcome-heading"
           className={cn(
@@ -185,7 +182,7 @@ export default function PortfolioPage() {
               className="text-7xl md:text-7xl font-bold mb-2 text-transparent bg-clip-text"
               style={{ 
                 ...parallaxStyle,
-                backgroundImage: 'radial-gradient(circle at center, hsl(var(--primary)) 30%, hsl(var(--accent)) 100%)',
+                backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
               }}
             >
               Hi
@@ -305,7 +302,6 @@ export default function PortfolioPage() {
             )
           )}
         </section>
-      </div>
-    </>
+    </div>
   );
 }

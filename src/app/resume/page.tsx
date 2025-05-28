@@ -82,7 +82,7 @@ export default function ResumePage() {
           className="text-4xl font-bold text-transparent bg-clip-text mb-4"
           style={{ 
             ...parallaxStyle, 
-            backgroundImage: 'radial-gradient(circle at center, hsl(var(--primary)) 30%, hsl(var(--accent)) 100%)' 
+            backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
           }}
         >
           My Professional Profile

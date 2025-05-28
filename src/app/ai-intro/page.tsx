@@ -68,7 +68,7 @@ export default function AiIntroPage() {
           <h1 
             id="ai-intro-page-main-heading"
             className="text-4xl font-bold text-transparent bg-clip-text mb-4"
-            style={{ backgroundImage: 'radial-gradient(circle at center, hsl(var(--primary)) 30%, hsl(var(--accent)) 100%)' }}
+            style={{ backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)' }}
           >
             AI-Powered Introduction Generator
           </h1>

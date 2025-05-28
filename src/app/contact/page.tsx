@@ -67,7 +67,7 @@ export default function ContactPage() {
         className="text-4xl font-bold text-center mb-12 text-transparent bg-clip-text"
         style={{ 
           ...parallaxStyle, 
-          backgroundImage: 'radial-gradient(circle at center, hsl(var(--primary)) 30%, hsl(var(--accent)) 100%)' 
+          backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
         }}
       >
         Let's Connect
