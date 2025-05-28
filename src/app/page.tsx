@@ -27,8 +27,7 @@ export default function PortfolioPage() {
   const [isQuickNavVisible, setIsQuickNavVisible] = useState(false);
   const [isProjectsVisible, setIsProjectsVisible] = useState(false);
 
-  const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
-  const parallaxSensitivity = 15; 
+  // Parallax effect removed from this page for the heading hover effect
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -71,19 +70,6 @@ export default function PortfolioPage() {
       return { observer, ref };
     });
     
-    const handleMouseMove = (event: MouseEvent) => {
-      // Only apply parallax to the main welcome heading
-      const welcomeHeadingElement = document.getElementById('portfolio-page-main-heading');
-      
-      if (welcomeHeadingElement && welcomeHeadingElement.contains(event.target as Node)) {
-        const x = (event.clientX / window.innerWidth - 0.5) * parallaxSensitivity;
-        const y = (event.clientY / window.innerHeight - 0.5) * parallaxSensitivity;
-        setParallaxOffset({ x: -x, y: -y });
-      } else {
-         setParallaxOffset({ x: 0, y: 0 }); 
-      }
-    };
-    window.addEventListener('mousemove', handleMouseMove);
 
     return () => {
       intersectionObservers.forEach(({ observer, ref }) => {
@@ -91,9 +77,8 @@ export default function PortfolioPage() {
           observer.unobserve(ref.current);
         }
       });
-      window.removeEventListener('mousemove', handleMouseMove);
     };
-  }, [parallaxSensitivity]);
+  }, []);
 
 
   const filteredProjects = useMemo(() => {
@@ -151,10 +136,6 @@ export default function PortfolioPage() {
     </div>
   );
 
-  const parallaxStyle = {
-    transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`,
-    transition: 'transform 0.1s ease-out' 
-  };
 
   return (
     <div className="mt-8 space-y-12 py-6 px-12">
@@ -169,9 +150,8 @@ export default function PortfolioPage() {
           <div className="max-w-3xl mx-auto"> 
              <h1 
               id="portfolio-page-main-heading" 
-              className="text-7xl md:text-7xl font-bold mb-2 text-transparent bg-clip-text"
+              className="text-7xl md:text-7xl font-bold mb-2 text-transparent bg-clip-text heading-hover-reveal relative overflow-hidden"
               style={{ 
-                ...parallaxStyle,
                 backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
               }}
             >
@@ -208,7 +188,6 @@ export default function PortfolioPage() {
           <h2 
             id="quick-navigation-heading" 
             className="text-2xl font-semibold mb-6 text-foreground"
-            // Removed style={parallaxStyle}
            >
             Connect & Explore
            </h2>
@@ -240,7 +219,6 @@ export default function PortfolioPage() {
           <h2 
             id="projects-heading" 
             className="text-3xl font-semibold mb-8 text-center text-foreground"
-            // Removed style={parallaxStyle}
           >
             My Projects
           </h2>

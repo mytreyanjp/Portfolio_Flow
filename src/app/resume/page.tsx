@@ -25,8 +25,7 @@ const skills = [
 export default function ResumePage() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
-  const parallaxSensitivity = 15;
+  // Parallax effect removed for heading hover effect
 
   useEffect(() => {
     const observerOptions = {
@@ -43,30 +42,16 @@ export default function ResumePage() {
       observer.observe(sectionRef.current);
     }
 
-    const handleMouseMove = (event: MouseEvent) => {
-      const headingElement = document.getElementById('resume-page-main-heading');
-      if (headingElement && headingElement.contains(event.target as Node)) {
-        const x = (event.clientX / window.innerWidth - 0.5) * parallaxSensitivity;
-        const y = (event.clientY / window.innerHeight - 0.5) * parallaxSensitivity;
-        setParallaxOffset({ x: -x, y: -y });
-      } else {
-        setParallaxOffset({ x: 0, y: 0 });
-      }
-    };
-    window.addEventListener('mousemove', handleMouseMove);
+    // Mousemove listener for parallax removed
 
     return () => {
       if (sectionRef.current) {
         observer.unobserve(sectionRef.current);
       }
-      window.removeEventListener('mousemove', handleMouseMove);
+      // Mousemove listener removal removed
     };
-  }, [parallaxSensitivity]);
+  }, []);
 
-  const parallaxStyle = {
-    transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`,
-    transition: 'transform 0.1s ease-out'
-  };
 
   return (
     <div 
@@ -79,9 +64,8 @@ export default function ResumePage() {
       <header className="text-center mb-12">
         <h1 
           id="resume-page-main-heading"
-          className="text-4xl font-bold text-transparent bg-clip-text mb-4"
+          className="text-4xl font-bold text-transparent bg-clip-text mb-4 heading-hover-reveal relative overflow-hidden"
           style={{ 
-            ...parallaxStyle, 
             backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
           }}
         >
