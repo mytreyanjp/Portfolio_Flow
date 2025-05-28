@@ -28,7 +28,7 @@ export default function PortfolioPage() {
   const [isProjectsVisible, setIsProjectsVisible] = useState(false);
 
   const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
-  const parallaxSensitivity = 15;
+  const parallaxSensitivity = 15; // Keep sensitivity for other elements if re-enabled
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -72,8 +72,10 @@ export default function PortfolioPage() {
     });
     
     const handleMouseMove = (event: MouseEvent) => {
-      // Only apply parallax to the top heading "Hi"
       const headingElement = document.getElementById('portfolio-page-main-heading');
+      // Apply parallax only if the element is the target heading
+      // For this test, we are removing parallax from the main "Hi" heading, 
+      // so this condition might not be met for it, or you can adjust which elements it applies to.
       if (headingElement && headingElement.contains(event.target as Node)) {
         const x = (event.clientX / window.innerWidth - 0.5) * parallaxSensitivity;
         const y = (event.clientY / window.innerHeight - 0.5) * parallaxSensitivity;
@@ -99,7 +101,6 @@ export default function PortfolioPage() {
     if (isLoading || error) return [];
     const results = projects.filter(project => {
       const categoryMatch = filters.category ? project.category === filters.category : true;
-      // Technology filter logic removed as per previous request
       return categoryMatch;
     });
     setNoProjectsMessageVisible(results.length === 0 && !isLoading && (filters.category !== ''));
@@ -151,6 +152,7 @@ export default function PortfolioPage() {
     </div>
   );
 
+  // Parallax style for elements that should have it
   const parallaxStyle = {
     transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`,
     transition: 'transform 0.1s ease-out' 
@@ -162,26 +164,41 @@ export default function PortfolioPage() {
         <section
           aria-labelledby="welcome-heading"
           className={cn(
-            "text-center transition-all duration-700 ease-in-out",
+            "text-center transition-all duration-700 ease-in-out", // text-center for centering content
             isWelcomeVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
           )}
           ref={welcomeSectionRef}
         >
-          <div className="max-w-3xl mx-auto" style={parallaxStyle}> {/* Apply parallax to the container */}
+          {/* Removed parallaxStyle from this div for testing blend mode on H1 */}
+          <div className="max-w-3xl mx-auto"> 
              <h1 
               id="portfolio-page-main-heading" 
-              className="text-7xl md:text-7xl font-bold mb-2 text-transparent bg-clip-text mix-blend-screen"
-              style={{ backgroundImage: 'radial-gradient(circle at center, hsl(var(--primary)) 30%, hsl(var(--accent)) 100%)' }}
+              className="text-7xl md:text-7xl font-bold mb-2 text-transparent bg-clip-text mix-blend-screen" // mix-blend-screen applied
+              style={{ 
+                backgroundImage: 'radial-gradient(circle at center, hsl(var(--primary)) 30%, hsl(var(--accent)) 100%)',
+                // Parallax style removed for this h1 for testing
+              }}
             >
               Hi
             </h1>
-            <p className="text-3xl md:text-4xl font-semibold mb-4 text-primary">
+            <p 
+              className="text-3xl md:text-4xl font-semibold mb-4 text-primary"
+              style={parallaxStyle} // Parallax can remain on other elements if desired
+            >
               my name is Mytreyan.
             </p>
-            <p className="text-lg md:text-xl text-foreground mb-6">
+            <p 
+              className="text-lg md:text-xl text-foreground mb-4"
+              style={parallaxStyle} // Parallax can remain on other elements if desired
+            >
               Can create light outta a blackhole
             </p>
-            <Button size="lg" onClick={scrollToProjects} className="rounded-full shadow-lg hover:shadow-primary/30 transition-shadow">
+            <Button 
+              size="lg" 
+              onClick={scrollToProjects} 
+              className="rounded-full shadow-lg hover:shadow-primary/30 transition-shadow"
+              style={parallaxStyle} // Parallax can remain on other elements if desired
+            >
               View Projects <ArrowDown className="ml-2 h-5 w-5 animate-bounce" />
             </Button>
           </div>
@@ -198,6 +215,7 @@ export default function PortfolioPage() {
           <h2 
             id="quick-navigation-heading" 
             className="text-2xl font-semibold mb-6 text-foreground"
+            style={parallaxStyle}
            >
             Connect & Explore
            </h2>
@@ -229,6 +247,7 @@ export default function PortfolioPage() {
           <h2 
             id="projects-heading" 
             className="text-3xl font-semibold mb-8 text-center text-foreground"
+            style={parallaxStyle}
           >
             My Projects
           </h2>
@@ -284,3 +303,4 @@ export default function PortfolioPage() {
     </>
   );
 }
+
