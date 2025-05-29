@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 const CIRCLE_RADIUS = 150;
-const FILL_COLOR = 'rgba(107, 28, 117, 0.6)'; // Increased opacity
+const FILL_COLOR = 'rgba(107, 28, 117, 0.5)'; // Increased opacity
 const BLUR_STD_DEVIATION = 10;
 
 interface Position {
@@ -69,7 +69,7 @@ export default function CursorTail() {
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none', // Important: allows clicks to pass through
-        zIndex: 0, // Changed from -5 to 0
+        zIndex: -5, // Above page backgrounds (-z-10), below main content (z-0 or z-10)
       }}
       aria-hidden="true"
     >
