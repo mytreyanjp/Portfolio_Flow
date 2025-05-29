@@ -26,7 +26,22 @@ export default function PortfolioPage() {
   const [isWelcomeVisible, setIsWelcomeVisible] = useState(false);
   const [isQuickNavVisible, setIsQuickNavVisible] = useState(false);
   const [isProjectsVisible, setIsProjectsVisible] = useState(false);
-  
+
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      if (headingRef.current) {
+        const rect = headingRef.current.getBoundingClientRect();
+        const x = ((event.clientX - rect.left) / rect.width) * 100;
+        const y = ((event.clientY - rect.top) / rect.height) * 100;
+        headingRef.current.style.setProperty('--gradient-center-x', `${x}%`);
+        headingRef.current.style.setProperty('--gradient-center-y', `${y}%`);
+      }
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -44,7 +59,6 @@ export default function PortfolioPage() {
     };
     fetchProjects();
   }, []);
-
 
   useEffect(() => {
     const observerOptions = {
@@ -68,7 +82,6 @@ export default function PortfolioPage() {
       }
       return { observer, ref };
     });
-    
 
     return () => {
       intersectionObservers.forEach(({ observer, ref }) => {
@@ -79,13 +92,10 @@ export default function PortfolioPage() {
     };
   }, []);
 
-
   const filteredProjects = useMemo(() => {
     if (isLoading || error) return [];
     const results = projects.filter(project => {
       const categoryMatch = filters.category ? project.category === filters.category : true;
-      // Technology filter logic is removed based on previous request to remove the dropdown
-      // const technologyMatch = filters.technologies.length > 0 ? filters.technologies.every(tech => project.technologies.includes(tech)) : true;
       return categoryMatch;
     });
     setNoProjectsMessageVisible(results.length === 0 && !isLoading && (filters.category !== ''));
@@ -95,12 +105,12 @@ export default function PortfolioPage() {
   const handleFilterChange = (newFilters: Filters) => {
     setFilters(newFilters);
     if (newFilters.category === '') {
-      setNoProjectsMessageVisible(false); 
+      setNoProjectsMessageVisible(false);
     }
   };
 
   const handleResetFilters = () => {
-    setFilters({ category: '', technologies: [] }); // Reset technologies as well, even if UI is removed
+    setFilters({ category: '', technologies: [] });
     setNoProjectsMessageVisible(false);
   };
 
@@ -137,142 +147,145 @@ export default function PortfolioPage() {
     </div>
   );
 
-
   return (
     <div className="space-y-12 py-6 px-12 mt-8">
-        <section
-          aria-labelledby="welcome-heading"
-          className={cn(
-            "text-center transition-all duration-700 ease-in-out", 
-            isWelcomeVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-          )}
-          ref={welcomeSectionRef}
+      <section
+        aria-labelledby="welcome-heading"
+        className={cn(
+          "text-center transition-all duration-700 ease-in-out",
+          isWelcomeVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+        )}
+        ref={welcomeSectionRef}
+      >
+        <div
+          className="max-w-3xl mx-auto"
         >
-          <div 
-            className="max-w-3xl mx-auto" 
-          > 
-             <h1 
-              id="portfolio-page-main-heading" 
-              className="text-7xl font-bold text-transparent bg-clip-text mb-2 heading-hover-reveal relative overflow-hidden"
-              style={{
-                backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
-              }}
-            >
-              Hello there
-            </h1>
-            <p 
-              className="text-3xl md:text-4xl font-semibold mb-4 text-primary"
-            >
-              my name is Mytreyan.
-            </p>
-            <p 
-              className="text-lg md:text-xl text-foreground mb-4"
-            >
-              Can create light outta a blackhole
-            </p>
-            <Button 
-              size="lg" 
-              onClick={scrollToProjects} 
-              className="rounded-full shadow-lg hover:shadow-primary/30 transition-shadow"
-            >
-              View Projects <ArrowDown className="ml-2 h-5 w-5 animate-bounce" />
-            </Button>
-          </div>
-        </section>
-
-        <section
-          aria-labelledby="quick-navigation-heading"
-          className={cn(
-            "py-8 text-center transition-all duration-700 ease-in-out",
-            isQuickNavVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-          )}
-          ref={quickNavSectionRef}
-        >
-          <h2 
-            id="quick-navigation-heading" 
-            className="text-2xl font-semibold mb-6 text-foreground"
-           >
-            Connect & Explore
-           </h2>
-          <div className="flex justify-center space-x-4">
-            <Button asChild size="lg" variant="outline" className="shadow-md hover:shadow-lg transition-shadow">
-              <Link href="/contact">
-                <Mail className="mr-2 h-5 w-5" />
-                Get in Touch
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="shadow-md hover:shadow-lg transition-shadow">
-              <Link href="/resume">
-                <FileText className="mr-2 h-5 w-5" />
-                View Resume
-              </Link>
-            </Button>
-          </div>
-        </section>
-
-        <section
-          id="projects-section"
-          aria-labelledby="projects-heading"
-          className={cn(
-            "pt-8 transition-all duration-700 ease-in-out",
-            isProjectsVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-          )}
-          ref={projectsSectionRef}
-        >
-          <h2 
-            id="projects-heading" 
-            className="text-3xl font-semibold mb-8 text-center text-foreground"
+          <h1
+            id="portfolio-page-main-heading"
+            ref={headingRef}
+            className="text-7xl font-bold text-transparent bg-clip-text mb-2 relative overflow-hidden"
+            style={{
+              backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
+              transition: 'background-position 0.1s ease-out', // Optional: for smoother gradient shift
+            }}
           >
-            My Projects
-          </h2>
-          <ProjectFilter
-            filters={filters}
-            onFilterChange={handleFilterChange}
-            onResetFilters={handleResetFilters}
-          />
-          {error && (
-            <div className="text-center py-8 text-destructive flex flex-col items-center animate-fadeInUpScale">
-              <AlertTriangle className="h-12 w-12 mb-4" />
-              <p className="text-xl font-semibold">Failed to load projects</p>
-              <p>{error}</p>
-              <Button onClick={() => window.location.reload()} className="mt-4">Try Again</Button>
+            Hello there
+          </h1>
+          <p
+            className="text-3xl md:text-4xl font-semibold mb-4 text-primary"
+          >
+            my name is Mytreyan.
+          </p>
+          <p
+            className="text-lg md:text-xl text-foreground mb-8"
+          >
+            Can create light outta a blackhole
+          </p>
+          <Button
+            size="lg"
+            onClick={scrollToProjects}
+            className="rounded-full shadow-lg hover:shadow-primary/30 transition-shadow"
+          >
+            View Projects <ArrowDown className="ml-2 h-5 w-5 animate-bounce" />
+          </Button>
+        </div>
+      </section>
+
+      <section
+        aria-labelledby="quick-navigation-heading"
+        className={cn(
+          "py-8 text-center transition-all duration-700 ease-in-out",
+          isQuickNavVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+        )}
+        ref={quickNavSectionRef}
+      >
+        <h2
+          id="quick-navigation-heading"
+          className="text-2xl font-semibold mb-6 text-foreground"
+        >
+          Connect & Explore
+        </h2>
+        <div className="flex justify-center space-x-4">
+          <Button asChild size="lg" variant="outline" className="shadow-md hover:shadow-lg transition-shadow">
+            <Link href="/contact">
+              <Mail className="mr-2 h-5 w-5" />
+              Get in Touch
+            </Link>
+          </Button>
+          <Button asChild size="lg" variant="outline" className="shadow-md hover:shadow-lg transition-shadow">
+            <Link href="/resume">
+              <FileText className="mr-2 h-5 w-5" />
+              View Resume
+            </Link>
+          </Button>
+        </div>
+      </section>
+
+      <section
+        id="projects-section"
+        aria-labelledby="projects-heading"
+        className={cn(
+          "pt-8 transition-all duration-700 ease-in-out",
+          isProjectsVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+        )}
+        ref={projectsSectionRef}
+      >
+        <h2
+          id="projects-heading"
+          className="text-3xl font-semibold mb-8 text-center text-foreground"
+        >
+          My Projects
+        </h2>
+        <ProjectFilter
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onResetFilters={handleResetFilters}
+        />
+        {error && (
+          <div className="text-center py-8 text-destructive flex flex-col items-center animate-fadeInUpScale">
+            <AlertTriangle className="h-12 w-12 mb-4" />
+            <p className="text-xl font-semibold">Failed to load projects</p>
+            <p>{error}</p>
+            <Button onClick={() => window.location.reload()} className="mt-4">Try Again</Button>
+          </div>
+        )}
+        {!error && (
+          isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[...Array(3)].map((_, i) => <ProjectSkeletonCard key={`skeleton-${i}`} />)}
             </div>
-          )}
-          {!error && (
-            isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {[...Array(3)].map((_, i) => <ProjectSkeletonCard key={`skeleton-${i}`} />)}
-              </div>
-            ) : filteredProjects.length > 0 ? (
-              <div key={gridKey} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredProjects.map((project, index) => (
-                  <ProjectCard key={project.id} project={project} index={index} />
-                ))}
-              </div>
-            ) : (
-              noProjectsMessageVisible && (
-                <Alert 
-                  variant="destructive" 
-                  className="relative py-8 text-center animate-fadeInUpScale bg-destructive/10" 
-                  style={{ animationDelay: '0s' }}
+          ) : filteredProjects.length > 0 ? (
+            <div key={gridKey} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredProjects.map((project, index) => (
+                <ProjectCard key={project.id} project={project} index={index} />
+              ))}
+            </div>
+          ) : (
+            noProjectsMessageVisible && (
+              <Alert
+                variant="destructive"
+                className="relative py-8 text-center animate-fadeInUpScale bg-destructive/10"
+                style={{ animationDelay: '0s' }}
+              >
+                <button
+                  onClick={() => setNoProjectsMessageVisible(false)}
+                  className="absolute top-2 right-2 p-1 rounded-md hover:bg-destructive/20 transition-colors"
+                  aria-label="Dismiss message"
                 >
-                  <button 
-                    onClick={() => setNoProjectsMessageVisible(false)} 
-                    className="absolute top-2 right-2 p-1 rounded-md hover:bg-destructive/20 transition-colors"
-                    aria-label="Dismiss message"
-                  >
-                    <XIcon className="h-5 w-5" />
-                  </button>
-                  <AlertTriangle className="h-8 w-8 mx-auto mb-3" />
-                  <AlertTitle className="font-semibold text-lg mb-2">No Projects Found</AlertTitle>
-                  <AlertDescription>
-                    No projects match the current filters. Try adjusting your selection or reset filters.
-                  </AlertDescription>
-                </Alert>
-              )
+                  <XIcon className="h-5 w-5" />
+                </button>
+                <AlertTriangle className="h-8 w-8 mx-auto mb-3" />
+                <AlertTitle className="font-semibold text-lg mb-2">No Projects Found</AlertTitle>
+                <AlertDescription>
+                  No projects match the current filters. Try adjusting your selection or reset filters.
+                </AlertDescription>
+              </Alert>
             )
-          )}
-        </section>
+          )
+        )}
+      </section>
     </div>
   );
 }
+
+    
