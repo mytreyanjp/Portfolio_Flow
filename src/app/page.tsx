@@ -152,7 +152,10 @@ export default function PortfolioPage() {
   );
 
   return (
-    <div className="space-y-12 py-6 px-12 mt-8">
+    <div 
+      className="space-y-12 py-6 px-12 mt-8 bg-[url('https://placehold.co/1920x1080.png')] bg-cover bg-center bg-fixed"
+      data-ai-hint="abstract texture"
+    >
       <section
         aria-labelledby="welcome-heading"
         className={cn(
@@ -167,7 +170,7 @@ export default function PortfolioPage() {
           <h1
             id="portfolio-page-main-heading"
             ref={headingRef}
-            className="text-7xl font-bold text-transparent bg-clip-text mb-2 relative overflow-hidden"
+            className="text-7xl font-bold text-transparent bg-clip-text mb-2 relative overflow-hidden heading-hover-reveal"
             style={{
               backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)',
               // Add a subtle transition for the background position for smoother visual updates
@@ -182,7 +185,7 @@ export default function PortfolioPage() {
             my name is Mytreyan.
           </p>
           <p
-            className="text-lg md:text-xl text-foreground mb-8"
+            className="text-lg md:text-xl text-foreground mb-4"
           >
             Can create light outta a blackhole
           </p>
@@ -269,7 +272,7 @@ export default function PortfolioPage() {
             noProjectsMessageVisible && (
               <Alert
                 variant="destructive"
-                className="relative py-8 text-center animate-fadeInUpScale bg-destructive/10"
+                className="relative py-8 text-center animate-fadeInUpScale"
                 style={{ animationDelay: '0s' }} 
               >
                 <button

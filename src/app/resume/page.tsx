@@ -71,9 +71,10 @@ export default function ResumePage() {
     <div 
       ref={sectionRef}
       className={cn(
-        "max-w-4xl mx-auto py-8 transition-all duration-700 ease-in-out",
+        "max-w-4xl mx-auto py-8 transition-all duration-700 ease-in-out bg-[url('https://placehold.co/1920x1080.png')] bg-cover bg-center bg-fixed",
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
       )}
+      data-ai-hint="abstract texture"
     >
       <header className="text-center mb-12">
         <h1 
