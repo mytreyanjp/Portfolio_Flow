@@ -49,25 +49,25 @@ body {
   }
 
   .dark {
-    /* Royal Purple Dark Theme / Dark Violet */
-    --background: 270 40% 10%; /* Very dark purple */
-    --foreground: 275 50% 80%; /* Softer light lavender/silver */
-    --card: 270 35% 18%; /* Slightly lighter dark purple */
+    /* Black Dark Theme */
+    --background: 0 0% 0%; /* Black */
+    --foreground: 275 50% 80%; /* Softer light lavender/silver for text */
+    --card: 270 35% 10%; /* Very dark purple, almost black for cards */
     --card-foreground: 275 50% 80%; /* Match main foreground */
-    --popover: 270 40% 12%; /* Darker popover */
+    --popover: 270 40% 8%; /* Darker popover */
     --popover-foreground: 275 50% 80%; /* Match main foreground */
-    --primary: 280 70% 60%; /* Rich royal purple */
-    --primary-foreground: 280 60% 95%; /* Very light purple/white */
-    --secondary: 270 30% 25%; /* Dark muted purple for secondary elements */
+    --primary: 280 70% 60%; /* Rich royal purple for primary elements */
+    --primary-foreground: 280 60% 95%; /* Very light purple/white for text on primary */
+    --secondary: 270 30% 15%; /* Dark muted purple for secondary elements */
     --secondary-foreground: 275 50% 80%; /* Lighter purple for text on secondary */
-    --muted: 270 30% 22%; /* Similar to secondary */
+    --muted: 270 30% 12%; /* Similar to secondary, slightly darker */
     --muted-foreground: 275 30% 60%; /* Darker, more muted lavender */
-    --accent: 300 75% 70%; /* Bright magenta/violet */
+    --accent: 300 75% 70%; /* Bright magenta/violet for accents */
     --accent-foreground: 0 0% 100%; /* White */
     --destructive: 0 70% 50%; /* Adjusted for dark theme contrast */
     --destructive-foreground: 0 0% 98%;
-    --border: 270 25% 30%; /* Medium dark purple border */
-    --input: 270 25% 28%; /* Dark purple input background */
+    --border: 270 25% 20%; /* Dark purple border, slightly lighter than black */
+    --input: 270 25% 18%; /* Dark purple input background */
     --ring: 280 70% 60%; /* Primary purple for focus rings */
     --chart-1: 280 70% 70%;
     --chart-2: 300 60% 60%;
@@ -75,13 +75,13 @@ body {
     --chart-4: 290 80% 75%;
     --chart-5: 260 65% 65%;
     /* Sidebar variables for dark theme */
-    --sidebar-background: 270 40% 8%;
+    --sidebar-background: 0 0% 4%; /* Very dark, almost black */
     --sidebar-foreground: 275 50% 80%; 
     --sidebar-primary: 280 70% 60%;
     --sidebar-primary-foreground: 280 60% 95%;
     --sidebar-accent: 300 75% 70%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 270 25% 25%;
+    --sidebar-border: 270 25% 15%;
     --sidebar-ring: 280 70% 60%;
   }
 }
@@ -143,3 +143,4 @@ body {
   /* Expand the circle to reveal the ::after pseudo-element's gradient */
   clip-path: circle(75% at 50% 50%);
 }
+

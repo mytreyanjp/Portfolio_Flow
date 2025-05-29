@@ -26,7 +26,7 @@ export default function PortfolioPage() {
   const [isWelcomeVisible, setIsWelcomeVisible] = useState(false);
   const [isQuickNavVisible, setIsQuickNavVisible] = useState(false);
   const [isProjectsVisible, setIsProjectsVisible] = useState(false);
-
+  
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
@@ -43,6 +43,7 @@ export default function PortfolioPage() {
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
+
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -149,7 +150,7 @@ export default function PortfolioPage() {
   );
 
   return (
-    <div className="relative z-0 space-y-12 py-6 px-12 mt-8">
+    <div className="py-6 px-12 mt-8 space-y-12">
       <section
         aria-labelledby="welcome-heading"
         className={cn(
@@ -175,7 +176,7 @@ export default function PortfolioPage() {
           <p
             className="text-3xl md:text-4xl font-semibold mb-4 text-primary"
           >
-            my name is Mytreyan.
+            Mytreyan here
           </p>
           <p
             className="text-lg md:text-xl text-foreground mb-4"
