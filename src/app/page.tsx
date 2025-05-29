@@ -14,7 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 
 export default function PortfolioPage() {
-  const [filters, setFilters] = useState<Filters>({ category: '' });
+  const [filters, setFilters] = useState<Filters>({ category: '', technologies: [] });
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,6 +26,7 @@ export default function PortfolioPage() {
   const [isWelcomeVisible, setIsWelcomeVisible] = useState(false);
   const [isQuickNavVisible, setIsQuickNavVisible] = useState(false);
   const [isProjectsVisible, setIsProjectsVisible] = useState(false);
+  
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -83,6 +84,8 @@ export default function PortfolioPage() {
     if (isLoading || error) return [];
     const results = projects.filter(project => {
       const categoryMatch = filters.category ? project.category === filters.category : true;
+      // Technology filter logic is removed based on previous request to remove the dropdown
+      // const technologyMatch = filters.technologies.length > 0 ? filters.technologies.every(tech => project.technologies.includes(tech)) : true;
       return categoryMatch;
     });
     setNoProjectsMessageVisible(results.length === 0 && !isLoading && (filters.category !== ''));
@@ -97,7 +100,7 @@ export default function PortfolioPage() {
   };
 
   const handleResetFilters = () => {
-    setFilters({ category: '' });
+    setFilters({ category: '', technologies: [] }); // Reset technologies as well, even if UI is removed
     setNoProjectsMessageVisible(false);
   };
 
@@ -155,12 +158,12 @@ export default function PortfolioPage() {
                 backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
               }}
             >
-              Hi
+              Hello there
             </h1>
             <p 
               className="text-3xl md:text-4xl font-semibold mb-4 text-primary"
             >
-              Mytreyan here.
+              my name is Mytreyan.
             </p>
             <p 
               className="text-lg md:text-xl text-foreground mb-4"
