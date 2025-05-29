@@ -32,9 +32,9 @@ export default function PortfolioPage() {
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
       const { clientX, clientY } = event;
-      const x = (clientX / window.innerWidth - 0.5) * 2; 
-      const y = (clientY / window.innerHeight - 0.5) * 2; 
-      const sensitivity = 15; 
+      const x = (clientX / window.innerWidth - 0.5) * 2;
+      const y = (clientY / window.innerHeight - 0.5) * 2;
+      const sensitivity = 10; // Reduced sensitivity
       setParallaxOffset({ x: x * sensitivity, y: y * sensitivity });
     };
     window.addEventListener('mousemove', handleMouseMove);
@@ -164,7 +164,6 @@ export default function PortfolioPage() {
             isWelcomeVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
           )}
           ref={welcomeSectionRef}
-          
         >
           <div 
             className="max-w-3xl mx-auto" 
