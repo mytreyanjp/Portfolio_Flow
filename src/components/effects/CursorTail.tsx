@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 const CIRCLE_RADIUS = 150;
-const FILL_COLOR = 'rgba(107, 28, 117, 0.4)'; // Increased opacity
+const FILL_COLOR = 'rgba(107, 28, 117, 0.6)'; // Increased opacity
 const BLUR_STD_DEVIATION = 10;
 
 interface Position {
@@ -23,6 +23,7 @@ export default function CursorTail() {
       targetPosition.current = { x: event.clientX, y: event.clientY };
       if (!isVisible) {
         setIsVisible(true);
+        // Initialize position directly to avoid jump if mouse enters from edge
         setPosition({ x: event.clientX, y: event.clientY }); 
       }
     };
@@ -31,13 +32,15 @@ export default function CursorTail() {
 
     const updatePosition = () => {
       setPosition((prevPosition) => {
-        const newX = prevPosition.x + (targetPosition.current.x - prevPosition.x) * 0.2;
+        // Lerp for smooth following
+        const newX = prevPosition.x + (targetPosition.current.x - prevPosition.x) * 0.2; // Adjust 0.2 for follow speed
         const newY = prevPosition.y + (targetPosition.current.y - prevPosition.y) * 0.2;
         return { x: newX, y: newY };
       });
       animationFrameId.current = requestAnimationFrame(updatePosition);
     };
 
+    // Start animation loop only if visible and not already running
     if (isVisible) {
         if (animationFrameId.current === null) {
             animationFrameId.current = requestAnimationFrame(updatePosition);
@@ -51,10 +54,10 @@ export default function CursorTail() {
         animationFrameId.current = null;
       }
     };
-  }, [isVisible]);
+  }, [isVisible]); // Re-run effect if isVisible changes
 
   if (!isVisible) {
-    return null;
+    return null; // Don't render anything until the first mouse move
   }
 
   return (
@@ -65,8 +68,8 @@ export default function CursorTail() {
         left: 0,
         width: '100vw',
         height: '100vh',
-        pointerEvents: 'none',
-        zIndex: -5, // Adjusted z-index
+        pointerEvents: 'none', // Important: allows clicks to pass through
+        zIndex: 0, // Changed from -5 to 0
       }}
       aria-hidden="true"
     >
@@ -82,7 +85,7 @@ export default function CursorTail() {
         fill={FILL_COLOR}
         filter="url(#cursorBlurFilter)"
         style={{
-          transition: 'transform 0.05s ease-out', 
+          transition: 'transform 0.05s ease-out', // For slight visual smoothing if needed, but lerp handles main smoothing
         }}
       />
     </svg>
