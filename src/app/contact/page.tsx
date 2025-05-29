@@ -54,14 +54,16 @@ export default function ContactPage() {
   
 
   return (
-    <div 
-      className="bg-[url('https://placehold.co/1920x1080.png')] bg-cover bg-center bg-fixed"
-      data-ai-hint="abstract texture"
-    >
+    <div>
+      <div
+        className="fixed inset-0 -z-10 bg-cover bg-center"
+        style={{ backgroundImage: "url('https://placehold.co/1920x1080.png')" }}
+        data-ai-hint="abstract texture"
+      />
       <div
         ref={sectionRef}
         className={cn(
-          "max-w-4xl mx-auto py-8 transition-all duration-700 ease-in-out",
+          "relative z-0 max-w-4xl mx-auto py-8 transition-all duration-700 ease-in-out",
           isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
         )}
       >

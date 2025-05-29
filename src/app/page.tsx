@@ -148,11 +148,13 @@ export default function PortfolioPage() {
   );
 
   return (
-    <div 
-      className="bg-[url('https://placehold.co/1920x1080.png')] bg-cover bg-center bg-fixed"
-      data-ai-hint="abstract texture"
-    >
-      <div className="space-y-12 py-6 px-12 mt-8">
+    <div>
+      <div
+        className="fixed inset-0 -z-10 bg-cover bg-center"
+        style={{ backgroundImage: "url('https://picsum.photos/1980/1080')" }}
+        data-ai-hint="abstract texture"
+      />
+      <div className="relative z-0 space-y-12 py-6 px-12 mt-8">
         <section
           aria-labelledby="welcome-heading"
           className={cn(
