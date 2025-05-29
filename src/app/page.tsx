@@ -33,15 +33,18 @@ export default function PortfolioPage() {
     const handleMouseMove = (event: MouseEvent) => {
       if (headingRef.current) {
         const rect = headingRef.current.getBoundingClientRect();
+        // Calculate mouse position relative to the element
         const x = ((event.clientX - rect.left) / rect.width) * 100;
         const y = ((event.clientY - rect.top) / rect.height) * 100;
+        // Set CSS custom properties
         headingRef.current.style.setProperty('--gradient-center-x', `${x}%`);
         headingRef.current.style.setProperty('--gradient-center-y', `${y}%`);
       }
     };
+    // Add listener to window to track mouse globally
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
+  }, []); // Empty dependency array means this effect runs once on mount and cleanup on unmount
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -96,6 +99,7 @@ export default function PortfolioPage() {
     if (isLoading || error) return [];
     const results = projects.filter(project => {
       const categoryMatch = filters.category ? project.category === filters.category : true;
+      // Technology filter is removed, so we don't filter by it anymore
       return categoryMatch;
     });
     setNoProjectsMessageVisible(results.length === 0 && !isLoading && (filters.category !== ''));
@@ -165,8 +169,9 @@ export default function PortfolioPage() {
             ref={headingRef}
             className="text-7xl font-bold text-transparent bg-clip-text mb-2 relative overflow-hidden"
             style={{
-              backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
-              transition: 'background-position 0.1s ease-out', // Optional: for smoother gradient shift
+              backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)',
+              // Add a subtle transition for the background position for smoother visual updates
+              transition: 'background-position 0.1s ease-out', 
             }}
           >
             Hello there
@@ -265,7 +270,7 @@ export default function PortfolioPage() {
               <Alert
                 variant="destructive"
                 className="relative py-8 text-center animate-fadeInUpScale bg-destructive/10"
-                style={{ animationDelay: '0s' }}
+                style={{ animationDelay: '0s' }} 
               >
                 <button
                   onClick={() => setNoProjectsMessageVisible(false)}
@@ -287,5 +292,3 @@ export default function PortfolioPage() {
     </div>
   );
 }
-
-    
