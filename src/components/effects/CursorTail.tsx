@@ -3,8 +3,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
-const CIRCLE_RADIUS = 150; // Doubled from 75
-const FILL_COLOR = 'rgba(107, 28, 117, 0.2)'; // A semi-transparent purple
+const CIRCLE_RADIUS = 150;
+const FILL_COLOR = 'rgba(107, 28, 117, 0.4)'; // Increased opacity
 const BLUR_STD_DEVIATION = 10;
 
 interface Position {
@@ -23,7 +23,6 @@ export default function CursorTail() {
       targetPosition.current = { x: event.clientX, y: event.clientY };
       if (!isVisible) {
         setIsVisible(true);
-        // Initialize position to current mouse position to avoid jump
         setPosition({ x: event.clientX, y: event.clientY }); 
       }
     };
@@ -32,7 +31,6 @@ export default function CursorTail() {
 
     const updatePosition = () => {
       setPosition((prevPosition) => {
-        // Smooth transition to the target position
         const newX = prevPosition.x + (targetPosition.current.x - prevPosition.x) * 0.2;
         const newY = prevPosition.y + (targetPosition.current.y - prevPosition.y) * 0.2;
         return { x: newX, y: newY };
@@ -68,7 +66,7 @@ export default function CursorTail() {
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none',
-        zIndex: -1, 
+        zIndex: -5, // Adjusted z-index
       }}
       aria-hidden="true"
     >
@@ -84,7 +82,7 @@ export default function CursorTail() {
         fill={FILL_COLOR}
         filter="url(#cursorBlurFilter)"
         style={{
-          transition: 'transform 0.05s ease-out', // Optional: for smoother visual updates if direct pos updates are jerky
+          transition: 'transform 0.05s ease-out', 
         }}
       />
     </svg>
