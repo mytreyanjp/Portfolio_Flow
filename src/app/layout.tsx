@@ -12,7 +12,7 @@ import { useTheme } from 'next-themes';
 import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
-import CursorTail from '@/components/effects/CursorTail'; // Import CursorTail
+import CursorTail from '@/components/effects/CursorTail';
 
 const ThreeScene = dynamic(() => import('@/components/portfolio/ThreeScene'), {
   ssr: false,
@@ -63,7 +63,6 @@ export default function RootLayout({
     };
   }, [isClient]); 
   
-  // Logging for theme states
   console.log('RootLayout Render: isClient is', isClient);
   console.log('RootLayout Render: rawTheme (from useTheme) is', theme);
   console.log('RootLayout Render: resolvedTheme is', resolvedTheme);
@@ -72,8 +71,8 @@ export default function RootLayout({
   const shouldRenderThreeSceneOnPage = !pathsToHide3DModel.includes(pathname);
   
   const canRenderThreeScene = isClient && (resolvedTheme === 'light' || resolvedTheme === 'dark') && shouldRenderThreeSceneOnPage;
-  const currentThemeForScene = (resolvedTheme === 'light' || resolvedTheme === 'dark') ? resolvedTheme : 'light';
-  const threeSceneKey = resolvedTheme || 'initial-theme-key';
+  const currentThemeForScene = (resolvedTheme === 'light' || resolvedTheme === 'dark') ? resolvedTheme : 'dark'; // Default to dark if undefined
+  const threeSceneKey = resolvedTheme || 'initial-dark-theme-key'; // Ensure key changes if resolvedTheme was undefined
 
   console.log('RootLayout Render: canRenderThreeScene is', canRenderThreeScene);
   console.log('RootLayout Render: currentThemeForScene is', currentThemeForScene);
@@ -88,17 +87,10 @@ export default function RootLayout({
           `${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-background`,
         )}
       >
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {canRenderThreeScene && (
-            <Suspense fallback={<div style={{ height: '100vh', width: '100vw', position: 'fixed', top: 0, left: 0, zIndex: -1, backgroundColor: 'transparent' }} />}>
-              <ThreeScene
-                key={threeSceneKey} 
-                scrollPercentage={scrollPercentage}
-                currentTheme={currentThemeForScene}
-              />
-            </Suspense>
-          )}
-          <CursorTail /> {/* Add CursorTail here */}
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+          {/* 3D Scene is conditionally rendered directly within ThemeProvider if needed globally */}
+          {/* If ThreeScene is page-specific, it should be rendered within that page's component */}
+          <CursorTail />
           <div className="relative z-10 flex flex-col min-h-screen"> {/* Content wrapper above background */}
             <Header />
             <main className="flex-grow container mx-auto px-4 py-8">

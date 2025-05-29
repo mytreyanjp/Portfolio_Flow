@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 const CIRCLE_RADIUS = 150;
-const FILL_COLOR = 'rgba(107, 28, 117, 0.5)'; // Increased opacity
+const FILL_COLOR = 'rgba(107, 28, 117, 0.2)'; // Reduced alpha from 0.5 to 0.2
 const BLUR_STD_DEVIATION = 10;
 
 interface Position {
@@ -24,7 +24,7 @@ export default function CursorTail() {
       if (!isVisible) {
         setIsVisible(true);
         // Initialize position directly to avoid jump if mouse enters from edge
-        setPosition({ x: event.clientX, y: event.clientY }); 
+        setPosition({ x: event.clientX, y: event.clientY });
       }
     };
 
@@ -69,7 +69,7 @@ export default function CursorTail() {
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none', // Important: allows clicks to pass through
-        zIndex: -5, // Above page backgrounds (-z-10), below main content (z-0 or z-10)
+        zIndex: -5, 
       }}
       aria-hidden="true"
     >
@@ -85,7 +85,7 @@ export default function CursorTail() {
         fill={FILL_COLOR}
         filter="url(#cursorBlurFilter)"
         style={{
-          transition: 'transform 0.05s ease-out', // For slight visual smoothing if needed, but lerp handles main smoothing
+          transition: 'transform 0.05s ease-out',
         }}
       />
     </svg>
