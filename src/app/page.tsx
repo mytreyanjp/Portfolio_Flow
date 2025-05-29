@@ -20,32 +20,12 @@ export default function PortfolioPage() {
   const [error, setError] = useState<string | null>(null);
   const [noProjectsMessageVisible, setNoProjectsMessageVisible] = useState(false);
 
-  const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
-
   const welcomeSectionRef = useRef<HTMLElement>(null);
   const quickNavSectionRef = useRef<HTMLElement>(null);
   const projectsSectionRef = useRef<HTMLElement>(null);
   const [isWelcomeVisible, setIsWelcomeVisible] = useState(false);
   const [isQuickNavVisible, setIsQuickNavVisible] = useState(false);
   const [isProjectsVisible, setIsProjectsVisible] = useState(false);
-
-  useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      const { clientX, clientY } = event;
-      const x = (clientX / window.innerWidth - 0.5) * 2;
-      const y = (clientY / window.innerHeight - 0.5) * 2;
-      const sensitivity = 10; // Reduced sensitivity
-      setParallaxOffset({ x: x * sensitivity, y: y * sensitivity });
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
-
-  const parallaxStyle = {
-    transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`,
-    transition: 'transform 0.1s ease-out',
-  };
-
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -172,7 +152,6 @@ export default function PortfolioPage() {
               id="portfolio-page-main-heading" 
               className="text-7xl font-bold text-transparent bg-clip-text mb-2 heading-hover-reveal relative overflow-hidden"
               style={{
-                ...parallaxStyle,
                 backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
               }}
             >
@@ -181,7 +160,7 @@ export default function PortfolioPage() {
             <p 
               className="text-3xl md:text-4xl font-semibold mb-4 text-primary"
             >
-              my name is Mytreyan.
+              Mytreyan here.
             </p>
             <p 
               className="text-lg md:text-xl text-foreground mb-4"

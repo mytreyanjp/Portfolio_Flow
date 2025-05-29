@@ -79,7 +79,7 @@ export default function Header() {
             height={28} // Adjust height as needed
             className="h-7 w-7" // Tailwind class for consistency if needed, or remove if width/height is enough
           />
-          <span>Myth</span>
+          
         </Link>
 
         <div className="flex items-center space-x-2">
