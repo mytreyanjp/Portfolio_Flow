@@ -10,46 +10,7 @@ body {
 
 @layer base {
   :root {
-    /* Light Purple Theme */
-    --background: 275 80% 97%; /* Very light, almost white lavender */
-    --foreground: 270 40% 20%; /* Deep, readable purple */
-    --card: 275 70% 95%; /* Light lavender card */
-    --card-foreground: 270 40% 20%;
-    --popover: 275 70% 96%; /* Light lavender popover */
-    --popover-foreground: 270 40% 20%;
-    --primary: 270 65% 65%; /* Main light purple */
-    --primary-foreground: 270 80% 98%; /* Off-white for text on primary */
-    --secondary: 275 50% 90%; /* Lighter, muted purple */
-    --secondary-foreground: 270 40% 30%; /* Darker purple for text on secondary */
-    --muted: 275 50% 93%; /* Very light muted purple */
-    --muted-foreground: 270 30% 50%; /* Muted purple-gray */
-    --accent: 285 70% 70%; /* Brighter, slightly more pinkish purple accent */
-    --accent-foreground: 0 0% 100%; /* White */
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 275 50% 85%; /* Soft lavender border */
-    --input: 275 50% 92%; /* Light lavender input background */
-    --ring: 270 65% 65%; /* Primary purple for focus rings */
-    --chart-1: 270 65% 70%;
-    --chart-2: 285 60% 75%;
-    --chart-3: 260 55% 65%;
-    --chart-4: 275 70% 80%;
-    --chart-5: 290 50% 70%;
-    --radius: 0.5rem;
-
-    /* Sidebar variables for light purple theme */
-    --sidebar-background: 275 80% 96%;
-    --sidebar-foreground: 270 40% 20%;
-    --sidebar-primary: 270 65% 65%;
-    --sidebar-primary-foreground: 270 80% 98%;
-    --sidebar-accent: 285 70% 70%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 275 50% 82%;
-    --sidebar-ring: 270 65% 65%;
-  }
-
-  .dark {
-    /* Royal Purple Dark Theme / Dark Violet */
+    /* Royal Purple Dark Theme / Dark Violet - Applied as default */
     --background: 270 40% 10%; /* Very dark purple */
     --foreground: 275 50% 80%; /* Softer light lavender/silver */
     --card: 270 35% 18%; /* Slightly lighter dark purple */
@@ -59,7 +20,46 @@ body {
     --primary: 280 70% 60%; /* Rich royal purple */
     --primary-foreground: 280 60% 95%; /* Very light purple/white */
     --secondary: 270 30% 25%; /* Dark muted purple for secondary elements */
-    --secondary-foreground: 275 50% 80%; /* Lighter purple for text on secondary (matches new foreground) */
+    --secondary-foreground: 275 50% 80%; /* Lighter purple for text on secondary */
+    --muted: 270 30% 22%; /* Similar to secondary */
+    --muted-foreground: 275 30% 60%; /* Darker, more muted lavender */
+    --accent: 300 75% 70%; /* Bright magenta/violet */
+    --accent-foreground: 0 0% 100%; /* White */
+    --destructive: 0 84.2% 60.2%; /* Default destructive, ensure good contrast on dark */
+    --destructive-foreground: 0 0% 98%;
+    --border: 270 25% 30%; /* Medium dark purple border */
+    --input: 270 25% 28%; /* Dark purple input background */
+    --ring: 280 70% 60%; /* Primary purple for focus rings */
+    --chart-1: 280 70% 70%;
+    --chart-2: 300 60% 60%;
+    --chart-3: 270 50% 50%;
+    --chart-4: 290 80% 75%;
+    --chart-5: 260 65% 65%;
+    --radius: 0.5rem;
+
+    /* Sidebar variables for dark theme - Applied as default */
+    --sidebar-background: 270 40% 8%;
+    --sidebar-foreground: 275 50% 80%;
+    --sidebar-primary: 280 70% 60%;
+    --sidebar-primary-foreground: 280 60% 95%;
+    --sidebar-accent: 300 75% 70%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 270 25% 25%;
+    --sidebar-ring: 280 70% 60%;
+  }
+
+  .dark {
+    /* Royal Purple Dark Theme / Dark Violet - Explicit dark mode */
+    --background: 270 40% 10%; /* Very dark purple */
+    --foreground: 275 50% 80%; /* Softer light lavender/silver */
+    --card: 270 35% 18%; /* Slightly lighter dark purple */
+    --card-foreground: 275 50% 80%; /* Match main foreground */
+    --popover: 270 40% 12%; /* Darker popover */
+    --popover-foreground: 275 50% 80%; /* Match main foreground */
+    --primary: 280 70% 60%; /* Rich royal purple */
+    --primary-foreground: 280 60% 95%; /* Very light purple/white */
+    --secondary: 270 30% 25%; /* Dark muted purple for secondary elements */
+    --secondary-foreground: 275 50% 80%; /* Lighter purple for text on secondary */
     --muted: 270 30% 22%; /* Similar to secondary */
     --muted-foreground: 275 30% 60%; /* Darker, more muted lavender */
     --accent: 300 75% 70%; /* Bright magenta/violet */
@@ -76,7 +76,7 @@ body {
     --chart-5: 260 65% 65%;
     /* Sidebar variables for dark theme */
     --sidebar-background: 270 40% 8%;
-    --sidebar-foreground: 275 50% 80%; /* Match new main foreground */
+    --sidebar-foreground: 275 50% 80%; 
     --sidebar-primary: 280 70% 60%;
     --sidebar-primary-foreground: 280 60% 95%;
     --sidebar-accent: 300 75% 70%;
@@ -109,12 +109,15 @@ body {
   }
 }
 
-/* Removed previous heading hover reveal CSS as the effect is now JS-driven */
-/*
 .heading-hover-reveal {
   position: relative;
   overflow: hidden;
   display: inline-block; 
+  color: transparent; /* Ensure text itself is transparent */
+  -webkit-text-fill-color: transparent; /* For Safari */
+  background-clip: text;
+  -webkit-background-clip: text;
+  /* The default gradient is applied directly to the h1 in its style attribute */
 }
 
 .heading-hover-reveal::after {
@@ -122,9 +125,9 @@ body {
   position: absolute;
   inset: 0; 
   background-image: radial-gradient(circle at center, hsl(var(--primary)) 10%, hsl(var(--accent)) 90%);
-  -webkit-background-clip: text;
+  -webkit-background-clip: text; /* Clip this pseudo-element's background to text shape */
   background-clip: text;
-  color: transparent;
+  color: transparent; /* Make pseudo-element's "text" transparent to see its background */
   -webkit-text-fill-color: transparent;
   clip-path: circle(0% at 50% 50%); 
   transition: clip-path 0.4s ease-out;
@@ -134,6 +137,6 @@ body {
 .heading-hover-reveal:hover::after {
   clip-path: circle(75% at 50% 50%);
 }
-*/
+    
 
     
