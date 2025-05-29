@@ -30,6 +30,7 @@ export default function PortfolioPage() {
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
+    if (!headingRef.current) return;
     const handleMouseMove = (event: MouseEvent) => {
       if (headingRef.current) {
         const rect = headingRef.current.getBoundingClientRect();
@@ -148,149 +149,142 @@ export default function PortfolioPage() {
   );
 
   return (
-    <div>
-      <div
-        className="fixed inset-0 -z-10 bg-cover bg-center"
-        style={{ backgroundImage: "url('https://picsum.photos/1980/1080')" }}
-        data-ai-hint="abstract texture"
-      />
-      <div className="relative z-0 space-y-12 py-6 px-12 mt-8">
-        <section
-          aria-labelledby="welcome-heading"
-          className={cn(
-            "text-center transition-all duration-700 ease-in-out",
-            isWelcomeVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-          )}
-          ref={welcomeSectionRef}
+    <div className="relative z-0 space-y-12 py-6 px-12 mt-8">
+      <section
+        aria-labelledby="welcome-heading"
+        className={cn(
+          "text-center transition-all duration-700 ease-in-out",
+          isWelcomeVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+        )}
+        ref={welcomeSectionRef}
+      >
+        <div
+          className="max-w-3xl mx-auto"
         >
-          <div
-            className="max-w-3xl mx-auto"
+          <h1
+            id="portfolio-page-main-heading"
+            ref={headingRef}
+            className="text-7xl font-bold text-transparent bg-clip-text mb-2 relative overflow-hidden heading-hover-reveal"
+            style={{
+              backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)',
+              transition: 'background-position 0.1s ease-out',
+            }}
           >
-            <h1
-              id="portfolio-page-main-heading"
-              ref={headingRef}
-              className="text-7xl font-bold text-transparent bg-clip-text mb-2 relative overflow-hidden heading-hover-reveal"
-              style={{
-                backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)',
-                transition: 'background-position 0.1s ease-out', 
-              }}
-            >
-              Hello there
-            </h1>
-            <p
-              className="text-3xl md:text-4xl font-semibold mb-4 text-primary"
-            >
-              my name is Mytreyan.
-            </p>
-            <p
-              className="text-lg md:text-xl text-foreground mb-4"
-            >
-              Can create light outta a blackhole
-            </p>
-            <Button
-              size="lg"
-              onClick={scrollToProjects}
-              className="rounded-full shadow-lg hover:shadow-primary/30 transition-shadow"
-            >
-              View Projects <ArrowDown className="ml-2 h-5 w-5 animate-bounce" />
-            </Button>
-          </div>
-        </section>
+            Hello there
+          </h1>
+          <p
+            className="text-3xl md:text-4xl font-semibold mb-4 text-primary"
+          >
+            my name is Mytreyan.
+          </p>
+          <p
+            className="text-lg md:text-xl text-foreground mb-4"
+          >
+            Can create light outta a blackhole
+          </p>
+          <Button
+            size="lg"
+            onClick={scrollToProjects}
+            className="rounded-full shadow-lg hover:shadow-primary/30 transition-shadow"
+          >
+            View Projects <ArrowDown className="ml-2 h-5 w-5 animate-bounce" />
+          </Button>
+        </div>
+      </section>
 
-        <section
-          aria-labelledby="quick-navigation-heading"
-          className={cn(
-            "py-8 text-center transition-all duration-700 ease-in-out",
-            isQuickNavVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-          )}
-          ref={quickNavSectionRef}
+      <section
+        aria-labelledby="quick-navigation-heading"
+        className={cn(
+          "py-8 text-center transition-all duration-700 ease-in-out",
+          isQuickNavVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+        )}
+        ref={quickNavSectionRef}
+      >
+        <h2
+          id="quick-navigation-heading"
+          className="text-2xl font-semibold mb-6 text-foreground"
         >
-          <h2
-            id="quick-navigation-heading"
-            className="text-2xl font-semibold mb-6 text-foreground"
-          >
-            Connect & Explore
-          </h2>
-          <div className="flex justify-center space-x-4">
-            <Button asChild size="lg" variant="outline" className="shadow-md hover:shadow-lg transition-shadow">
-              <Link href="/contact">
-                <Mail className="mr-2 h-5 w-5" />
-                Get in Touch
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="shadow-md hover:shadow-lg transition-shadow">
-              <Link href="/resume">
-                <FileText className="mr-2 h-5 w-5" />
-                View Resume
-              </Link>
-            </Button>
-          </div>
-        </section>
+          Connect & Explore
+        </h2>
+        <div className="flex justify-center space-x-4">
+          <Button asChild size="lg" variant="outline" className="shadow-md hover:shadow-lg transition-shadow">
+            <Link href="/contact">
+              <Mail className="mr-2 h-5 w-5" />
+              Get in Touch
+            </Link>
+          </Button>
+          <Button asChild size="lg" variant="outline" className="shadow-md hover:shadow-lg transition-shadow">
+            <Link href="/resume">
+              <FileText className="mr-2 h-5 w-5" />
+              View Resume
+            </Link>
+          </Button>
+        </div>
+      </section>
 
-        <section
-          id="projects-section"
-          aria-labelledby="projects-heading"
-          className={cn(
-            "pt-8 transition-all duration-700 ease-in-out",
-            isProjectsVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-          )}
-          ref={projectsSectionRef}
+      <section
+        id="projects-section"
+        aria-labelledby="projects-heading"
+        className={cn(
+          "pt-8 transition-all duration-700 ease-in-out",
+          isProjectsVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+        )}
+        ref={projectsSectionRef}
+      >
+        <h2
+          id="projects-heading"
+          className="text-3xl font-semibold mb-8 text-center text-foreground"
         >
-          <h2
-            id="projects-heading"
-            className="text-3xl font-semibold mb-8 text-center text-foreground"
-          >
-            My Projects
-          </h2>
-          <ProjectFilter
-            filters={filters}
-            onFilterChange={handleFilterChange}
-            onResetFilters={handleResetFilters}
-          />
-          {error && (
-            <div className="text-center py-8 text-destructive flex flex-col items-center animate-fadeInUpScale">
-              <AlertTriangle className="h-12 w-12 mb-4" />
-              <p className="text-xl font-semibold">Failed to load projects</p>
-              <p>{error}</p>
-              <Button onClick={() => window.location.reload()} className="mt-4">Try Again</Button>
+          My Projects
+        </h2>
+        <ProjectFilter
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onResetFilters={handleResetFilters}
+        />
+        {error && (
+          <div className="text-center py-8 text-destructive flex flex-col items-center animate-fadeInUpScale">
+            <AlertTriangle className="h-12 w-12 mb-4" />
+            <p className="text-xl font-semibold">Failed to load projects</p>
+            <p>{error}</p>
+            <Button onClick={() => window.location.reload()} className="mt-4">Try Again</Button>
+          </div>
+        )}
+        {!error && (
+          isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[...Array(3)].map((_, i) => <ProjectSkeletonCard key={`skeleton-${i}`} />)}
             </div>
-          )}
-          {!error && (
-            isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {[...Array(3)].map((_, i) => <ProjectSkeletonCard key={`skeleton-${i}`} />)}
-              </div>
-            ) : filteredProjects.length > 0 ? (
-              <div key={gridKey} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredProjects.map((project, index) => (
-                  <ProjectCard key={project.id} project={project} index={index} />
-                ))}
-              </div>
-            ) : (
-              noProjectsMessageVisible && (
-                <Alert
-                  variant="destructive"
-                  className="relative py-8 text-center animate-fadeInUpScale bg-destructive/10"
-                  style={{ animationDelay: '0s' }} 
+          ) : filteredProjects.length > 0 ? (
+            <div key={gridKey} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredProjects.map((project, index) => (
+                <ProjectCard key={project.id} project={project} index={index} />
+              ))}
+            </div>
+          ) : (
+            noProjectsMessageVisible && (
+              <Alert
+                variant="destructive"
+                className="relative py-8 text-center animate-fadeInUpScale bg-destructive/10"
+                style={{ animationDelay: '0s' }}
+              >
+                <button
+                  onClick={() => setNoProjectsMessageVisible(false)}
+                  className="absolute top-2 right-2 p-1 rounded-md hover:bg-destructive/20 transition-colors"
+                  aria-label="Dismiss message"
                 >
-                  <button
-                    onClick={() => setNoProjectsMessageVisible(false)}
-                    className="absolute top-2 right-2 p-1 rounded-md hover:bg-destructive/20 transition-colors"
-                    aria-label="Dismiss message"
-                  >
-                    <XIcon className="h-5 w-5" />
-                  </button>
-                  <AlertTriangle className="h-8 w-8 mx-auto mb-3" />
-                  <AlertTitle className="font-semibold text-lg mb-2">No Projects Found</AlertTitle>
-                  <AlertDescription>
-                    No projects match the current filters. Try adjusting your selection or reset filters.
-                  </AlertDescription>
-                </Alert>
-              )
+                  <XIcon className="h-5 w-5" />
+                </button>
+                <AlertTriangle className="h-8 w-8 mx-auto mb-3" />
+                <AlertTitle className="font-semibold text-lg mb-2">No Projects Found</AlertTitle>
+                <AlertDescription>
+                  No projects match the current filters. Try adjusting your selection or reset filters.
+                </AlertDescription>
+              </Alert>
             )
-          )}
-        </section>
-      </div>
+          )
+        )}
+      </section>
     </div>
   );
 }
