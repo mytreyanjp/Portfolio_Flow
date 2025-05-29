@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowUpRight, Github } from 'lucide-react';
 import React, { useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import { cn } from '@/lib/utils';
 
 const ProjectModelViewer = dynamic(() => import('./ProjectModelViewer'), {
   ssr: false,
@@ -35,7 +36,10 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
   return (
     <Card 
       ref={cardRef}
-      className="flex flex-col h-full overflow-hidden transform transition-all duration-300 hover:shadow-xl hover:scale-[1.02] animate-fadeInUpScale"
+      className={cn(
+        "flex flex-col h-full overflow-hidden transform transition-all duration-300 hover:scale-[1.02] animate-fadeInUpScale shadow-glow-primary",
+        "dark:shadow-glow-primary" // Ensure dark mode also applies the glow if needed (or handled by utility)
+      )}
       style={{ animationDelay: `${index * 100}ms` }}
     >
       <div className="relative w-full h-48 mb-4 rounded-t-md overflow-hidden group bg-muted">

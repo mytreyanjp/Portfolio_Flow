@@ -1,7 +1,9 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function ResumeDownloader() {
   const handleDownload = () => {
@@ -24,7 +26,11 @@ export default function ResumeDownloader() {
   };
 
   return (
-    <Button onClick={handleDownload} className="w-full shadow-md hover:shadow-lg" size="lg">
+    <Button 
+      onClick={handleDownload} 
+      className={cn("w-full shadow-md hover:shadow-lg", "shadow-glow-primary")}
+      size="lg"
+    >
       <Download className="mr-2 h-5 w-5" />
       Download Resume
     </Button>

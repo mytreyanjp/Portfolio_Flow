@@ -90,7 +90,7 @@ export default function ResumePage() {
       </header>
 
       <div className="grid md:grid-cols-3 gap-8 mb-12">
-        <Card className="md:col-span-1 shadow-lg">
+        <Card className="md:col-span-1 shadow-lg shadow-glow-primary">
           <CardContent className="pt-6 flex flex-col items-center text-center">
             <Image
               src="https://placehold.co/150x150.png"
@@ -108,7 +108,7 @@ export default function ResumePage() {
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-2 shadow-lg">
+        <Card className="md:col-span-2 shadow-lg shadow-glow-primary">
           <CardHeader>
             <CardTitle className="text-2xl flex items-center text-foreground"><Lightbulb className="mr-2 h-6 w-6 text-primary"/> Summary</CardTitle>
           </CardHeader>
@@ -121,7 +121,7 @@ export default function ResumePage() {
       </div>
 
       <div className="space-y-10">
-        <Card className="shadow-lg">
+        <Card className="shadow-lg shadow-glow-primary">
           <CardHeader>
             <CardTitle className="text-2xl flex items-center text-foreground"><CheckCircle className="mr-2 h-6 w-6 text-primary"/> Key Skills</CardTitle>
           </CardHeader>
@@ -142,7 +142,7 @@ export default function ResumePage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg">
+        <Card className="shadow-lg shadow-glow-primary">
           <CardHeader>
             <CardTitle className="text-2xl flex items-center text-foreground"><Briefcase className="mr-2 h-6 w-6 text-primary"/> Experience (Placeholder)</CardTitle>
           </CardHeader>
@@ -167,7 +167,7 @@ export default function ResumePage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg">
+        <Card className="shadow-lg shadow-glow-primary">
           <CardHeader>
             <CardTitle className="text-2xl flex items-center text-foreground"><GraduationCap className="mr-2 h-6 w-6 text-primary"/> Education (Placeholder)</CardTitle>
           </CardHeader>
@@ -180,7 +180,7 @@ export default function ResumePage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg">
+        <Card className="shadow-lg shadow-glow-primary">
           <CardHeader>
             <CardTitle className="text-2xl flex items-center text-foreground"><Award className="mr-2 h-6 w-6 text-primary"/> Awards & Certifications (Placeholder)</CardTitle>
           </CardHeader>

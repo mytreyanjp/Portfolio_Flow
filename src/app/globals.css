@@ -107,40 +107,38 @@ body {
       transform: translateY(0) scale(1);
     }
   }
+  .shadow-glow-primary {
+    filter: drop-shadow(0 0 6px hsl(var(--primary) / 0.5)) drop-shadow(0 0 10px hsl(var(--primary) / 0.3));
+  }
+  .dark .shadow-glow-primary { /* Ensure it uses the dark theme's primary */
+    filter: drop-shadow(0 0 8px hsl(var(--primary) / 0.6)) drop-shadow(0 0 12px hsl(var(--primary) / 0.4));
+  }
 }
 
 .heading-hover-reveal {
   position: relative;
   overflow: hidden;
   display: inline-block; 
-  /* Ensure the text itself is transparent to see the background that is clipped to it */
   color: transparent; 
   -webkit-text-fill-color: transparent; /* For Safari */
   background-clip: text;
   -webkit-background-clip: text;
-  /* The default gradient is applied directly to the h1 in its style attribute */
 }
 
 .heading-hover-reveal::after {
   content: '';
   position: absolute;
   inset: 0; 
-  /* This is the gradient that will be revealed on hover */
   background-image: radial-gradient(circle at center, hsl(var(--primary)) 10%, hsl(var(--accent)) 90%);
-  /* Crucially, this pseudo-element's background must also be clipped to the text shape */
   -webkit-background-clip: text; 
   background-clip: text;
-  /* Make the pseudo-element's "text" color transparent so its background (the hover gradient) is visible */
   color: transparent; 
   -webkit-text-fill-color: transparent;
-  /* Start with the circle clipped to 0% (invisible) */
   clip-path: circle(0% at 50% 50%); 
   transition: clip-path 0.4s ease-out;
   pointer-events: none; 
 }
 
 .heading-hover-reveal:hover::after {
-  /* Expand the circle to reveal the ::after pseudo-element's gradient */
   clip-path: circle(75% at 50% 50%);
 }
-
