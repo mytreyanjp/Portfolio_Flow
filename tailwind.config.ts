@@ -11,8 +11,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        display: ["var(--font-greater-theory)"], // For "Hello there", "Mytreyan here"
-        subtext: ["var(--font-wasted-vindey)"], // New font family for subtext
+        display: ["var(--font-greater-theory)"], 
+        subtext: ["var(--font-wasted-vindey)"], 
       },
   		colors: {
   			background: 'hsl(var(--background))',
@@ -92,11 +92,16 @@ export default {
           '0%': { opacity: '0', transform: 'translateY(20px) scale(0.95)' },
           '100%': { opacity: '1', transform: 'translateY(0px) scale(1)' },
         },
+        fadeInQuick: { // New animation for the percentage number
+          '0%': { opacity: '0', transform: 'translateY(5px) scale(0.95)' },
+          '100%': { opacity: '1', transform: 'translateY(0px) scale(1)' },
+        },
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
         'fadeInUpScale': 'fadeInUpScale 0.5s ease-out forwards',
+        'fadeInQuick': 'fadeInQuick 0.3s ease-out forwards', // New animation utility
   		}
   	}
   },

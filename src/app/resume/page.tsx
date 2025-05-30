@@ -8,7 +8,7 @@ import { Award, Briefcase, GraduationCap, Lightbulb, CheckCircle, Instagram, Git
 import Image from 'next/image';
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import SkillBar from '@/components/resume/SkillBar'; // Import the new component
+import SkillBar from '@/components/resume/SkillBar';
 
 const skills = [
   { name: 'JavaScript & Python', level: 90 },
@@ -27,6 +27,7 @@ export default function ResumePage() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
+  const [hoveredSkillLevel, setHoveredSkillLevel] = useState<number | null>(null);
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
@@ -67,6 +68,9 @@ export default function ResumePage() {
     };
   }, []);
 
+  const handleSkillHover = (level: number | null) => {
+    setHoveredSkillLevel(level);
+  };
 
   return (
     <div
@@ -82,7 +86,6 @@ export default function ResumePage() {
           className="font-display text-3xl md:text-4xl font-bold text-transparent bg-clip-text relative overflow-hidden heading-hover-reveal"
           style={{
             backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
-            ...parallaxStyle,
           }}
         >
           My Professional Profile
@@ -91,7 +94,7 @@ export default function ResumePage() {
       </header>
 
       <div className="grid md:grid-cols-3 gap-8 mb-12">
-        <div className="md:col-span-1 flex flex-col items-center text-center">
+        <div className="md:col-span-1 flex flex-col items-center">
           <Card className={cn("shadow-lg w-full", "transition-transform duration-200 ease-out hover:scale-[1.02]")}>
             <CardContent className="pt-6 flex flex-col items-center text-center">
               <div className="relative mb-4 group">
@@ -113,7 +116,7 @@ export default function ResumePage() {
             </CardContent>
           </Card>
           <div className="mt-4 text-center">
-            <p className="text-sm text-black dark:text-white font-subtext">
+            <p className="text-sm text-black dark:text-white">
               BTech IT<br />
               <a
                 href="https://www.annauniv.edu/#gsc.tab=0"
@@ -164,19 +167,19 @@ export default function ResumePage() {
             <ul className="space-y-3 text-foreground/80 leading-relaxed">
               <li className="flex items-start">
                 <span className="mr-2 mt-1 text-primary shrink-0 text-xl leading-none">&bull;</span>
-                <span>IT student skilled in web app development, data structures, and languages: C++, Java, Python, JavaScript.</span>
+                <span>Skilled IT student: Web Dev, Data Structures, C++, Java, Python, JavaScript.</span>
               </li>
               <li className="flex items-start">
                 <span className="mr-2 mt-1 text-primary shrink-0 text-xl leading-none">&bull;</span>
-                <span>Proficient in Machine Learning concepts, 3D Modeling (Blender, Unity), and SQL.</span>
+                <span>Proficient: Machine Learning, 3D Modeling (Blender/Unity), SQL.</span>
               </li>
               <li className="flex items-start">
                 <span className="mr-2 mt-1 text-primary shrink-0 text-xl leading-none">&bull;</span>
-                <span>Practical skills: 3D modelling, video/image editing, database admin, and computer hardware.</span>
+                <span>Hands-on: 3D design, video/image editing, database admin, hardware basics.</span>
               </li>
               <li className="flex items-start">
                 <span className="mr-2 mt-1 text-primary shrink-0 text-xl leading-none">&bull;</span>
-                <span>Proactive leader, eager for new challenges and driving innovative solutions.</span>
+                <span>Proactive leader, eager for challenges and innovative solutions.</span>
               </li>
             </ul>
           </CardContent>
@@ -185,13 +188,28 @@ export default function ResumePage() {
 
       <div className="space-y-10">
         <Card className={cn("shadow-lg", "transition-transform duration-200 ease-out hover:scale-[1.02]")}>
-          <CardHeader>
-            <CardTitle className="font-display text-2xl flex items-center text-foreground"><CheckCircle className="mr-2 h-6 w-6 text-primary"/> Key Skills</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between"> {/* Flex layout for title and number */}
+            <CardTitle className="font-display text-2xl flex items-center text-foreground">
+              <CheckCircle className="mr-2 h-6 w-6 text-primary"/> Key Skills
+            </CardTitle>
+            <div className="text-right">
+              <span
+                key={hoveredSkillLevel === null ? 'placeholder' : hoveredSkillLevel} 
+                className="text-2xl font-bold text-primary animate-fadeInQuick"
+              >
+                {hoveredSkillLevel !== null ? `${hoveredSkillLevel}%` : '0%'}
+              </span>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-0"> {/* Adjusted gap */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-0">
               {skills.map(skill => (
-                <SkillBar key={skill.name} name={skill.name} level={skill.level} />
+                <SkillBar
+                  key={skill.name}
+                  name={skill.name}
+                  level={skill.level}
+                  onHoverSkill={handleSkillHover}
+                />
               ))}
             </div>
           </CardContent>
