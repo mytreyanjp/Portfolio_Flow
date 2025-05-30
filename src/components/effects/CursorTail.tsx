@@ -3,15 +3,15 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 
-// DEBUG Appearance settings:
+// Appearance settings:
 const CIRCLE_RADIUS = 150;
-const FILL_COLOR_DARK_THEME_VISIBLE_OPACITY = 1; // Opaque for dark
-const FILL_COLOR_LIGHT_THEME_INVISIBLE_OPACITY = 0.0; // Invisible for light
-const BASE_FILL_COLOR_RGB_DARK_THEME = '255, 0, 0'; // DEBUG: Bright Red for dark theme
-const BASE_FILL_COLOR_RGB_LIGHT_THEME = '107, 28, 117'; // Original Purple for light (but will be transparent)
+const FILL_COLOR_DARK_THEME_VISIBLE_OPACITY = 0.3; // Semi-transparent for dark theme
+const FILL_COLOR_LIGHT_THEME_INVISIBLE_OPACITY = 0.0; // Invisible for light theme
+const BASE_FILL_COLOR_RGB_DARK_THEME = '107, 28, 117'; // Purple for dark theme
+const BASE_FILL_COLOR_RGB_LIGHT_THEME = '107, 28, 117'; // Doesn't matter much if opacity is 0
 
-const BLUR_STD_DEVIATION = 0; // DEBUG: No blur
-const Z_INDEX = 9999; // DEBUG: Force on top
+const BLUR_STD_DEVIATION = 15; // Restore blur
+const Z_INDEX = -1; // Place behind main content but above body background
 
 interface Position {
   x: number;
@@ -60,8 +60,11 @@ export default function CursorTail(props: CursorTailProps) {
       animationFrameId.current = requestAnimationFrame(updatePosition);
     };
     
-    animationFrameId.current = requestAnimationFrame(updatePosition);
-    console.log('[CursorTail] Mousemove listener added and animation loop started.');
+    // Start the animation loop only if not already running
+    if (animationFrameId.current === null) {
+      animationFrameId.current = requestAnimationFrame(updatePosition);
+      console.log('[CursorTail] Mousemove listener added and animation loop started.');
+    }
     
     return () => {
       console.log('[CursorTail] Cleanup: Removing mousemove listener and cancelling animation frame.');
@@ -72,7 +75,7 @@ export default function CursorTail(props: CursorTailProps) {
         animationFrameId.current = null;
       }
     };
-  }, []); // Re-run effect if isDarkTheme changes (due to key prop in layout.tsx)
+  }, []); // Empty dependency array to run once on mount and clean up on unmount
 
   const fillColor = useMemo(() => {
     const baseRgb = isDarkTheme ? BASE_FILL_COLOR_RGB_DARK_THEME : BASE_FILL_COLOR_RGB_LIGHT_THEME;
@@ -110,7 +113,7 @@ export default function CursorTail(props: CursorTailProps) {
         cy={position.y}
         r={CIRCLE_RADIUS}
         fill={fillColor}
-        filter={BLUR_STD_DEVIATION > 0 && isDarkTheme ? `url(#${blurFilterId})` : undefined} // Apply blur only if >0 and darkTheme
+        filter={BLUR_STD_DEVIATION > 0 && isDarkTheme ? `url(#${blurFilterId})` : undefined} 
       />
     </svg>
   );
