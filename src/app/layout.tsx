@@ -52,11 +52,11 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
       {isClient && <CursorTail key={cursorTailKey} isDarkTheme={currentIsDarkTheme} />}
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
-        {/* Added pb-16 to main to account for fixed footer height */}
-        <main className="flex-grow container mx-auto px-4 py-8 pb-20"> {/* Increased bottom padding */}
+        {/* Responsive bottom padding: pb-20 for small screens (footer visible), pb-8 for md+ (footer hidden) */}
+        <main className="flex-grow container mx-auto px-4 py-8 pb-20 md:pb-8">
           {children}
         </main>
-        <Footer /> {/* This is now the navigation footer */}
+        <Footer /> {/* This is now the mobile-only navigation footer */}
       </div>
       <Toaster />
     </>

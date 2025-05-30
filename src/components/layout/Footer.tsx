@@ -21,7 +21,8 @@ export default function Footer() {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <footer className="fixed bottom-0 left-0 right-0 z-40 h-16 border-t border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      {/* Footer is now hidden on md screens and up */}
+      <footer className="fixed bottom-0 left-0 right-0 z-40 h-16 border-t border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">
         <nav className="container mx-auto flex h-full max-w-md items-center justify-around px-4">
           {navItems.map((item) => {
             const isDisabled = !!item.disabled;
