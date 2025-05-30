@@ -3,7 +3,7 @@
 
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
-import { Moon, Sun } from 'lucide-react';
+import { Lightbulb, LightbulbOff } from 'lucide-react'; // Changed imports
 import { useEffect, useState } from 'react';
 
 export default function ThemeSwitcher() {
@@ -27,9 +27,9 @@ export default function ThemeSwitcher() {
       aria-label="Toggle theme"
     >
       {resolvedTheme === 'dark' ? (
-        <Sun className="h-[1.2rem] w-[1.2rem]" />
+        <LightbulbOff className="h-[1.2rem] w-[1.2rem]" /> // Show LightbulbOff for dark theme
       ) : (
-        <Moon className="h-[1.2rem] w-[1.2rem]" />
+        <Lightbulb className="h-[1.2rem] w-[1.2rem]" /> // Show Lightbulb for light theme
       )}
     </Button>
   );
