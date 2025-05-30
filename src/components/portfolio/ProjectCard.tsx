@@ -34,18 +34,18 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
   }, [project]);
 
   return (
-    <Card 
+    <Card
       ref={cardRef}
       className={cn(
-        "flex flex-col h-full overflow-hidden transform transition-all duration-300 hover:scale-[1.02] animate-fadeInUpScale shadow-lg", // Removed shadow-glow-primary
+        "flex flex-col h-full overflow-hidden transform transition-all duration-300 hover:scale-[1.02] animate-fadeInUpScale shadow-lg",
       )}
       style={{ animationDelay: `${index * 100}ms` }}
     >
       <div className="relative w-full h-48 mb-4 rounded-t-md overflow-hidden group bg-muted">
         {project.model ? (
-          <ProjectModelViewer model={project.model} containerRef={cardRef} />
+          <ProjectModelViewer modelUrl={project.model} containerRef={cardRef} />
         ) : project.imageUrl ? (
-          <img 
+          <img
             src={project.imageUrl}
             alt={project.title}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -80,14 +80,24 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
       </CardContent>
       <CardFooter className="flex justify-start space-x-2 pt-4 border-t">
         {project.liveLink && (
-          <Button asChild variant="default" size="sm">
+          <Button
+            asChild
+            variant="default"
+            size="sm"
+            className="transition-transform duration-200 ease-out hover:scale-105 hover:bg-primary"
+          >
             <Link href={project.liveLink} target="_blank" rel="noopener noreferrer">
               Live Demo <ArrowUpRight className="ml-1 h-4 w-4" />
             </Link>
           </Button>
         )}
         {project.sourceLink && (
-          <Button asChild variant="outline" size="sm">
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="transition-transform duration-200 ease-out hover:scale-105 hover:bg-background"
+          >
             <Link href={project.sourceLink} target="_blank" rel="noopener noreferrer">
               <Github className="mr-1 h-4 w-4" /> Source
             </Link>
