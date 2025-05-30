@@ -24,7 +24,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
 
   useEffect(() => {
     console.log(`ProjectCard: Rendering project "${project.title}" with model: ${project.model}`);
-    if (project.model) {
+    if (typeof project.model === 'string' && project.model.trim() !== '') {
       console.log(`ProjectCard: Attempting to render ProjectModelViewer for "${project.title}"`);
     } else if (project.imageUrl) {
       console.log(`ProjectCard: Rendering fallback image for "${project.title}"`);
@@ -42,7 +42,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
       style={{ animationDelay: `${index * 100}ms` }}
     >
       <div className="relative w-full h-48 mb-4 rounded-t-md overflow-hidden group bg-muted">
-        {project.model ? (
+        {typeof project.model === 'string' && project.model.trim() !== '' ? (
           <ProjectModelViewer modelPath={project.model} containerRef={cardRef} />
         ) : project.imageUrl ? (
           <img
@@ -87,7 +87,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
             className="w-full sm:w-auto transition-transform duration-200 ease-out hover:scale-105 hover:bg-primary"
           >
             <Link href={project.liveLink} target="_blank" rel="noopener noreferrer">
-              <span className="flex items-center"> {/* Ensure single child for Link */}
+              <span className="flex items-center">
                 Live Demo <ArrowUpRight className="ml-1 h-4 w-4" />
               </span>
             </Link>
@@ -101,7 +101,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
             className="w-full sm:w-auto transition-transform duration-200 ease-out hover:scale-105 hover:bg-background"
           >
             <Link href={project.sourceLink} target="_blank" rel="noopener noreferrer">
-              <span className="flex items-center"> {/* Ensure single child for Link */}
+              <span className="flex items-center">
                 <Github className="mr-1 h-4 w-4" /> Source
               </span>
             </Link>
