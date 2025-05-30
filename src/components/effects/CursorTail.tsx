@@ -3,9 +3,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
+// Diagnostic settings:
 const CIRCLE_RADIUS = 150;
-const FILL_COLOR = 'rgba(107, 28, 117, 0.4)'; // Increased opacity
-const BLUR_STD_DEVIATION = 10;
+const FILL_COLOR = 'rgba(255, 0, 0, 1)'; // Bright red, fully opaque for testing
+const BLUR_STD_DEVIATION = 0; // No blur for testing
 
 interface Position {
   x: number;
@@ -16,18 +17,17 @@ export default function CursorTail() {
   const [position, setPosition] = useState<Position>({ x: -1000, y: -1000 }); // Start off-screen
   const animationFrameId = useRef<number | null>(null);
   const targetPosition = useRef<Position>({ x: -1000, y: -1000 });
-  const [isVisible, setIsVisible] = useState(false);
+  // const [isVisible, setIsVisible] = useState(false); // Removed isVisible to render immediately
 
   useEffect(() => {
-    console.log('[CursorTail] Component mounted or isVisible changed:', isVisible);
+    console.log('[CursorTail] Component mounted. Initializing...');
+    // Initialize position to center of screen or an initial mouse position quickly
+    targetPosition.current = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    setPosition(targetPosition.current);
+
     const handleMouseMove = (event: MouseEvent) => {
       targetPosition.current = { x: event.clientX, y: event.clientY };
-      if (!isVisible) {
-        setIsVisible(true);
-        // Initialize position directly to avoid jump if mouse enters from edge
-        setPosition({ x: event.clientX, y: event.clientY });
-        console.log('[CursorTail] First mouse move, setting visible and initial position.');
-      }
+      // No longer need to set isVisible here as it's always visible if rendered
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -35,7 +35,7 @@ export default function CursorTail() {
 
     let lastTimestamp = 0;
     const updatePosition = (timestamp: number) => {
-      if (!isMounted) { // Check if component is still mounted
+      if (!isMounted) { 
         console.log('[CursorTail] updatePosition: component unmounted, stopping animation loop.');
         return;
       }
@@ -55,23 +55,13 @@ export default function CursorTail() {
       animationFrameId.current = requestAnimationFrame(updatePosition);
     };
     
-    let isMounted = true; // Flag to track mount status for the animation loop
+    let isMounted = true; 
 
-    if (isVisible) {
-        if (animationFrameId.current === null) {
-            console.log('[CursorTail] isVisible is true, starting animation loop.');
-            animationFrameId.current = requestAnimationFrame(updatePosition);
-        }
-    } else {
-        if (animationFrameId.current !== null) {
-            console.log('[CursorTail] isVisible is false, cancelling animation loop.');
-            cancelAnimationFrame(animationFrameId.current);
-            animationFrameId.current = null;
-        }
-    }
-
+    console.log('[CursorTail] Starting animation loop.');
+    animationFrameId.current = requestAnimationFrame(updatePosition);
+    
     return () => {
-      isMounted = false; // Set flag on unmount
+      isMounted = false; 
       window.removeEventListener('mousemove', handleMouseMove);
       if (animationFrameId.current) {
         cancelAnimationFrame(animationFrameId.current);
@@ -79,14 +69,9 @@ export default function CursorTail() {
       }
       console.log('[CursorTail] Cleanup: Mouse move listener removed and animation frame cancelled.');
     };
-  }, [isVisible]); // Re-run effect if isVisible changes
+  }, []); // Empty dependency array ensures this runs once on mount
 
-  if (!isVisible) {
-    // console.log('[CursorTail] Not visible, rendering null.');
-    return null; // Don't render anything until the first mouse move
-  }
-
-  // console.log('[CursorTail] Rendering SVG at position:', position);
+  console.log('[CursorTail] Rendering SVG at position:', position);
   return (
     <svg
       style={{
@@ -96,7 +81,7 @@ export default function CursorTail() {
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none',
-        zIndex: -1, // Behind main content, above body background
+        zIndex: 5, // Temporarily high z-index for testing visibility
       }}
       aria-hidden="true"
     >
@@ -110,9 +95,9 @@ export default function CursorTail() {
         cy={position.y}
         r={CIRCLE_RADIUS}
         fill={FILL_COLOR}
-        filter="url(#cursorBlurFilter)"
+        filter={BLUR_STD_DEVIATION > 0 ? "url(#cursorBlurFilter)" : undefined}
         style={{
-          transition: 'transform 0.05s ease-out', // Keep for slight smoothness if needed, but lerp handles most
+          transition: 'transform 0.05s ease-out', 
         }}
       />
     </svg>
