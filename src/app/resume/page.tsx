@@ -90,37 +90,68 @@ export default function ResumePage() {
       </header>
 
       <div className="grid md:grid-cols-3 gap-8 mb-12">
-        <Card className={cn("md:col-span-1 shadow-lg", "transition-transform duration-200 ease-out hover:scale-[1.02]")}>
-          <CardContent className="pt-6 flex flex-col items-center text-center">
-            <div className="relative mb-4 group">
-              <div className="rounded-full overflow-hidden w-[120px] h-[120px]">
-                <Image
-                  src="/mytreyan.jpg"
-                  alt="Profile Picture of Mytreyan"
-                  width={120}
-                  height={120}
-                  className="object-cover w-full h-full hover:scale-110 transition-transform duration-300 ease-in-out"
-                  data-ai-hint="profile photo"
-                />
+        <div className="md:col-span-1 flex flex-col items-center text-center">
+          <Card className={cn("shadow-lg w-full", "transition-transform duration-200 ease-out hover:scale-[1.02]")}>
+            <CardContent className="pt-6 flex flex-col items-center text-center">
+              <div className="relative mb-4 group">
+                <div className="rounded-full overflow-hidden w-[120px] h-[120px]">
+                  <Image
+                    src="/mytreyan.jpg"
+                    alt="Profile Picture of Mytreyan"
+                    width={120}
+                    height={120}
+                    className="object-cover w-full h-full hover:scale-110 transition-transform duration-300 ease-in-out"
+                    data-ai-hint="profile photo"
+                  />
+                </div>
               </div>
-            </div>
-            <h2 className="text-2xl font-semibold text-foreground font-display">Mytreyan</h2>
-            <p className="text-black dark:text-white">
-              BTech IT<br />
-              <a
-                href="https://www.annauniv.edu/#gsc.tab=0"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-black dark:text-white hover:underline"
-              >
-                CEG, Anna university
-              </a>
-            </p>
-            <div className="mt-6 w-full">
-              <ResumeDownloader />
-            </div>
-          </CardContent>
-        </Card>
+              <h2 className="text-2xl font-semibold text-foreground font-display">Mytreyan</h2>
+              <div className="mt-6 w-full">
+                <ResumeDownloader />
+              </div>
+            </CardContent>
+          </Card>
+          <p className="text-sm text-muted-foreground mt-4">
+            BTech IT<br />
+            <a
+              href="https://www.annauniv.edu/#gsc.tab=0"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-black dark:text-white hover:underline"
+            >
+              CEG, Anna university
+            </a>
+          </p>
+          <div className="flex justify-center space-x-4 mt-4">
+            <a
+              href="https://www.instagram.com/mytreyn?igsh=YnZyanJmOTZwaW1l"
+              aria-label="Instagram"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-3 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-all duration-200 ease-out hover:scale-110"
+            >
+              <Instagram className="w-5 h-5" />
+            </a>
+            <a
+              href="https://github.com/mytreyanjp"
+              aria-label="GitHub"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-3 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-all duration-200 ease-out hover:scale-110"
+            >
+              <Github className="w-5 h-5" />
+            </a>
+            <a
+              href="https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://in.linkedin.com/in/mytreyan-jp-49226a2a7&ved=2ahUKEwj3rtuY_8qNAxWA2TgGHXl_O7gQFnoECBoQAQ&usg=AOvVaw3D68WydBGZLTSn9LRwey7Z"
+              aria-label="LinkedIn"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-3 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-all duration-200 ease-out hover:scale-110"
+            >
+              <Linkedin className="w-5 h-5" />
+            </a>
+          </div>
+        </div>
 
         <Card className={cn("md:col-span-2 shadow-lg", "transition-transform duration-200 ease-out hover:scale-[1.02]")}>
           <CardHeader>
@@ -132,36 +163,6 @@ export default function ResumePage() {
             </p>
           </CardContent>
         </Card>
-      </div>
-
-      <div className="flex justify-center space-x-6 mb-12">
-        <a
-          href="https://www.instagram.com/mytreyn?igsh=YnZyanJmOTZwaW1l"
-          aria-label="Instagram"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="p-3 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-all duration-200 ease-out hover:scale-110"
-        >
-          <Instagram className="w-6 h-6" />
-        </a>
-        <a
-          href="https://github.com/mytreyanjp"
-          aria-label="GitHub"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="p-3 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-all duration-200 ease-out hover:scale-110"
-        >
-          <Github className="w-6 h-6" />
-        </a>
-        <a
-          href="https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://in.linkedin.com/in/mytreyan-jp-49226a2a7&ved=2ahUKEwj3rtuY_8qNAxWA2TgGHXl_O7gQFnoECBoQAQ&usg=AOvVaw3D68WydBGZLTSn9LRwey7Z"
-          aria-label="LinkedIn"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="p-3 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-all duration-200 ease-out hover:scale-110"
-        >
-          <Linkedin className="w-6 h-6" />
-        </a>
       </div>
 
       <div className="space-y-10">
