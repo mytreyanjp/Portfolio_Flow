@@ -11,8 +11,8 @@ import { cn } from '@/lib/utils';
 import SkillBar from '@/components/resume/SkillBar';
 
 const skills = [
-  { name: 'JavaScript & Python', level: 90 },
   { name: 'Web Development (React/Next.js)', level: 90 },
+  { name: 'JavaScript & Python', level: 85 },
   { name: 'Data Structures & Algorithms', level: 85 },
   { name: 'C/C++ & Java', level: 75 },
   { name: 'SQL & Databases', level: 80 },
@@ -118,7 +118,7 @@ export default function ResumePage() {
             </CardContent>
           </Card>
            <div className="mt-4 text-center">
-            <p className="text-sm text-black dark:text-white font-subtext">
+            <p className="text-sm text-black dark:text-white">
               BTech IT<br />
               <a
                 href="https://www.annauniv.edu/#gsc.tab=0"
