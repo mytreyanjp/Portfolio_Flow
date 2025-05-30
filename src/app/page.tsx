@@ -7,7 +7,7 @@ import ProjectFilter, { Filters } from '@/components/portfolio/ProjectFilter';
 import type { Project } from '@/data/projects';
 import { getProjects } from '@/services/projectsService';
 import { Button } from '@/components/ui/button';
-import { ArrowDown, Mail, FileText, AlertTriangle, X as XIcon, Menu } from 'lucide-react';
+import { ArrowDown, Mail, FileText, AlertTriangle, X as XIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -194,14 +194,15 @@ export default function PortfolioPage() {
             Mytreyan here
           </p>
           <p
-            className="font-subtext text-lg md:text-xl text-foreground mb-8" // Applied font-subtext
+            className="font-subtext text-lg md:text-xl text-foreground mb-8" 
           >
             Can create light outta a blackhole
           </p>
           <Button
             size="lg"
+            variant="outline"
             onClick={scrollToProjects}
-            className="rounded-full shadow-lg hover:shadow-primary/30 transition-shadow"
+            className="shadow-md hover:shadow-lg transition-shadow"
           >
             View Projects <ArrowDown className="ml-2 h-5 w-5 animate-bounce" />
           </Button>
@@ -285,7 +286,7 @@ export default function PortfolioPage() {
             noProjectsMessageVisible && (
               <Alert
                 variant="destructive"
-                className="relative py-8 text-center animate-fadeInUpScale bg-destructive/10"
+                className="relative py-8 text-center animate-fadeInUpScale"
                 style={{ animationDelay: '0s' }}
               >
                 <button
