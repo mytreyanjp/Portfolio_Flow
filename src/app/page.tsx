@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
-import { useTheme } from 'next-themes'; 
+import { useTheme } from 'next-themes';
 
 export default function PortfolioPage() {
   const [filters, setFilters] = useState<Filters>({ category: '', technologies: [] });
@@ -226,7 +226,12 @@ export default function PortfolioPage() {
           Connect & Explore
         </h2>
         <div className="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-4">
-          <Button asChild size="lg" variant="outline" className="shadow-md hover:shadow-lg transition-shadow w-full md:w-auto">
+          <Button 
+            asChild 
+            size="lg" 
+            variant="outline" 
+            className="shadow-md hover:shadow-lg transition-transform duration-200 ease-out hover:scale-105 hover:bg-background w-full md:w-auto"
+          >
             <Link href="/contact">
               <span className="flex items-center">
                 <Mail className="mr-2 h-5 w-5" />
@@ -234,7 +239,12 @@ export default function PortfolioPage() {
               </span>
             </Link>
           </Button>
-          <Button asChild size="lg" variant="outline" className="shadow-md hover:shadow-lg transition-shadow w-full md:w-auto">
+          <Button 
+            asChild 
+            size="lg" 
+            variant="outline" 
+            className="shadow-md hover:shadow-lg transition-transform duration-200 ease-out hover:scale-105 hover:bg-background w-full md:w-auto"
+          >
             <Link href="/resume">
               <span className="flex items-center">
                 <FileText className="mr-2 h-5 w-5" />
