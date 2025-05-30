@@ -4,7 +4,7 @@
 import type { Metadata } from 'next';
 import ResumeDownloader from '@/components/resume/ResumeDownloader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Award, Briefcase, GraduationCap, Lightbulb, CheckCircle, Instagram, Github, Linkedin } from 'lucide-react';
+import { Award, Briefcase, GraduationCap, Lightbulb, CheckCircle, Instagram, Github, Linkedin, Check } from 'lucide-react';
 import Image from 'next/image';
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
@@ -111,7 +111,7 @@ export default function ResumePage() {
               </div>
             </CardContent>
           </Card>
-           <p className="text-sm text-muted-foreground mt-4 font-subtext"> {/* Apply font-subtext here */}
+           <p className="text-sm text-muted-foreground mt-4"> {/* Reverted font here */}
             BTech IT<br />
             <a
               href="https://www.annauniv.edu/#gsc.tab=0"
@@ -158,9 +158,24 @@ export default function ResumePage() {
             <CardTitle className="font-title text-2xl flex items-center text-foreground"><Lightbulb className="mr-2 h-6 w-6 text-primary"/> Summary</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-foreground/80 leading-relaxed">
-              I’m an IT student with extensive experience in web App development, data structures, and programming in C, C++, Java, Python, JavaScript, Machine Learning concepts, Blender, Unity and SQL. Skilled in Modelling, Editing, databases, and basic computer hardware. A leader with a positive outlook, always eager to embrace new challenges and drive innovative solutions.
-            </p>
+            <ul className="space-y-3 text-foreground/80 leading-relaxed">
+              <li className="flex items-start">
+                <Check className="mr-2 mt-1 h-5 w-5 text-primary shrink-0" />
+                <span>IT student (BTech) with a strong foundation in web app development, data structures, and core programming languages (C, C++, Java, Python, JavaScript).</span>
+              </li>
+              <li className="flex items-start">
+                <Check className="mr-2 mt-1 h-5 w-5 text-primary shrink-0" />
+                <span>Proficient in specialized areas including Machine Learning concepts, 3D Modeling/Animation (Blender, Unity), and SQL database management.</span>
+              </li>
+              <li className="flex items-start">
+                <Check className="mr-2 mt-1 h-5 w-5 text-primary shrink-0" />
+                <span>Skilled in practical application: 3D modelling, video/image editing, database administration, and fundamental computer hardware.</span>
+              </li>
+              <li className="flex items-start">
+                <Check className="mr-2 mt-1 h-5 w-5 text-primary shrink-0" />
+                <span>Demonstrates leadership qualities with a proactive, positive approach to tackling new challenges and delivering innovative solutions.</span>
+              </li>
+            </ul>
           </CardContent>
         </Card>
       </div>
