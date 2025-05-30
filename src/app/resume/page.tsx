@@ -97,7 +97,7 @@ export default function ResumePage() {
 
       <div className="grid md:grid-cols-3 gap-8 mb-12">
         <div className="md:col-span-1 flex flex-col items-center">
-          <Card className={cn("shadow-lg w-full", "transition-transform duration-200 ease-out hover:scale-[1.02]")}>
+           <Card className={cn("shadow-lg w-full", "transition-transform duration-200 ease-out hover:scale-[1.02]")}>
             <CardContent className="pt-6 flex flex-col items-center text-center">
               <div className="relative mb-4 group">
                 <div className="rounded-full overflow-hidden w-[120px] h-[120px]">
@@ -118,7 +118,7 @@ export default function ResumePage() {
             </CardContent>
           </Card>
            <div className="mt-4 text-center">
-            <p className="text-sm text-black dark:text-white">
+            <p className="text-sm text-black dark:text-white font-subtext">
               BTech IT<br />
               <a
                 href="https://www.annauniv.edu/#gsc.tab=0"
@@ -166,7 +166,7 @@ export default function ResumePage() {
             <CardTitle className="font-display text-2xl flex items-center text-foreground"><Lightbulb className="mr-2 h-6 w-6 text-primary"/> Summary</CardTitle>
           </CardHeader>
           <CardContent>
-            <ul className="space-y-3 text-foreground/80 leading-relaxed">
+             <ul className="space-y-3 text-foreground/80 leading-relaxed">
               <li className="flex items-start">
                 <span className="mr-2 mt-1 text-primary shrink-0 text-xl leading-none">&bull;</span>
                 <span>IT student skilled in web dev, data structures, C++, Java, Python, JavaScript.</span>
@@ -196,10 +196,10 @@ export default function ResumePage() {
             </CardTitle>
             <div className="flex items-baseline space-x-1 text-right">
               <span
-                key={hoveredSkillLevel === null ? 'placeholder' : hoveredSkillLevel} 
+                key={hoveredSkillLevel === null ? 'infinity' : hoveredSkillLevel} 
                 className="text-2xl font-bold text-primary animate-numberRollIn"
               >
-                {hoveredSkillLevel !== null ? `${hoveredSkillLevel}` : '0'}
+                {hoveredSkillLevel !== null ? `${hoveredSkillLevel}` : '∞'}
               </span>
               <Percent className="h-4 w-4 text-primary" />
             </div>
@@ -269,4 +269,3 @@ export default function ResumePage() {
     </div>
   );
 }
-
