@@ -12,17 +12,14 @@ import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 import localFont from 'next/font/local';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Terminal, X as XIcon, Laptop } from 'lucide-react';
 
 // CRUCIAL: Ensure your font file GreaterTheory.otf exists at the path:
 // /home/user/studio/public/fonts/GreaterTheory.otf
 const greaterTheory = localFont({
-  src: [
-    {
-      path: '../../public/fonts/GreaterTheory.otf', // Path relative to this file (src/app/layout.tsx)
-      weight: '400', // Adjust if your font has a different default weight
-      style: 'normal', // Adjust if your font has a different default style
-    },
-  ],
+  src: '../../public/fonts/GreaterTheory.otf',
   variable: '--font-greater-theory',
   display: 'swap',
 });
@@ -30,13 +27,7 @@ const greaterTheory = localFont({
 // CRUCIAL: Ensure your font file Wasted-Vindey.ttf exists at the path:
 // /home/user/studio/public/fonts/Wasted-Vindey.ttf
 const wastedVindey = localFont({
-  src: [
-    {
-      path: '../../public/fonts/Wasted-Vindey.ttf',
-      weight: '400', // Adjust if your font has a different default weight
-      style: 'normal',
-    },
-  ],
+  src: '../../public/fonts/Wasted-Vindey.ttf',
   variable: '--font-wasted-vindey',
   display: 'swap',
 });
@@ -47,7 +38,9 @@ const CursorTail = dynamic(() => import('@/components/effects/CursorTail'), { ss
 
 function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   const [isClient, setIsClient] = useState(false);
-  const { theme, resolvedTheme } = useTheme(); // theme is the setting, resolvedTheme is what's active
+  const { theme, resolvedTheme } = useTheme();
+  const isMobile = useIsMobile();
+  const [showMobileMessage, setShowMobileMessage] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -57,6 +50,24 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     console.log('[MainContentWithTheme] useEffect: resolvedTheme changed to:', resolvedTheme);
   }, [resolvedTheme]);
+
+  useEffect(() => {
+    if (isClient && isMobile) {
+      // Check if the message has been dismissed before
+      const dismissed = localStorage.getItem('dismissedMobileMessage');
+      if (!dismissed) {
+        setShowMobileMessage(true);
+      }
+    } else {
+      setShowMobileMessage(false);
+    }
+  }, [isClient, isMobile]);
+
+  const handleDismissMobileMessage = () => {
+    setShowMobileMessage(false);
+    localStorage.setItem('dismissedMobileMessage', 'true');
+  };
+
 
   console.log('[MainContentWithTheme] RENDER: isClient is', isClient);
   console.log('[MainContentWithTheme] RENDER: rawTheme (from useTheme) is', theme);
@@ -80,6 +91,25 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
         <Footer />
       </div>
       <Toaster />
+      {showMobileMessage && (
+        <Alert
+          variant="default"
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 w-11/12 max-w-md p-4 shadow-lg z-50 bg-card border-border/60"
+        >
+          <Laptop className="h-5 w-5 text-primary" />
+          <AlertTitle className="font-semibold ml-2">Optimal Viewing Experience</AlertTitle>
+          <AlertDescription className="ml-2 text-sm">
+            For the best experience with all interactive features, we recommend viewing this site on a desktop or larger screen.
+          </AlertDescription>
+          <button
+            onClick={handleDismissMobileMessage}
+            className="absolute top-2 right-2 p-1 rounded-md hover:bg-muted/20 transition-colors"
+            aria-label="Dismiss message"
+          >
+            <XIcon className="h-4 w-4" />
+          </button>
+        </Alert>
+      )}
     </>
   );
 }
@@ -98,8 +128,8 @@ export default function RootLayout({
       </head>
       <body className={cn(
           "antialiased flex flex-col min-h-screen bg-background",
-          greaterTheory.variable, // Apply the font variable to the body
-          wastedVindey.variable // Apply the new font variable
+          greaterTheory.variable, 
+          wastedVindey.variable 
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
