@@ -56,7 +56,7 @@ export default function PortfolioPage() {
       const rect = button.getBoundingClientRect();
       const maskX = mousePosition.x - rect.left;
       const maskY = mousePosition.y - rect.top;
-      const maskRadius = 200; // Adjusted from 170px to 200px
+      const maskRadius = 200; 
 
       setButtonMaskStyle({
         '--mask-x': `${maskX}px`,
@@ -64,7 +64,7 @@ export default function PortfolioPage() {
         '--mask-radius': `${maskRadius}px`,
         maskImage: `radial-gradient(circle var(--mask-radius) at var(--mask-x) var(--mask-y), black 0%, black 60%, transparent 100%)`,
         WebkitMaskImage: `radial-gradient(circle var(--mask-radius) at var(--mask-x) var(--mask-y), black 0%, black 60%, transparent 100%)`,
-        opacity: 1, // Ensure button is "there" for the mask to work on
+        opacity: 1, 
       });
     } else {
       setButtonMaskStyle({
@@ -223,15 +223,16 @@ export default function PortfolioPage() {
         <div className="max-w-3xl mx-auto" ref={introContentRef}>
           <h1
             id="portfolio-page-main-heading"
-            className="font-display text-5xl sm:text-6xl md:text-7xl text-transparent bg-clip-text relative overflow-hidden"
+            className="font-display text-5xl sm:text-6xl md:text-7xl text-transparent bg-clip-text relative overflow-hidden mb-2"
             style={{
-              backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)',
+              backgroundImage:
+                'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)',
             }}
           >
             Hello there
           </h1>
           <p
-            className="font-display text-2xl sm:text-3xl md:text-4xl text-transparent bg-clip-text relative overflow-hidden"
+            className="font-display text-2xl sm:text-3xl md:text-4xl text-transparent bg-clip-text relative overflow-hidden mb-2"
              style={{
               backgroundImage:
                 'radial-gradient(circle at calc(100% - var(--gradient-center-x, 50%)) calc(100% - var(--gradient-center-y, 50%)), hsl(var(--primary)) 5%, hsl(var(--accent)) 75%)',
@@ -248,13 +249,12 @@ export default function PortfolioPage() {
             variant="outline"
             className={cn(
               "shadow-md relative",
-              "transition-all duration-200 ease-out", // Combined transition for opacity and transform
+              "transition-all duration-200 ease-out", 
               "hover:scale-105 hover:bg-background"
             )}
             style={{
               ...buttonMaskStyle,
-              // Opacity controlled by mask or always 1 if mask is not active
-              opacity: (resolvedTheme === 'dark' && !hasButtonClicked) ? 1 : 1, 
+              opacity: 1, 
             }}
             onClick={() => {
               setHasButtonClicked(true);
