@@ -23,15 +23,18 @@ export default function PortfolioPage() {
 
   const welcomeSectionRef = useRef<HTMLElement>(null);
   const projectsSectionRef = useRef<HTMLElement>(null);
-  const quickNavSectionRef = useRef<HTMLElement>(null); 
+  const quickNavSectionRef = useRef<HTMLElement>(null);
   const [isWelcomeVisible, setIsWelcomeVisible] = useState(false);
   const [isProjectsVisible, setIsProjectsVisible] = useState(false);
-  const [isQuickNavVisible, setIsQuickNavVisible] = useState(false);
+  const [isQuickNavVisible, setIsQuickNavVisible] = useState(false); // Renamed from isConnectExploreVisible
   const [hasScrolled, setHasScrolled] = useState(false);
-  
+
   const introContentRef = useRef<HTMLDivElement>(null);
 
-  const { resolvedTheme } = useTheme(); 
+  const { resolvedTheme } = useTheme();
+  const [isButtonHovered, setIsButtonHovered] = useState(false);
+  const [hasButtonClicked, setHasButtonClicked] = useState(false);
+
 
   useEffect(() => {
     const contentNode = introContentRef.current;
@@ -40,7 +43,7 @@ export default function PortfolioPage() {
     const handleMouseMove = (event: MouseEvent) => {
       const x = (event.clientX / window.innerWidth) * 100;
       const y = (event.clientY / window.innerHeight) * 100;
-      
+
       contentNode.style.setProperty('--gradient-center-x', `${x}%`);
       contentNode.style.setProperty('--gradient-center-y', `${y}%`);
     };
@@ -53,20 +56,19 @@ export default function PortfolioPage() {
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 0) {
+      if (window.scrollY > 0 && !hasScrolled) {
         setHasScrolled(true);
-        window.removeEventListener('scroll', handleScroll); // Remove listener once scrolled
       }
     };
 
     window.addEventListener('scroll', handleScroll);
-    handleScroll(); 
+    // Call it once to check initial scroll position (e.g. if page is reloaded mid-scroll)
+    handleScroll();
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, []);
-
+  }, [hasScrolled]); // Dependency ensures this effect doesn't re-run unnecessarily
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -89,13 +91,13 @@ export default function PortfolioPage() {
     const observerOptions = {
       root: null,
       rootMargin: '0px',
-      threshold: 0.1, 
+      threshold: 0.1,
     };
 
     const observers: [React.RefObject<HTMLElement>, React.Dispatch<React.SetStateAction<boolean>>][] = [
       [welcomeSectionRef, setIsWelcomeVisible],
       [projectsSectionRef, setIsProjectsVisible],
-      [quickNavSectionRef, setIsQuickNavVisible],
+      [quickNavSectionRef, setIsQuickNavVisible], // Ensure this uses the correct ref for "Connect & Explore"
     ];
 
     const intersectionObservers = observers.map(([ref, setVisible]) => {
@@ -129,13 +131,13 @@ export default function PortfolioPage() {
 
   const handleFilterChange = (newFilters: Filters) => {
     setFilters(newFilters);
-    if (newFilters.category === '' && newFilters.technologies.length === 0) { 
+    if (newFilters.category === '' && newFilters.technologies.length === 0) {
       setNoProjectsMessageVisible(false);
     }
   };
 
   const handleResetFilters = () => {
-    setFilters({ category: '', technologies: [] }); 
+    setFilters({ category: '', technologies: [] });
     setNoProjectsMessageVisible(false);
   };
 
@@ -174,24 +176,26 @@ export default function PortfolioPage() {
 
   useEffect(() => {
     if (resolvedTheme) {
-      const isDark = resolvedTheme === 'dark';
-      console.log(`[PortfolioPage] Current theme isDark: ${isDark} (resolvedTheme: ${resolvedTheme})`);
+      console.log(`[PortfolioPage] Current theme isDark: ${resolvedTheme === 'dark'} (resolvedTheme: ${resolvedTheme})`);
     }
   }, [resolvedTheme]);
+
+  const isDark = resolvedTheme === 'dark';
+  const showViewProjectsButton = !isDark || hasButtonClicked || isButtonHovered;
 
   return (
     <div className="py-6 px-12 space-y-12 mt-12">
       <section
         aria-labelledby="welcome-heading"
         className={cn(
-          "text-center transition-all duration-700 ease-in-out mt-12", 
+          "text-center transition-all duration-700 ease-in-out mt-12",
           isWelcomeVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
         )}
         ref={welcomeSectionRef}
       >
         <div
           className="max-w-3xl mx-auto"
-          ref={introContentRef} 
+          ref={introContentRef}
         >
           <h1
             id="portfolio-page-main-heading"
@@ -204,22 +208,31 @@ export default function PortfolioPage() {
           </h1>
           <p
             className="font-display text-2xl sm:text-3xl md:text-4xl text-transparent bg-clip-text mb-4 relative overflow-hidden heading-hover-reveal"
-            style={{ 
-              backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)' 
+            style={{
+              backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)'
             }}
           >
             Mytreyan here
           </p>
           <p
-            className="font-subtext text-lg md:text-xl text-foreground mb-4" 
+            className="font-subtext text-lg md:text-xl text-foreground mb-4"
           >
             Can create light outta a blackhole
           </p>
           <Button
             size="lg"
             variant="outline"
-            onClick={scrollToProjects}
-            className="shadow-md hover:shadow-lg transition-transform duration-200 ease-out hover:scale-105 hover:bg-background"
+            onClick={() => {
+              setHasButtonClicked(true);
+              scrollToProjects();
+            }}
+            onMouseEnter={() => setIsButtonHovered(true)}
+            onMouseLeave={() => setIsButtonHovered(false)}
+            className={cn(
+              "shadow-md transition-transform duration-200 ease-out hover:scale-105 hover:bg-background",
+              "transition-opacity duration-300",
+              showViewProjectsButton ? "opacity-100" : "opacity-0"
+            )}
           >
             View Projects <ArrowDown className="ml-2 h-5 w-5 animate-bounce" />
           </Button>
@@ -230,7 +243,7 @@ export default function PortfolioPage() {
         aria-labelledby="quick-navigation-heading"
         ref={quickNavSectionRef}
         className={cn(
-          "py-8 text-center transition-all duration-700 ease-in-out mt-23",
+          "py-8 text-center transition-all duration-700 ease-in-out mt-23", // Changed from mt-12
           hasScrolled ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
         )}
       >
@@ -241,10 +254,10 @@ export default function PortfolioPage() {
           Connect & Explore
         </h2>
         <div className="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-4">
-          <Button 
-            asChild 
-            size="lg" 
-            variant="outline" 
+          <Button
+            asChild
+            size="lg"
+            variant="outline"
             className="shadow-md hover:shadow-lg transition-transform duration-200 ease-out hover:scale-105 hover:bg-background w-full md:w-auto"
           >
             <Link href="/contact">
@@ -254,10 +267,10 @@ export default function PortfolioPage() {
               </span>
             </Link>
           </Button>
-          <Button 
-            asChild 
-            size="lg" 
-            variant="outline" 
+          <Button
+            asChild
+            size="lg"
+            variant="outline"
             className="shadow-md hover:shadow-lg transition-transform duration-200 ease-out hover:scale-105 hover:bg-background w-full md:w-auto"
           >
             <Link href="/resume">
@@ -281,7 +294,7 @@ export default function PortfolioPage() {
       >
         <h2
           id="projects-heading"
-          className="text-3xl font-display font-semibold mb-8 text-center text-foreground" 
+          className="text-3xl font-display font-semibold mb-8 text-center text-foreground"
         >
           My Projects
         </h2>
@@ -314,7 +327,7 @@ export default function PortfolioPage() {
               <Alert
                 variant="destructive"
                 className="relative py-8 text-center animate-fadeInUpScale bg-destructive/10"
-                style={{ animationDelay: '0s' }} 
+                style={{ animationDelay: '0s' }}
               >
                 <button
                   onClick={() => setNoProjectsMessageVisible(false)}
