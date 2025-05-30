@@ -14,11 +14,6 @@ import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 import CursorTail from '@/components/effects/CursorTail';
 
-const ThreeScene = dynamic(() => import('@/components/portfolio/ThreeScene'), {
-  ssr: false,
-  loading: () => <div style={{ height: '100vh', width: '100vw', position: 'fixed', top: 0, left: 0, zIndex: -1, backgroundColor: 'transparent' }} />,
-});
-
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
@@ -34,49 +29,17 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [scrollPercentage, setScrollPercentage] = useState(0);
   const [isClient, setIsClient] = useState(false);
-  const { theme, resolvedTheme } = useTheme();
-  const pathname = usePathname();
+  const { theme, resolvedTheme } = useTheme(); // Get theme directly
 
   useEffect(() => {
     setIsClient(true);
     console.log('RootLayout: isClient set to true');
   }, []);
-
-  useEffect(() => {
-    if (!isClient) return;
-    console.log('RootLayout: Adding scroll listener');
-    const handleScroll = () => {
-      const scrollTop = window.scrollY;
-      const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-      const scrolled = (scrollTop / docHeight);
-      setScrollPercentage(isNaN(scrolled) || !isFinite(scrolled) ? 0 : scrolled);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    handleScroll(); 
-
-    return () => {
-      console.log('RootLayout: Removing scroll listener');
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [isClient]); 
   
   console.log('RootLayout Render: isClient is', isClient);
   console.log('RootLayout Render: rawTheme (from useTheme) is', theme);
   console.log('RootLayout Render: resolvedTheme is', resolvedTheme);
-
-  const pathsToHide3DModel: string[] = []; 
-  const shouldRenderThreeSceneOnPage = !pathsToHide3DModel.includes(pathname);
-  
-  const canRenderThreeScene = isClient && (resolvedTheme === 'light' || resolvedTheme === 'dark') && shouldRenderThreeSceneOnPage;
-  const currentThemeForScene = (resolvedTheme === 'light' || resolvedTheme === 'dark') ? resolvedTheme : 'dark'; // Default to dark if undefined
-  const threeSceneKey = resolvedTheme || 'initial-dark-theme-key'; // Ensure key changes if resolvedTheme was undefined
-
-  console.log('RootLayout Render: canRenderThreeScene is', canRenderThreeScene);
-  console.log('RootLayout Render: currentThemeForScene is', currentThemeForScene);
-  console.log('RootLayout Render: Key for ThreeScene will be', threeSceneKey);
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -88,9 +51,7 @@ export default function RootLayout({
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-          {/* 3D Scene is conditionally rendered directly within ThemeProvider if needed globally */}
-          {/* If ThreeScene is page-specific, it should be rendered within that page's component */}
-          <CursorTail />
+          {isClient && resolvedTheme === 'dark' && <CursorTail />}
           <div className="relative z-10 flex flex-col min-h-screen"> {/* Content wrapper above background */}
             <Header />
             <main className="flex-grow container mx-auto px-4 py-8">
