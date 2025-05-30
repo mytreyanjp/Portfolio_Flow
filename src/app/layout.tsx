@@ -13,9 +13,7 @@ import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 
-// Dynamically import CursorTail to ensure it's client-side only
 const CursorTail = dynamic(() => import('@/components/effects/CursorTail'), { ssr: false });
-
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -27,7 +25,6 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
-// New component to wrap content that needs theme context
 function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   const [isClient, setIsClient] = useState(false);
   const { theme, resolvedTheme } = useTheme();
@@ -41,7 +38,6 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
     console.log('[MainContentWithTheme] useEffect: resolvedTheme changed to:', resolvedTheme);
   }, [resolvedTheme]);
 
-  // Render phase logs
   console.log('[MainContentWithTheme] RENDER: isClient is', isClient);
   console.log('[MainContentWithTheme] RENDER: rawTheme (from useTheme) is', theme);
   console.log('[MainContentWithTheme] RENDER: resolvedTheme is', resolvedTheme);
@@ -53,31 +49,25 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      {isClient && (
-        <CursorTail
-          key={cursorTailKey}
-          isDarkTheme={currentIsDarkTheme}
-        />
-      )}
-      <div className="relative z-10 flex flex-col min-h-screen"> {/* Content wrapper above background */}
+      {isClient && <CursorTail key={cursorTailKey} isDarkTheme={currentIsDarkTheme} />}
+      <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
-        <main className="flex-grow container mx-auto px-4 py-8">
+        {/* Added pb-16 to main to account for fixed footer height */}
+        <main className="flex-grow container mx-auto px-4 py-8 pb-20"> {/* Increased bottom padding */}
           {children}
         </main>
-        <Footer />
+        <Footer /> {/* This is now the navigation footer */}
       </div>
       <Toaster />
     </>
   );
 }
 
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Logs from RootLayout (which is outside ThemeProvider context for useTheme)
   console.log('[RootLayout] RENDER: RootLayout component is rendering.');
 
   return (
