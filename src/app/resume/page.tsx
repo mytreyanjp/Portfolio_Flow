@@ -101,7 +101,17 @@ export default function ResumePage() {
               data-ai-hint="profile avatar"
             />
             <h2 className="text-2xl font-semibold text-foreground">Mytreyan JP</h2>
-            <p className="text-primary">BTech IT<br />CEG, Anna university</p>
+            <p className="text-primary">
+              BTech IT<br />
+              <a 
+                href="https://www.annauniv.edu/#gsc.tab=0" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-accent hover:underline"
+              >
+                CEG, Anna university
+              </a>
+            </p>
             <div className="mt-6 w-full">
               <ResumeDownloader />
             </div>
