@@ -23,8 +23,10 @@ export default function PortfolioPage() {
 
   const welcomeSectionRef = useRef<HTMLElement>(null);
   const projectsSectionRef = useRef<HTMLElement>(null);
+  const quickNavSectionRef = useRef<HTMLElement>(null); 
   const [isWelcomeVisible, setIsWelcomeVisible] = useState(false);
   const [isProjectsVisible, setIsProjectsVisible] = useState(false);
+  const [isQuickNavVisible, setIsQuickNavVisible] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
   
   const introContentRef = useRef<HTMLDivElement>(null);
@@ -58,7 +60,6 @@ export default function PortfolioPage() {
     };
 
     window.addEventListener('scroll', handleScroll);
-    // Call it once on mount in case the page is already scrolled (e.g., refresh)
     handleScroll(); 
 
     return () => {
@@ -88,12 +89,13 @@ export default function PortfolioPage() {
     const observerOptions = {
       root: null,
       rootMargin: '0px',
-      threshold: 0.1, // Trigger when 10% of the element is visible
+      threshold: 0.1, 
     };
 
     const observers: [React.RefObject<HTMLElement>, React.Dispatch<React.SetStateAction<boolean>>][] = [
       [welcomeSectionRef, setIsWelcomeVisible],
       [projectsSectionRef, setIsProjectsVisible],
+      [quickNavSectionRef, setIsQuickNavVisible],
     ];
 
     const intersectionObservers = observers.map(([ref, setVisible]) => {
@@ -119,7 +121,6 @@ export default function PortfolioPage() {
     if (isLoading || error) return [];
     const results = projects.filter(project => {
       const categoryMatch = filters.category ? project.category === filters.category : true;
-      // Technology filter logic removed as dropdown was removed
       return categoryMatch;
     });
     setNoProjectsMessageVisible(results.length === 0 && !isLoading && (filters.category !== ''));
@@ -227,6 +228,7 @@ export default function PortfolioPage() {
 
       <section
         aria-labelledby="quick-navigation-heading"
+        ref={quickNavSectionRef}
         className={cn(
           "py-8 text-center transition-all duration-700 ease-in-out mt-23",
           hasScrolled ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
@@ -234,7 +236,7 @@ export default function PortfolioPage() {
       >
         <h2
           id="quick-navigation-heading"
-          className="text-2xl font-semibold mb-6 text-foreground"
+          className="text-2xl font-display font-semibold mb-6 text-foreground"
         >
           Connect & Explore
         </h2>
@@ -279,7 +281,7 @@ export default function PortfolioPage() {
       >
         <h2
           id="projects-heading"
-          className="text-3xl font-semibold mb-8 text-center text-foreground" 
+          className="text-3xl font-display font-semibold mb-8 text-center text-foreground" 
         >
           My Projects
         </h2>
