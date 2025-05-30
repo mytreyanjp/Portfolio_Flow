@@ -33,13 +33,6 @@ export default function PortfolioPage() {
   const { resolvedTheme } = useTheme(); 
 
   useEffect(() => {
-    if (resolvedTheme) {
-      const isDarkTheme = resolvedTheme === 'dark';
-      console.log('[PortfolioPage] Current theme isDark:', isDarkTheme, '(resolvedTheme:', resolvedTheme, ')');
-    }
-  }, [resolvedTheme]);
-
-  useEffect(() => {
     const contentNode = introContentRef.current;
     if (!contentNode) return;
 
@@ -79,7 +72,7 @@ export default function PortfolioPage() {
     const observerOptions = {
       root: null,
       rootMargin: '0px',
-      threshold: 0.1,
+      threshold: 0.1, // Trigger when 10% of the element is visible
     };
 
     const observers: [React.RefObject<HTMLElement>, React.Dispatch<React.SetStateAction<boolean>>][] = [
@@ -162,6 +155,13 @@ export default function PortfolioPage() {
     </div>
   );
 
+  useEffect(() => {
+    if (resolvedTheme) {
+      const isDark = resolvedTheme === 'dark';
+      console.log(`[PortfolioPage] Current theme isDark: ${isDark} (resolvedTheme: ${resolvedTheme})`);
+    }
+  }, [resolvedTheme]);
+
   return (
     <div className="py-6 px-12 space-y-12">
       <section
@@ -178,7 +178,7 @@ export default function PortfolioPage() {
         >
           <h1
             id="portfolio-page-main-heading"
-            className="font-display text-5xl sm:text-6xl md:text-7xl text-transparent bg-clip-text mb-2 relative overflow-hidden heading-hover-reveal"
+            className="font-display text-5xl sm:text-6xl md:text-7xl text-transparent bg-clip-text mb-2 relative overflow-hidden"
             style={{
               backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)',
             }}
@@ -264,7 +264,7 @@ export default function PortfolioPage() {
       >
         <h2
           id="projects-heading"
-          className="text-3xl font-semibold mb-8 text-center text-foreground"
+          className="text-3xl font-semibold mb-8 text-center text-foreground" 
         >
           My Projects
         </h2>
@@ -297,7 +297,7 @@ export default function PortfolioPage() {
               <Alert
                 variant="destructive"
                 className="relative py-8 text-center animate-fadeInUpScale bg-destructive/10"
-                style={{ animationDelay: '0s' }}
+                style={{ animationDelay: '0s' }} 
               >
                 <button
                   onClick={() => setNoProjectsMessageVisible(false)}
