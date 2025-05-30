@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,6 +14,7 @@ import { generateIntroMessage, IntroMessageInput } from '@/ai/flows/intro-messag
 import React, { useState } from 'react';
 import { Loader2, Wand2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
   employer: z.string().min(2, 'Employer name is required.'),
@@ -149,7 +151,14 @@ export default function AiIntroGeneratorForm() {
               </FormItem>
             )}
           />
-          <Button type="submit" disabled={isLoading} className="w-full text-lg py-6">
+          <Button 
+            type="submit" 
+            disabled={isLoading} 
+            className={cn(
+              "w-full text-lg py-6",
+              "hover:scale-105 transition-transform duration-200 ease-out hover:bg-primary" // Keeps primary bg on hover
+            )}
+          >
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Generating...
@@ -178,7 +187,10 @@ export default function AiIntroGeneratorForm() {
             <Button 
               variant="outline" 
               size="sm" 
-              className="mt-4"
+              className={cn(
+                "mt-4",
+                "hover:scale-105 transition-transform duration-200 ease-out hover:bg-background" // Keeps outline hover behavior
+              )}
               onClick={() => {
                 navigator.clipboard.writeText(generatedMessage);
                 toast({ title: "Copied!", description: "Message copied to clipboard." });

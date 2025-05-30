@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import React from 'react';
+import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.').max(50, 'Name must be less than 50 characters.'),
@@ -19,20 +21,9 @@ const formSchema = z.object({
 
 type ContactFormValues = z.infer<typeof formSchema>;
 
-// Server action (simulated)
 async function submitContactForm(data: ContactFormValues): Promise<{ success: boolean; message: string }> {
-  // In a real app, you would send this data to your backend, email service, etc.
   console.log('Contact form submitted:', data);
-  
-  // Simulate API call delay
   await new Promise(resolve => setTimeout(resolve, 1500));
-
-  // Simulate success/failure
-  // if (Math.random() > 0.5) {
-  //   return { success: true, message: "Your message has been sent successfully! I'll get back to you soon." };
-  // } else {
-  //   return { success: false, message: 'Failed to send message. Please try again later.' };
-  // }
   return { success: true, message: "Your message has been sent successfully! I'll get back to you soon." };
 }
 
@@ -120,7 +111,14 @@ export default function ContactForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
+        <Button 
+          type="submit" 
+          className={cn(
+            "w-full",
+            "hover:scale-105 transition-transform duration-200 ease-out hover:bg-primary" // Keeps primary bg on hover
+          )} 
+          disabled={isSubmitting}
+        >
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

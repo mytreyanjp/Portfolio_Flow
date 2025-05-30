@@ -7,28 +7,24 @@ import { cn } from '@/lib/utils';
 
 export default function ResumeDownloader() {
   const handleDownload = () => {
-    // In a real scenario, this would point to your actual resume PDF file
-    // For this placeholder, we'll simulate by trying to open a non-existent file,
-    // or you could host a sample PDF somewhere.
     const resumeUrl = '/placeholder-resume.pdf'; 
     
-    // Create a link element
     const link = document.createElement('a');
     link.href = resumeUrl;
-    link.setAttribute('download', 'My_Resume.pdf'); // or any other filename
+    link.setAttribute('download', 'My_Resume.pdf'); 
     
-    // Append to the DOM, click it, and then remove it
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-
-    // alert('Resume download started (placeholder). In a real app, this would download your resume PDF.');
   };
 
   return (
     <Button 
       onClick={handleDownload} 
-      className={cn("w-full shadow-md hover:shadow-lg")} // Removed shadow-glow-primary
+      className={cn(
+        "w-full shadow-md hover:shadow-lg",
+        "hover:scale-105 transition-transform duration-200 ease-out hover:bg-primary" // Keeps primary bg on hover
+      )}
       size="lg"
     >
       <Download className="mr-2 h-5 w-5" />
