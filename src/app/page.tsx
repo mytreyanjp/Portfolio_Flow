@@ -26,33 +26,75 @@ export default function PortfolioPage() {
   const quickNavSectionRef = useRef<HTMLElement>(null);
   const [isWelcomeVisible, setIsWelcomeVisible] = useState(false);
   const [isProjectsVisible, setIsProjectsVisible] = useState(false);
-  const [isQuickNavVisible, setIsQuickNavVisible] = useState(false); // Renamed from isConnectExploreVisible
+  const [isQuickNavVisible, setIsQuickNavVisible] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
 
   const introContentRef = useRef<HTMLDivElement>(null);
+  const viewProjectsButtonRef = useRef<HTMLButtonElement>(null);
 
   const { resolvedTheme } = useTheme();
-  const [isButtonHovered, setIsButtonHovered] = useState(false);
   const [hasButtonClicked, setHasButtonClicked] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: -1000, y: -1000 }); // Initialize off-screen
 
-
+  // Effect for dynamic gradient on intro text
   useEffect(() => {
     const contentNode = introContentRef.current;
     if (!contentNode) return;
 
-    const handleMouseMove = (event: MouseEvent) => {
+    const handleMouseMoveForGradient = (event: MouseEvent) => {
       const x = (event.clientX / window.innerWidth) * 100;
       const y = (event.clientY / window.innerHeight) * 100;
-
       contentNode.style.setProperty('--gradient-center-x', `${x}%`);
       contentNode.style.setProperty('--gradient-center-y', `${y}%`);
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousemove', handleMouseMoveForGradient);
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mousemove', handleMouseMoveForGradient);
     };
   }, []);
+
+  // Effect for global mouse tracking for button spotlight
+  useEffect(() => {
+    const handleMouseMoveForSpotlight = (event: MouseEvent) => {
+      setMousePosition({ x: event.clientX, y: event.clientY });
+    };
+    window.addEventListener('mousemove', handleMouseMoveForSpotlight);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMoveForSpotlight);
+    };
+  }, []);
+
+  // Effect for button spotlight mask
+  useEffect(() => {
+    if (viewProjectsButtonRef.current) {
+      const button = viewProjectsButtonRef.current;
+      if (resolvedTheme === 'dark' && !hasButtonClicked) {
+        const rect = button.getBoundingClientRect();
+        const maskX = mousePosition.x - rect.left;
+        const maskY = mousePosition.y - rect.top;
+        const maskRadius = '120px'; // Corresponds to CursorTail visual effect
+
+        button.style.setProperty('--mask-x', `${maskX}px`);
+        button.style.setProperty('--mask-y', `${maskY}px`);
+        button.style.setProperty('--mask-radius', maskRadius);
+        button.style.maskImage = `radial-gradient(circle var(--mask-radius) at var(--mask-x) var(--mask-y), black 100%, transparent 101%)`;
+        button.style.webkitMaskImage = `radial-gradient(circle var(--mask-radius) at var(--mask-x) var(--mask-y), black 100%, transparent 101%)`;
+        button.style.opacity = '1'; // Ensure it's "there" for the mask to work on
+      } else {
+        button.style.maskImage = 'none';
+        button.style.webkitMaskImage = 'none';
+        button.style.opacity = '1';
+      }
+    }
+  }, [mousePosition, resolvedTheme, hasButtonClicked]);
+
+
+  useEffect(() => {
+    if (resolvedTheme) {
+      console.log(`[PortfolioPage] Current theme isDark: ${resolvedTheme === 'dark'} (resolvedTheme: ${resolvedTheme})`);
+    }
+  }, [resolvedTheme]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -60,15 +102,12 @@ export default function PortfolioPage() {
         setHasScrolled(true);
       }
     };
-
     window.addEventListener('scroll', handleScroll);
-    // Call it once to check initial scroll position (e.g. if page is reloaded mid-scroll)
     handleScroll();
-
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [hasScrolled]); // Dependency ensures this effect doesn't re-run unnecessarily
+  }, [hasScrolled]);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -93,13 +132,11 @@ export default function PortfolioPage() {
       rootMargin: '0px',
       threshold: 0.1,
     };
-
     const observers: [React.RefObject<HTMLElement>, React.Dispatch<React.SetStateAction<boolean>>][] = [
       [welcomeSectionRef, setIsWelcomeVisible],
       [projectsSectionRef, setIsProjectsVisible],
-      [quickNavSectionRef, setIsQuickNavVisible], // Ensure this uses the correct ref for "Connect & Explore"
+      [quickNavSectionRef, setIsQuickNavVisible],
     ];
-
     const intersectionObservers = observers.map(([ref, setVisible]) => {
       const observer = new IntersectionObserver(([entry]) => {
         setVisible(entry.isIntersecting);
@@ -109,7 +146,6 @@ export default function PortfolioPage() {
       }
       return { observer, ref };
     });
-
     return () => {
       intersectionObservers.forEach(({ observer, ref }) => {
         if (ref.current) {
@@ -173,15 +209,8 @@ export default function PortfolioPage() {
       </div>
     </div>
   );
-
-  useEffect(() => {
-    if (resolvedTheme) {
-      console.log(`[PortfolioPage] Current theme isDark: ${resolvedTheme === 'dark'} (resolvedTheme: ${resolvedTheme})`);
-    }
-  }, [resolvedTheme]);
-
+  
   const isDark = resolvedTheme === 'dark';
-  const showViewProjectsButton = !isDark || hasButtonClicked || isButtonHovered;
 
   return (
     <div className="py-6 px-12 space-y-12 mt-12">
@@ -193,13 +222,10 @@ export default function PortfolioPage() {
         )}
         ref={welcomeSectionRef}
       >
-        <div
-          className="max-w-3xl mx-auto"
-          ref={introContentRef}
-        >
+        <div className="max-w-3xl mx-auto" ref={introContentRef}>
           <h1
             id="portfolio-page-main-heading"
-            className="font-display text-5xl sm:text-6xl md:text-7xl text-transparent bg-clip-text mb-2 relative overflow-hidden heading-hover-reveal"
+            className="font-display text-5xl sm:text-6xl md:text-7xl text-transparent bg-clip-text mb-2 relative overflow-hidden"
             style={{
               backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)',
             }}
@@ -207,32 +233,33 @@ export default function PortfolioPage() {
             Hello there
           </h1>
           <p
-            className="font-display text-2xl sm:text-3xl md:text-4xl text-transparent bg-clip-text mb-4 relative overflow-hidden heading-hover-reveal"
+            className="font-display text-2xl sm:text-3xl md:text-4xl text-transparent bg-clip-text mb-4 relative overflow-hidden"
             style={{
               backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)'
             }}
           >
             Mytreyan here
           </p>
-          <p
-            className="font-subtext text-lg md:text-xl text-foreground mb-4"
-          >
+          <p className="font-subtext text-lg md:text-xl text-foreground mb-8">
             Can create light outta a blackhole
           </p>
           <Button
+            ref={viewProjectsButtonRef}
             size="lg"
             variant="outline"
             onClick={() => {
               setHasButtonClicked(true);
               scrollToProjects();
             }}
-            onMouseEnter={() => setIsButtonHovered(true)}
-            onMouseLeave={() => setIsButtonHovered(false)}
             className={cn(
-              "shadow-md transition-transform duration-200 ease-out hover:scale-105 hover:bg-background",
-              "transition-opacity duration-300",
-              showViewProjectsButton ? "opacity-100" : "opacity-0"
+              "shadow-md",
+              "transition-transform duration-200 ease-out hover:scale-105 hover:bg-background",
+              // Opacity for light theme or if button has been clicked is handled by the mask effect removal
             )}
+            style={{
+              // Initial opacity will be 1, mask handles visibility in dark mode
+              // Transition for opacity can be added if desired for smoother appearance/disappearance with mask
+            }}
           >
             View Projects <ArrowDown className="ml-2 h-5 w-5 animate-bounce" />
           </Button>
@@ -243,7 +270,7 @@ export default function PortfolioPage() {
         aria-labelledby="quick-navigation-heading"
         ref={quickNavSectionRef}
         className={cn(
-          "py-8 text-center transition-all duration-700 ease-in-out mt-23", // Changed from mt-12
+          "py-8 text-center transition-all duration-700 ease-in-out mt-23",
           hasScrolled ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
         )}
       >
