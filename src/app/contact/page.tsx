@@ -12,14 +12,23 @@ export default function ContactPage() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
+  const headingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
-      const { clientX, clientY } = event;
-      const x = (clientX / window.innerWidth - 0.5) * 2;
-      const y = (clientY / window.innerHeight - 0.5) * 2;
-      const sensitivity = 10;
-      setParallaxOffset({ x: x * sensitivity, y: y * sensitivity });
+      if (headingRef.current) {
+        const { clientX, clientY } = event;
+        const x = (clientX / window.innerWidth - 0.5) * 2; // Normalized -1 to 1
+        const y = (clientY / window.innerHeight - 0.5) * 2; // Normalized -1 to 1
+        const sensitivity = 10; // Keep parallax for other elements subtle
+        setParallaxOffset({ x: x * sensitivity, y: y * sensitivity });
+
+        // For dynamic gradient on heading
+        const gradientX = (event.clientX / window.innerWidth) * 100;
+        const gradientY = (event.clientY / window.innerHeight) * 100;
+        headingRef.current.style.setProperty('--gradient-center-x', `${gradientX}%`);
+        headingRef.current.style.setProperty('--gradient-center-y', `${gradientY}%`);
+      }
     };
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
@@ -63,10 +72,10 @@ export default function ContactPage() {
     >
       <h1
         id="contact-page-main-heading"
+        ref={headingRef}
         className="font-display text-4xl font-bold text-center mb-12 text-transparent bg-clip-text relative overflow-hidden"
         style={{
-          ...parallaxStyle,
-          backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
+          backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)',
         }}
       >
         Let's Connect
@@ -90,6 +99,7 @@ export default function ContactPage() {
            <h2
             id="contact-info-section-heading"
             className="text-2xl font-semibold mb-6 text-center md:text-left text-foreground font-title"
+            style={parallaxStyle} 
            >
             Contact Information
            </h2>
