@@ -111,7 +111,7 @@ export default function ResumePage() {
               </div>
             </CardContent>
           </Card>
-          <p className="text-sm text-muted-foreground mt-4">
+           <p className="text-sm text-muted-foreground mt-4 font-subtext"> {/* Apply font-subtext here */}
             BTech IT<br />
             <a
               href="https://www.annauniv.edu/#gsc.tab=0"
@@ -122,33 +122,33 @@ export default function ResumePage() {
               CEG, Anna university
             </a>
           </p>
-          <div className="flex justify-center space-x-4 mt-4">
+          <div className="flex justify-center space-x-3 mt-4">
             <a
               href="https://www.instagram.com/mytreyn?igsh=YnZyanJmOTZwaW1l"
               aria-label="Instagram"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-3 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-all duration-200 ease-out hover:scale-110"
+              className="p-2 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-all duration-200 ease-out hover:scale-110"
             >
-              <Instagram className="w-5 h-5" />
+              <Instagram className="w-4 h-4" />
             </a>
             <a
               href="https://github.com/mytreyanjp"
               aria-label="GitHub"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-3 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-all duration-200 ease-out hover:scale-110"
+              className="p-2 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-all duration-200 ease-out hover:scale-110"
             >
-              <Github className="w-5 h-5" />
+              <Github className="w-4 h-4" />
             </a>
             <a
               href="https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://in.linkedin.com/in/mytreyan-jp-49226a2a7&ved=2ahUKEwj3rtuY_8qNAxWA2TgGHXl_O7gQFnoECBoQAQ&usg=AOvVaw3D68WydBGZLTSn9LRwey7Z"
               aria-label="LinkedIn"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-3 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-all duration-200 ease-out hover:scale-110"
+              className="p-2 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-all duration-200 ease-out hover:scale-110"
             >
-              <Linkedin className="w-5 h-5" />
+              <Linkedin className="w-4 h-4" />
             </a>
           </div>
         </div>
