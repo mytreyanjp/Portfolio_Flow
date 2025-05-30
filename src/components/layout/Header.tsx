@@ -79,7 +79,7 @@ export default function Header() {
             height={28}
             className="h-7 w-7"
           />
-          Myth
+          {/* Myth text removed */}
         </Link>
 
         <div className="flex items-center space-x-2">
@@ -95,7 +95,7 @@ export default function Header() {
           {/* Mobile Navigation */}
           {mounted && (
             <div className="md:hidden">
-              <Sheet>
+               <Sheet>
                 <SheetTrigger className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}>
                   <Menu className="h-6 w-6" />
                   <span className="sr-only">Toggle navigation menu</span>
