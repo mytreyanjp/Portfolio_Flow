@@ -39,7 +39,7 @@ const CursorTail = dynamic(() => import('@/components/effects/CursorTail'), { ss
 function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   const [isClient, setIsClient] = useState(false);
   const { theme, resolvedTheme } = useTheme();
-  const isMobile = useIsMobile();
+  const mobileStatus = useIsMobile(); // Can be true, false, or undefined
   const [showMobileMessage, setShowMobileMessage] = useState(false);
 
   useEffect(() => {
@@ -53,15 +53,17 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   }, [theme, resolvedTheme]);
 
   useEffect(() => {
-    if (isClient && isMobile) {
+    // Only act once mobileStatus is determined (not undefined)
+    if (isClient && mobileStatus === true) {
       const dismissed = localStorage.getItem('dismissedMobileMessage');
       if (!dismissed) {
         setShowMobileMessage(true);
       }
-    } else {
+    } else if (isClient && mobileStatus === false) {
       setShowMobileMessage(false);
     }
-  }, [isClient, isMobile]);
+    // If mobileStatus is undefined, we wait for it to resolve.
+  }, [isClient, mobileStatus]);
 
   const handleDismissMobileMessage = () => {
     setShowMobileMessage(false);
@@ -69,15 +71,15 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    let timerId: number | undefined;
+    let timerId: ReturnType<typeof setTimeout> | undefined;
     if (showMobileMessage) {
-      timerId = window.setTimeout(() => {
+      timerId = setTimeout(() => {
         handleDismissMobileMessage();
       }, 5000); // 5 seconds
     }
     return () => {
       if (timerId) {
-        window.clearTimeout(timerId);
+        clearTimeout(timerId);
       }
     };
   }, [showMobileMessage]);
@@ -86,13 +88,15 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   console.log('[MainContentWithTheme] RENDER: isClient is', isClient);
   console.log('[MainContentWithTheme] RENDER: rawTheme (from useTheme) is', theme);
   console.log('[MainContentWithTheme] RENDER: resolvedTheme is', resolvedTheme);
+  console.log('[MainContentWithTheme] RENDER: mobileStatus from useIsMobile is', mobileStatus);
+
 
   const currentIsDarkTheme = resolvedTheme === 'dark';
   console.log('[MainContentWithTheme] RENDER: currentIsDarkTheme evaluates to:', currentIsDarkTheme);
   
   const showCursorTail = isClient && currentIsDarkTheme;
   
-  console.log(`[RootLayout] RENDER: showCursorTail is ${showCursorTail}, isClient is ${isClient}, resolvedTheme is ${resolvedTheme}`);
+  console.log(`[MainContentWithTheme] RENDER: showCursorTail is ${showCursorTail}, isClient is ${isClient}, resolvedTheme is ${resolvedTheme}`);
   
 
   return (
