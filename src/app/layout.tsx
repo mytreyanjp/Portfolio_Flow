@@ -49,7 +49,7 @@ export default function RootLayout({
   console.log('[RootLayout] Render: rawTheme (from useTheme) is', theme);
   console.log('[RootLayout] Render: resolvedTheme is', resolvedTheme);
 
-  const showCursorTail = isClient;
+  const showCursorTail = isClient && (resolvedTheme === 'light' || resolvedTheme === 'dark');
   console.log('[RootLayout] About to render CursorTail. showCursorTail:', showCursorTail, 'isClient:', isClient, 'resolvedTheme:', resolvedTheme);
 
 
