@@ -3,7 +3,7 @@
 
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
-import { ToggleLeft, ToggleRight } from 'lucide-react'; // Changed icons
+import { Lightbulb, LightbulbOff } from 'lucide-react'; // Changed icons
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -28,9 +28,9 @@ export default function ThemeSwitcher() {
       aria-label="Toggle theme"
     >
       {resolvedTheme === 'dark' ? (
-        <ToggleLeft className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out" />
+        <LightbulbOff className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out" />
       ) : (
-        <ToggleRight className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out text-primary" />
+        <Lightbulb className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out text-primary" />
       )}
     </Button>
   );
