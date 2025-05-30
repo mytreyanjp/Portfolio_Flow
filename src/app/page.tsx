@@ -111,6 +111,8 @@ export default function PortfolioPage() {
     if (isLoading || error) return [];
     const results = projects.filter(project => {
       const categoryMatch = filters.category ? project.category === filters.category : true;
+      // Technology filter is removed from UI, so we don't filter by it here anymore
+      // const technologyMatch = filters.technologies.length > 0 ? filters.technologies.every(tech => project.technologies.includes(tech)) : true;
       return categoryMatch;
     });
     setNoProjectsMessageVisible(results.length === 0 && !isLoading && (filters.category !== ''));
@@ -119,13 +121,13 @@ export default function PortfolioPage() {
 
   const handleFilterChange = (newFilters: Filters) => {
     setFilters(newFilters);
-    if (newFilters.category === '') {
+    if (newFilters.category === '') { // Also reset message if category is cleared
       setNoProjectsMessageVisible(false);
     }
   };
 
   const handleResetFilters = () => {
-    setFilters({ category: '', technologies: [] });
+    setFilters({ category: '', technologies: [] }); // technologies filter is kept in state for consistency
     setNoProjectsMessageVisible(false);
   };
 
@@ -202,7 +204,7 @@ export default function PortfolioPage() {
             size="lg"
             variant="outline"
             onClick={scrollToProjects}
-            className="shadow-md hover:shadow-lg transition-transform duration-200 ease-out hover:scale-105"
+            className="shadow-md hover:shadow-lg transition-transform duration-200 ease-out hover:scale-105 hover:bg-background"
           >
             View Projects <ArrowDown className="ml-2 h-5 w-5 animate-bounce" />
           </Button>
@@ -219,7 +221,7 @@ export default function PortfolioPage() {
       >
         <h2
           id="quick-navigation-heading"
-          className="text-2xl font-semibold mb-6 text-foreground" 
+          className="text-2xl font-semibold mb-6 text-foreground"
         >
           Connect & Explore
         </h2>
