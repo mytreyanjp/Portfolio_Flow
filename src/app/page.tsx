@@ -32,11 +32,11 @@ export default function PortfolioPage() {
   const viewProjectsButtonRef = useRef<HTMLButtonElement>(null);
 
   const [isWelcomeVisible, setIsWelcomeVisible] = useState(false);
+  const [isQuickNavVisible, setIsQuickNavVisible] = useState(false);
   const [isProjectsVisible, setIsProjectsVisible] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
   const { resolvedTheme } = useTheme();
   const [hasButtonClicked, setHasButtonClicked] = useState(false);
-
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [buttonMaskStyle, setButtonMaskStyle] = useState({});
 
@@ -56,7 +56,7 @@ export default function PortfolioPage() {
       const rect = button.getBoundingClientRect();
       const maskX = mousePosition.x - rect.left;
       const maskY = mousePosition.y - rect.top;
-      const maskRadius = 200; // Or your desired radius
+      const maskRadius = 200; // Adjusted from 170px to 200px
 
       setButtonMaskStyle({
         '--mask-x': `${maskX}px`,
@@ -131,6 +131,7 @@ export default function PortfolioPage() {
     };
     const observers: [React.RefObject<HTMLElement>, React.Dispatch<React.SetStateAction<boolean>>][] = [
       [welcomeSectionRef, setIsWelcomeVisible],
+      [quickNavSectionRef, setIsQuickNavVisible],
       [projectsSectionRef, setIsProjectsVisible],
     ];
     const intersectionObservers = observers.map(([ref, setVisible]) => {
@@ -206,8 +207,11 @@ export default function PortfolioPage() {
     </div>
   );
 
+  const showViewProjectsButton = resolvedTheme === 'light' || hasButtonClicked;
+
+
   return (
-    <div className="py-6 px-12 mt-12">
+    <div className="py-6 px-12 mt-8">
       <section
         aria-labelledby="welcome-heading"
         className={cn(
@@ -243,13 +247,14 @@ export default function PortfolioPage() {
             size="lg"
             variant="outline"
             className={cn(
-              "shadow-md relative", // Removed overflow-hidden temporarily if mask is CSS-only
-              "transition-all duration-200 ease-out",
+              "shadow-md relative",
+              "transition-all duration-200 ease-out", // Combined transition for opacity and transform
               "hover:scale-105 hover:bg-background"
             )}
             style={{
               ...buttonMaskStyle,
-              opacity: (resolvedTheme === 'dark' && !hasButtonClicked) ? 1 : 1 // Opacity is now handled by mask or always 1
+              // Opacity controlled by mask or always 1 if mask is not active
+              opacity: (resolvedTheme === 'dark' && !hasButtonClicked) ? 1 : 1, 
             }}
             onClick={() => {
               setHasButtonClicked(true);
@@ -271,7 +276,7 @@ export default function PortfolioPage() {
       >
         <h2
           id="quick-navigation-heading"
-          className="text-2xl font-display font-semibold mb-6 text-foreground"
+          className="font-display text-2xl font-semibold mb-6 text-foreground"
         >
           Connect & Explore
         </h2>
@@ -316,7 +321,7 @@ export default function PortfolioPage() {
       >
         <h2
           id="projects-heading"
-          className="text-3xl font-display font-semibold mb-8 text-center text-foreground"
+          className="font-display text-3xl font-semibold mb-8 text-center text-foreground"
         >
           My Projects
         </h2>
