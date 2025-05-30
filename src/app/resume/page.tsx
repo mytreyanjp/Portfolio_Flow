@@ -78,7 +78,7 @@ export default function ResumePage() {
       <header className="text-center mb-12">
         <h1
           id="resume-page-main-heading"
-          className="font-display text-4xl font-bold text-transparent bg-clip-text relative overflow-hidden"
+          className="font-display text-4xl font-bold text-transparent bg-clip-text relative overflow-hidden heading-hover-reveal"
           style={{
             ...parallaxStyle,
             backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
@@ -93,11 +93,11 @@ export default function ResumePage() {
         <Card className="md:col-span-1 shadow-lg"> 
           <CardContent className="pt-6 flex flex-col items-center text-center">
             <Image
-              src="/mytreyan.jpg" // Corrected path
+              src="/mytreyan.jpg" 
               alt="Profile Picture of Mytreyan JP"
               width={120}
               height={120}
-              className="rounded-full mb-4 border-4 border-primary object-cover"
+              className="rounded-full mb-4 object-cover"
               data-ai-hint="profile photo"
             />
             <h2 className="text-2xl font-semibold text-foreground">Mytreyan JP</h2>
