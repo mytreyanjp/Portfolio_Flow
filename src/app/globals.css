@@ -8,7 +8,7 @@
     /* Light Purple Theme */
     --background: 275 80% 97%; /* Very light lavender */
     --foreground: 270 40% 25%; /* Darker purple for text */
-    --card: 275 75% 99%; /* Almost white lavender */
+    --card: 275 75% 99% / 0.95; /* Almost white lavender, 95% opacity */
     --card-foreground: 270 40% 25%;
     --popover: 275 75% 99%;
     --popover-foreground: 270 40% 25%;
@@ -47,7 +47,7 @@
     /* Black Dark Theme */
     --background: 0 0% 0%; /* Black */
     --foreground: 275 50% 80%; /* Softer light lavender/silver for text */
-    --card: 270 35% 10%; /* Very dark purple, almost black for cards */
+    --card: 270 35% 10% / 0.9; /* Very dark purple, almost black for cards, 90% opacity */
     --card-foreground: 275 50% 80%; /* Match main foreground */
     --popover: 270 40% 8%; /* Darker popover */
     --popover-foreground: 275 50% 80%; /* Match main foreground */
@@ -79,14 +79,39 @@
     --sidebar-border: 270 25% 15%;
     --sidebar-ring: 280 70% 60%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
     scroll-behavior: smooth;
+  }
+}
+
+/* Keyframes for animations */
+@keyframes fadeInUpScale {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0px) scale(1);
+  }
+}
+
+@keyframes numberRollIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px) scale(0.9);
+  }
+  60% { /* Using percentages directly here is also valid and common */
+    opacity: 1;
+    transform: translateY(-2px) scale(1.05);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0px) scale(1);
   }
 }
