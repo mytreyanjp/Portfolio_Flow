@@ -63,7 +63,7 @@ export default function ContactPage() {
     >
       <h1
         id="contact-page-main-heading"
-        className="font-display text-4xl font-bold text-center mb-12 text-transparent bg-clip-text heading-hover-reveal relative overflow-hidden"
+        className="font-display text-4xl font-bold text-center mb-12 text-transparent bg-clip-text relative overflow-hidden"
         style={{
           ...parallaxStyle,
           backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',

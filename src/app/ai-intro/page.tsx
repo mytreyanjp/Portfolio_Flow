@@ -67,7 +67,7 @@ export default function AiIntroPage() {
           <Sparkles className="h-16 w-16 text-primary mx-auto mb-4 animate-pulse" />
           <h1 
             id="ai-intro-page-main-heading"
-            className="text-4xl font-display font-bold text-transparent bg-clip-text mb-4 heading-hover-reveal relative overflow-hidden"
+            className="text-4xl font-display font-bold text-transparent bg-clip-text mb-4 relative overflow-hidden"
             style={{
               ...parallaxStyle,
               backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',

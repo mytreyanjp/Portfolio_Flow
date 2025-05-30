@@ -26,9 +26,11 @@ export default function PortfolioPage() {
   const [noProjectsMessageVisible, setNoProjectsMessageVisible] = useState(false);
 
   const welcomeSectionRef = useRef<HTMLElement>(null);
+  const quickNavSectionRef = useRef<HTMLElement>(null);
   const projectsSectionRef = useRef<HTMLElement>(null);
   
   const [isWelcomeVisible, setIsWelcomeVisible] = useState(false);
+  const [isQuickNavVisible, setIsQuickNavVisible] = useState(false);
   const [isProjectsVisible, setIsProjectsVisible] = useState(false);
   
   const [hasScrolled, setHasScrolled] = useState(false);
@@ -38,15 +40,21 @@ export default function PortfolioPage() {
 
   const { resolvedTheme } = useTheme();
   const [hasButtonClicked, setHasButtonClicked] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  
-  // Flare effect state for the button
   const [flareStyle, setFlareStyle] = useState({});
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isMobile, setIsMobile] = useState<boolean | undefined>(undefined);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
 
   useEffect(() => {
     const contentNode = introContentRef.current;
-    if (!contentNode) return;
+    if (!contentNode || isMobile) return;
 
     const handleMouseMoveForGradient = (event: MouseEvent) => {
       const x = (event.clientX / window.innerWidth) * 100;
@@ -59,9 +67,10 @@ export default function PortfolioPage() {
     return () => {
       window.removeEventListener('mousemove', handleMouseMoveForGradient);
     };
-  }, []);
+  }, [isMobile]);
 
   useEffect(() => {
+    if (isMobile) return; // Disable flare effect on mobile
     const handleGlobalMouseMove = (event: MouseEvent) => {
       setMousePosition({ x: event.clientX, y: event.clientY });
     };
@@ -69,10 +78,17 @@ export default function PortfolioPage() {
     return () => {
       window.removeEventListener('mousemove', handleGlobalMouseMove);
     };
-  }, []);
+  }, [isMobile]);
 
   useEffect(() => {
-    if (!viewProjectsButtonRef.current) return;
+    if (!viewProjectsButtonRef.current || isMobile) {
+      setFlareStyle({}); // Clear flare style on mobile or if button ref is not available
+      return;
+    }
+    if (hasButtonClicked && resolvedTheme === 'dark') {
+      setFlareStyle({}); // Clear flare once button is clicked in dark mode
+      return;
+    }
 
     const button = viewProjectsButtonRef.current;
     const rect = button.getBoundingClientRect();
@@ -87,8 +103,8 @@ export default function PortfolioPage() {
       Math.pow(lightX - buttonCenterX, 2) + Math.pow(lightY - buttonCenterY, 2)
     );
 
-    const MAX_LIGHT_DISTANCE = 200; // px, how far the light effect spreads
-    const MAX_INTENSITY = 0.6; // Max alpha for the light color
+    const MAX_LIGHT_DISTANCE = 200; 
+    const MAX_INTENSITY = 0.6; 
 
     let calculatedIntensity = 0;
     if (distance < MAX_LIGHT_DISTANCE) {
@@ -103,7 +119,7 @@ export default function PortfolioPage() {
 
     setFlareStyle(newFlareStyle);
 
-  }, [mousePosition, resolvedTheme, hasButtonClicked]);
+  }, [mousePosition, resolvedTheme, hasButtonClicked, isMobile]);
 
 
   useEffect(() => {
@@ -144,6 +160,7 @@ export default function PortfolioPage() {
     };
     const observers: [React.RefObject<HTMLElement>, React.Dispatch<React.SetStateAction<boolean>>][] = [
       [welcomeSectionRef, setIsWelcomeVisible],
+      [quickNavSectionRef, setIsQuickNavVisible],
       [projectsSectionRef, setIsProjectsVisible],
     ];
     const intersectionObservers = observers.map(([ref, setVisible]) => {
@@ -232,7 +249,7 @@ export default function PortfolioPage() {
         <div className="max-w-3xl mx-auto" ref={introContentRef}>
           <h1
             id="portfolio-page-main-heading"
-            className="font-display text-5xl sm:text-6xl md:text-7xl text-transparent bg-clip-text mb-2 relative overflow-hidden heading-hover-reveal"
+            className="font-display text-5xl sm:text-6xl md:text-7xl text-transparent bg-clip-text mb-2 relative overflow-hidden"
             style={{
               backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)',
             }}
@@ -256,18 +273,18 @@ export default function PortfolioPage() {
             size="lg"
             variant="outline"
             className={cn(
-              "shadow-md relative overflow-hidden", // Added relative overflow-hidden
+              "shadow-md relative overflow-hidden",
               "transition-all duration-200 ease-out", 
-              "hover:scale-105 hover:bg-background"
+              "hover:scale-105 hover:bg-background",
+              {'opacity-0': resolvedTheme === 'dark' && !hasButtonClicked && !isMobile} // Initially hidden in dark mode
             )}
-            style={flareStyle} // Apply dynamic flare styles
+            style={flareStyle} 
             onClick={() => {
               setHasButtonClicked(true);
               scrollToProjects();
             }}
           >
-            {/* Flare Overlay: Only in dark theme and before click */}
-            {resolvedTheme === 'dark' && !hasButtonClicked && (
+            {resolvedTheme === 'dark' && !hasButtonClicked && !isMobile && (
               <div
                 className="absolute inset-0 rounded-[inherit] pointer-events-none"
                 style={{
@@ -276,8 +293,7 @@ export default function PortfolioPage() {
                 }}
               />
             )}
-            {/* Button Content */}
-            <span className="relative z-[1] flex items-center"> {/* Ensure content is above flare */}
+            <span className="relative z-[1] flex items-center"> 
               View Projects <ArrowDown className="ml-2 h-5 w-5 animate-bounce" />
             </span>
           </Button>
@@ -290,6 +306,7 @@ export default function PortfolioPage() {
           "py-8 text-center transition-all duration-700 ease-in-out mt-23",
           hasScrolled ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10" 
         )}
+        ref={quickNavSectionRef}
       >
         <h2
           id="quick-navigation-heading"
@@ -393,4 +410,3 @@ export default function PortfolioPage() {
     </div>
   );
 }
-
