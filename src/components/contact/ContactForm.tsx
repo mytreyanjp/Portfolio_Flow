@@ -12,6 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { db } from '@/lib/firebase/firebase'; // Import Firebase db instance
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore'; // Import Firestore functions
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.').max(50, 'Name must be less than 50 characters.'),
@@ -21,41 +23,36 @@ const formSchema = z.object({
 
 type ContactFormValues = z.infer<typeof formSchema>;
 
-// This function simulates form submission and prepares email content.
-// For actual email sending, this data would be sent to a backend API.
-async function submitContactForm(data: ContactFormValues): Promise<{ success: boolean; message: string; emailContent?: string }> {
-  // Generate a simple unique ID for the submission
+async function submitContactForm(data: ContactFormValues): Promise<{ success: boolean; message: string; submissionId?: string }> {
   const submissionId = 'CONTACT-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
 
-  // Structure the email content
-  const emailBody = 
-    'New Contact Form Submission\n' +
-    '-----------------------------\n' +
-    'ID: ' + submissionId + '\n' +
-    'Full Name: ' + data.name + '\n' +
-    'Email Address: ' + data.email + '\n' +
-    '-----------------------------\n' +
-    'Message:\n' +
-    data.message + '\n' +
-    '-----------------------------';
-
-  console.log('--- Contact Form Submission Data ---');
-  console.log('Recipient: mytreyan197@gmail.com');
-  console.log('Email Content to be sent:');
-  console.log(emailBody);
-  console.log('Note: This email is NOT actually sent. This is a frontend simulation. A backend service is required to send emails.');
-
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 1500));
-
-  // In a real application, you would send 'data' (or 'emailBody') to your backend here.
-  // The backend would then use an email service to send the email.
-
-  return { 
-    success: true, 
-    message: "Your message has been logged (simulation)! I'll get back to you soon.",
-    emailContent: emailBody 
+  const submissionData = {
+    submissionId: submissionId,
+    name: data.name,
+    email: data.email,
+    message: data.message,
+    timestamp: serverTimestamp(), // Adds a server-side timestamp
   };
+
+  console.log('--- Contact Form Submission Data to be saved to Firestore ---');
+  console.log(submissionData);
+  
+  try {
+    // Add a new document with a generated ID to the "contactSubmissions" collection
+    const docRef = await addDoc(collection(db, "contactSubmissions"), submissionData);
+    console.log("Document written with ID: ", docRef.id);
+    return { 
+      success: true, 
+      message: "Your message has been saved! I'll get back to you soon.",
+      submissionId: submissionId 
+    };
+  } catch (e) {
+    console.error("Error adding document: ", e);
+    return {
+      success: false,
+      message: "Failed to save your message. Please try again. " + (e instanceof Error ? e.message : 'Unknown error'),
+    };
+  }
 }
 
 
@@ -78,13 +75,13 @@ export default function ContactForm() {
       const result = await submitContactForm(data);
       if (result.success) {
         toast({
-          title: 'Message "Sent" (Simulated)!',
+          title: 'Message Saved!',
           description: result.message,
         });
         form.reset();
       } else {
         toast({
-          title: 'Error',
+          title: 'Error Saving Message',
           description: result.message,
           variant: 'destructive',
         });
@@ -92,7 +89,7 @@ export default function ContactForm() {
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'An unexpected error occurred. Please try again.',
+        description: 'An unexpected error occurred while saving your message. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -145,15 +142,14 @@ export default function ContactForm() {
         <Button 
           type="submit" 
           className={cn(
-            "w-full",
-            "hover:scale-105 transition-transform duration-200 ease-out hover:bg-primary"
+            "w-full hover:scale-105 transition-transform duration-200 ease-out hover:bg-primary"
           )} 
           disabled={isSubmitting}
         >
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Sending...
+              Saving...
             </>
           ) : (
             'Send Message'
