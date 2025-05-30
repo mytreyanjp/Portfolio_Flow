@@ -119,6 +119,7 @@ export default function PortfolioPage() {
     if (isLoading || error) return [];
     const results = projects.filter(project => {
       const categoryMatch = filters.category ? project.category === filters.category : true;
+      // Technology filter logic removed as dropdown was removed
       return categoryMatch;
     });
     setNoProjectsMessageVisible(results.length === 0 && !isLoading && (filters.category !== ''));
@@ -178,7 +179,7 @@ export default function PortfolioPage() {
   }, [resolvedTheme]);
 
   return (
-    <div className="py-6 px-12 space-y-12">
+    <div className="py-6 px-12 space-y-12 mt-12">
       <section
         aria-labelledby="welcome-heading"
         className={cn(
@@ -227,7 +228,7 @@ export default function PortfolioPage() {
       <section
         aria-labelledby="quick-navigation-heading"
         className={cn(
-          "py-8 text-center transition-all duration-700 ease-in-out mt-18",
+          "py-8 text-center transition-all duration-700 ease-in-out mt-23",
           hasScrolled ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
         )}
       >
@@ -235,7 +236,7 @@ export default function PortfolioPage() {
           id="quick-navigation-heading"
           className="text-2xl font-semibold mb-6 text-foreground"
         >
-          Connect &amp; Explore
+          Connect & Explore
         </h2>
         <div className="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-4">
           <Button 
@@ -333,4 +334,3 @@ export default function PortfolioPage() {
     </div>
   );
 }
-
