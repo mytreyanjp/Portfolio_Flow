@@ -93,7 +93,7 @@ export default function ResumePage() {
         <Card className="md:col-span-1 shadow-lg"> 
           <CardContent className="pt-6 flex flex-col items-center text-center">
             <Image
-              src="../../public/photos/mytreyan.jpg"
+              src="/mytreyan.jpg" // Corrected path
               alt="Profile Picture of Mytreyan JP"
               width={120}
               height={120}
