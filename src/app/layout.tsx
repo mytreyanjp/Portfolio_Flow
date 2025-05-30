@@ -16,12 +16,10 @@ import localFont from 'next/font/local';
 // Dynamically import CursorTail to ensure it's client-side only
 const CursorTail = dynamic(() => import('@/components/effects/CursorTail'), { ssr: false });
 
-// Initialize the local font
 // CRUCIAL: Ensure your font file GreaterTheory.otf exists at the path:
-// your-project-root/src/assets/fonts/GreaterTheory.otf
-// The path below is relative to this file (src/app/layout.tsx)
+// your-project-root/public/fonts/GreaterTheory.otf
 const greaterTheory = localFont({
-  src: '../assets/fonts/GreaterTheory.otf', // This path points to src/assets/fonts/GreaterTheory.otf
+  src: '/fonts/GreaterTheory.otf', // This path refers to PROJECT_ROOT/public/fonts/GreaterTheory.otf
   variable: '--font-greater-theory',
   display: 'swap',
 });
@@ -46,7 +44,6 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   const currentIsDarkTheme = resolvedTheme === 'dark';
   console.log('[MainContentWithTheme] RENDER: currentIsDarkTheme evaluates to:', currentIsDarkTheme);
   
-  // Condition for showing CursorTail: only on client and when dark theme is active.
   const showCursorTail = isClient && currentIsDarkTheme;
   console.log(`[RootLayout] RENDER: showCursorTail is ${showCursorTail}, isClient is ${isClient}, resolvedTheme is ${resolvedTheme}`);
   
