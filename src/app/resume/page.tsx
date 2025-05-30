@@ -109,13 +109,31 @@ export default function ResumePage() {
                            group-hover:opacity-100 group-hover:scale-100 group-hover:left-[calc(100%_+_1.75rem)] group-hover:pointer-events-auto
                            transform transition-all duration-300 ease-in-out z-10"
               >
-                <a href="#" aria-label="Instagram" className="p-2 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-colors">
+                <a 
+                  href="https://www.instagram.com/mytreyn?igsh=YnZyanJmOTZwaW1l" 
+                  aria-label="Instagram" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="p-2 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-colors"
+                >
                   <Instagram className="w-5 h-5" />
                 </a>
-                <a href="#" aria-label="GitHub" className="p-2 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-colors">
+                <a 
+                  href="https://github.com/mytreyanjp" 
+                  aria-label="GitHub" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="p-2 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-colors"
+                >
                   <Github className="w-5 h-5" />
                 </a>
-                <a href="#" aria-label="LinkedIn" className="p-2 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-colors">
+                <a 
+                  href="https://in.linkedin.com/in/mytreyan-jp-49226a2a7" 
+                  aria-label="LinkedIn" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="p-2 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-colors"
+                >
                   <Linkedin className="w-5 h-5" />
                 </a>
               </div>
