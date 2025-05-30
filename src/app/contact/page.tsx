@@ -57,7 +57,7 @@ export default function ContactPage() {
     <div
       ref={sectionRef}
       className={cn(
-        "relative z-0 max-w-4xl mx-auto py-8 transition-all duration-700 ease-in-out",
+        "relative z-0 max-w-4xl mx-auto py-8 transition-all duration-700 ease-in-out font-title",
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
       )}
     >
@@ -77,7 +77,7 @@ export default function ContactPage() {
           <h2 id="contact-form-section" className="sr-only">Contact Form</h2>
           <Card className="shadow-xl"> 
             <CardHeader>
-              <CardTitle className="text-2xl text-foreground">Send a Message</CardTitle>
+              <CardTitle className="text-2xl text-foreground font-title">Send a Message</CardTitle>
               <CardDescription>Fill out the form below and I'll get back to you as soon as possible.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -89,7 +89,7 @@ export default function ContactPage() {
         <section aria-labelledby="contact-info-section" className="space-y-8">
            <h2
             id="contact-info-section-heading"
-            className="text-2xl font-semibold mb-6 text-center md:text-left text-foreground"
+            className="text-2xl font-semibold mb-6 text-center md:text-left text-foreground font-title"
            >
             Contact Information
            </h2>
@@ -99,8 +99,8 @@ export default function ContactPage() {
                 <Mail className="h-6 w-6 text-primary mt-1" />
                 <div>
                   <h3 className="font-semibold text-foreground">Email</h3>
-                  <a href="mailto:placeholder@example.com" className="text-accent hover:underline">
-                    placeholder@example.com
+                  <a href="mailto:mytreyan197@gmail.com" className="text-accent hover:underline">
+                    mytreyan197@gmail.com
                   </a>
                 </div>
               </div>
@@ -108,14 +108,23 @@ export default function ContactPage() {
                 <Phone className="h-6 w-6 text-primary mt-1" />
                 <div>
                   <h3 className="font-semibold text-foreground">Phone</h3>
-                  <p className="text-muted-foreground">(123) 456-7890 (Placeholder)</p>
+                  <a href="tel:+919380744449" className="text-accent hover:underline">
+                    +91 9380744449
+                  </a>
                 </div>
               </div>
               <div className="flex items-start space-x-4">
                 <MapPin className="h-6 w-6 text-primary mt-1" />
                 <div>
                   <h3 className="font-semibold text-foreground">Location</h3>
-                  <p className="text-muted-foreground">Planet Earth (Remote Friendly)</p>
+                  <a 
+                    href="https://www.google.com/maps/search/?api=1&query=Chennai,Tamilnadu" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-accent hover:underline"
+                  >
+                    Chennai, Tamilnadu
+                  </a>
                 </div>
               </div>
             </CardContent>
