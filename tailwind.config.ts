@@ -1,6 +1,7 @@
 
 import type { Config } from "tailwindcss";
-import { fontFamily } from "tailwindcss/defaultTheme"; 
+// fontFamily import removed as it's no longer used for sans/mono extensions
+// import { fontFamily } from "tailwindcss/defaultTheme"; 
 
 export default {
     darkMode: ["class"],
@@ -12,8 +13,7 @@ export default {
   theme: {
     extend: {
       fontFamily: { 
-        sans: ["var(--font-geist-sans)", ...fontFamily.sans],
-        // Removed mono: ["var(--font-geist-mono)", ...fontFamily.mono],
+        // Removed sans and mono definitions that used CSS variables
       },
   		colors: {
   			background: 'hsl(var(--background))',

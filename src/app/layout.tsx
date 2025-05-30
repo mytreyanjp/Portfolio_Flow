@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Geist_Sans } from 'next/font/google'; // Removed Geist_Mono
+// Removed Geist_Sans import
 import './globals.css';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -15,12 +15,7 @@ import { usePathname } from 'next/navigation';
 
 const CursorTail = dynamic(() => import('@/components/effects/CursorTail'), { ssr: false });
 
-const geistSans = Geist_Sans({ 
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-});
-
-// Removed Geist_Mono initialization
+// Removed Geist_Sans initialization
 
 function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   const [isClient, setIsClient] = useState(false);
@@ -42,7 +37,7 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   const currentIsDarkTheme = resolvedTheme === 'dark';
   console.log('[MainContentWithTheme] RENDER: currentIsDarkTheme evaluates to:', currentIsDarkTheme);
   
-  const showCursorTail = isClient; 
+  const showCursorTail = isClient && currentIsDarkTheme; 
   console.log('[MainContentWithTheme] RENDER: showCursorTail condition evaluates to:', showCursorTail, '(isClient:', isClient, ', resolvedTheme:', resolvedTheme, ')');
   
 
@@ -74,7 +69,8 @@ export default function RootLayout({
         <link rel="icon" href="/favicon22.png" type="image/png" sizes="any" />
       </head>
       <body className={cn(
-          `${geistSans.variable} antialiased flex flex-col min-h-screen bg-background`, // Removed geistMono.variable
+          // Removed font variable from className
+          "antialiased flex flex-col min-h-screen bg-background", 
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
