@@ -202,7 +202,7 @@ export default function PortfolioPage() {
             size="lg"
             variant="outline"
             onClick={scrollToProjects}
-            className="shadow-md hover:shadow-lg transition-shadow"
+            className="shadow-md hover:shadow-lg transition-transform duration-200 ease-out hover:scale-105"
           >
             View Projects <ArrowDown className="ml-2 h-5 w-5 animate-bounce" />
           </Button>
@@ -286,7 +286,7 @@ export default function PortfolioPage() {
             noProjectsMessageVisible && (
               <Alert
                 variant="destructive"
-                className="relative py-8 text-center animate-fadeInUpScale"
+                className="relative py-8 text-center animate-fadeInUpScale bg-destructive/10"
                 style={{ animationDelay: '0s' }}
               >
                 <button
