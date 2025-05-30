@@ -111,8 +111,6 @@ export default function PortfolioPage() {
     if (isLoading || error) return [];
     const results = projects.filter(project => {
       const categoryMatch = filters.category ? project.category === filters.category : true;
-      // Technology filter is removed from UI, so we don't filter by it here anymore
-      // const technologyMatch = filters.technologies.length > 0 ? filters.technologies.every(tech => project.technologies.includes(tech)) : true;
       return categoryMatch;
     });
     setNoProjectsMessageVisible(results.length === 0 && !isLoading && (filters.category !== ''));
@@ -121,13 +119,13 @@ export default function PortfolioPage() {
 
   const handleFilterChange = (newFilters: Filters) => {
     setFilters(newFilters);
-    if (newFilters.category === '') { // Also reset message if category is cleared
+    if (newFilters.category === '') { 
       setNoProjectsMessageVisible(false);
     }
   };
 
   const handleResetFilters = () => {
-    setFilters({ category: '', technologies: [] }); // technologies filter is kept in state for consistency
+    setFilters({ category: '', technologies: [] }); 
     setNoProjectsMessageVisible(false);
   };
 
@@ -169,7 +167,7 @@ export default function PortfolioPage() {
       <section
         aria-labelledby="welcome-heading"
         className={cn(
-          "text-center transition-all duration-700 ease-in-out mt-[8.75rem]", 
+          "text-center transition-all duration-700 ease-in-out mt-12", 
           isWelcomeVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
         )}
         ref={welcomeSectionRef}
@@ -214,7 +212,7 @@ export default function PortfolioPage() {
       <section
         aria-labelledby="quick-navigation-heading"
         className={cn(
-          "py-8 text-center transition-all duration-700 ease-in-out mt-[8.75rem]",
+          "py-8 text-center transition-all duration-700 ease-in-out mt-12",
           isQuickNavVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
         )}
         ref={quickNavSectionRef}
