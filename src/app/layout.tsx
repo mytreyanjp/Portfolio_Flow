@@ -13,20 +13,27 @@ import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 import localFont from 'next/font/local';
 
-// Dynamically import CursorTail to ensure it's client-side only
-const CursorTail = dynamic(() => import('@/components/effects/CursorTail'), { ssr: false });
-
 // CRUCIAL: Ensure your font file GreaterTheory.otf exists at the path:
-// your-project-root/public/fonts/GreaterTheory.otf
+// /home/user/studio/public/fonts/GreaterTheory.otf
 const greaterTheory = localFont({
-  src: '/fonts/GreaterTheory.otf', // This path refers to PROJECT_ROOT/public/fonts/GreaterTheory.otf
+  src: [
+    {
+      path: '../../public/fonts/GreaterTheory.otf', // Path relative to this file (src/app/layout.tsx)
+      weight: '400', // Adjust if your font has a different default weight
+      style: 'normal', // Adjust if your font has a different default style
+    },
+  ],
   variable: '--font-greater-theory',
   display: 'swap',
 });
 
+// Dynamically import CursorTail to ensure it's client-side only
+const CursorTail = dynamic(() => import('@/components/effects/CursorTail'), { ssr: false });
+
+
 function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   const [isClient, setIsClient] = useState(false);
-  const { theme, resolvedTheme } = useTheme();
+  const { theme, resolvedTheme } = useTheme(); // theme is the setting, resolvedTheme is what's active
 
   useEffect(() => {
     setIsClient(true);
