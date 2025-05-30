@@ -37,13 +37,13 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
     <Card
       ref={cardRef}
       className={cn(
-        "flex flex-col h-full overflow-hidden transform transition-all duration-300 hover:scale-[1.02] animate-fadeInUpScale shadow-lg",
+        "flex flex-col h-full overflow-hidden transform transition-all duration-300 hover:scale-[1.02] animate-fadeInUpScale",
       )}
       style={{ animationDelay: `${index * 100}ms` }}
     >
       <div className="relative w-full h-48 mb-4 rounded-t-md overflow-hidden group bg-muted">
         {project.model ? (
-          <ProjectModelViewer modelUrl={project.model} containerRef={cardRef} />
+          <ProjectModelViewer modelPath={project.model} containerRef={cardRef} />
         ) : project.imageUrl ? (
           <img
             src={project.imageUrl}
@@ -87,7 +87,9 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
             className="w-full sm:w-auto transition-transform duration-200 ease-out hover:scale-105 hover:bg-primary"
           >
             <Link href={project.liveLink} target="_blank" rel="noopener noreferrer">
-              Live Demo <ArrowUpRight className="ml-1 h-4 w-4" />
+              <span className="flex items-center"> {/* Ensure single child for Link */}
+                Live Demo <ArrowUpRight className="ml-1 h-4 w-4" />
+              </span>
             </Link>
           </Button>
         )}
@@ -99,7 +101,9 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
             className="w-full sm:w-auto transition-transform duration-200 ease-out hover:scale-105 hover:bg-background"
           >
             <Link href={project.sourceLink} target="_blank" rel="noopener noreferrer">
-              <Github className="mr-1 h-4 w-4" /> Source
+              <span className="flex items-center"> {/* Ensure single child for Link */}
+                <Github className="mr-1 h-4 w-4" /> Source
+              </span>
             </Link>
           </Button>
         )}
