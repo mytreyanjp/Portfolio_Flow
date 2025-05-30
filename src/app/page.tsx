@@ -22,11 +22,12 @@ export default function PortfolioPage() {
   const [noProjectsMessageVisible, setNoProjectsMessageVisible] = useState(false);
 
   const welcomeSectionRef = useRef<HTMLElement>(null);
-  const quickNavSectionRef = useRef<HTMLElement>(null);
+  // quickNavSectionRef and isQuickNavVisible removed
   const projectsSectionRef = useRef<HTMLElement>(null);
   const [isWelcomeVisible, setIsWelcomeVisible] = useState(false);
-  const [isQuickNavVisible, setIsQuickNavVisible] = useState(false);
+  // isQuickNavVisible removed
   const [isProjectsVisible, setIsProjectsVisible] = useState(false);
+  const [hasScrolled, setHasScrolled] = useState(false);
   
   const introContentRef = useRef<HTMLDivElement>(null);
 
@@ -47,6 +48,23 @@ export default function PortfolioPage() {
     window.addEventListener('mousemove', handleMouseMove);
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 0) {
+        setHasScrolled(true);
+        window.removeEventListener('scroll', handleScroll); // Remove listener once scrolled
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    // Call it once on mount in case the page is already scrolled (e.g., refresh)
+    handleScroll(); 
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
     };
   }, []);
 
@@ -75,9 +93,9 @@ export default function PortfolioPage() {
       threshold: 0.1, // Trigger when 10% of the element is visible
     };
 
+    // Removed quickNavSectionRef from observers
     const observers: [React.RefObject<HTMLElement>, React.Dispatch<React.SetStateAction<boolean>>][] = [
       [welcomeSectionRef, setIsWelcomeVisible],
-      [quickNavSectionRef, setIsQuickNavVisible],
       [projectsSectionRef, setIsProjectsVisible],
     ];
 
@@ -104,6 +122,7 @@ export default function PortfolioPage() {
     if (isLoading || error) return [];
     const results = projects.filter(project => {
       const categoryMatch = filters.category ? project.category === filters.category : true;
+      // Technology filter logic removed as dropdown was removed
       return categoryMatch;
     });
     setNoProjectsMessageVisible(results.length === 0 && !isLoading && (filters.category !== ''));
@@ -112,7 +131,7 @@ export default function PortfolioPage() {
 
   const handleFilterChange = (newFilters: Filters) => {
     setFilters(newFilters);
-    if (newFilters.category === '') { 
+    if (newFilters.category === '' && newFilters.technologies.length === 0) { 
       setNoProjectsMessageVisible(false);
     }
   };
@@ -213,9 +232,10 @@ export default function PortfolioPage() {
         aria-labelledby="quick-navigation-heading"
         className={cn(
           "py-8 text-center transition-all duration-700 ease-in-out mt-12",
-          isQuickNavVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+          // Updated to use hasScrolled state
+          hasScrolled ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
         )}
-        ref={quickNavSectionRef}
+        // ref removed as IntersectionObserver is no longer used for this section
       >
         <h2
           id="quick-navigation-heading"
