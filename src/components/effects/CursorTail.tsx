@@ -23,6 +23,7 @@ interface CursorTailProps {
 
 export default function CursorTail(props: CursorTailProps) {
   const { isDarkTheme } = props;
+  // Log the received isDarkTheme prop
   console.log('[CursorTail] Component rendered. Received isDarkTheme prop:', isDarkTheme);
   
   const [position, setPosition] = useState<Position>({ x: -CIRCLE_RADIUS * 2, y: -CIRCLE_RADIUS * 2 });
@@ -59,10 +60,10 @@ export default function CursorTail(props: CursorTailProps) {
     };
     
     animationFrameId.current = requestAnimationFrame(updatePosition);
-    console.log('[CursorTail] Mousemove listener added and animation loop started.');
+    // console.log('[CursorTail] Mousemove listener added and animation loop started.');
     
     return () => {
-      console.log('[CursorTail] Cleanup: Removing mousemove listener and cancelling animation frame.');
+      // console.log('[CursorTail] Cleanup: Removing mousemove listener and cancelling animation frame.');
       isMounted = false; 
       window.removeEventListener('mousemove', handleMouseMove);
       if (animationFrameId.current) {
@@ -108,6 +109,10 @@ export default function CursorTail(props: CursorTailProps) {
         r={CIRCLE_RADIUS}
         fill={fillColor}
         filter={BLUR_STD_DEVIATION > 0 ? `url(#${blurFilterId})` : undefined}
+        style={{
+         // The transition is primarily handled by the animation loop for position.
+         // If fill color changes abruptly, it should be fine as the component remounts.
+        }}
       />
     </svg>
   );
