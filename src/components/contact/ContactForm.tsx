@@ -25,7 +25,7 @@ type ContactFormValues = z.infer<typeof formSchema>;
 // For actual email sending, this data would be sent to a backend API.
 async function submitContactForm(data: ContactFormValues): Promise<{ success: boolean; message: string; emailContent?: string }> {
   // Generate a simple unique ID for the submission
-  const submissionId = \`CONTACT-\${Date.now()}-\${Math.random().toString(36).substring(2, 9)}\`;
+  const submissionId = 'CONTACT-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
 
   // Structure the email content
   const emailBody = \`
