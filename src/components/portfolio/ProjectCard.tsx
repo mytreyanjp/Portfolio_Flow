@@ -78,13 +78,13 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
           </div>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-start space-x-2 pt-4 border-t">
+      <CardFooter className="flex flex-col sm:flex-row sm:justify-start gap-2 pt-4 border-t">
         {project.liveLink && (
           <Button
             asChild
             variant="default"
             size="sm"
-            className="transition-transform duration-200 ease-out hover:scale-105 hover:bg-primary"
+            className="w-full sm:w-auto transition-transform duration-200 ease-out hover:scale-105 hover:bg-primary"
           >
             <Link href={project.liveLink} target="_blank" rel="noopener noreferrer">
               Live Demo <ArrowUpRight className="ml-1 h-4 w-4" />
@@ -96,7 +96,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
             asChild
             variant="outline"
             size="sm"
-            className="transition-transform duration-200 ease-out hover:scale-105 hover:bg-background"
+            className="w-full sm:w-auto transition-transform duration-200 ease-out hover:scale-105 hover:bg-background"
           >
             <Link href={project.sourceLink} target="_blank" rel="noopener noreferrer">
               <Github className="mr-1 h-4 w-4" /> Source
