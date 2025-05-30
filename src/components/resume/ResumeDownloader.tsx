@@ -16,9 +16,10 @@ export default function ResumeDownloader() {
   return (
     <Button 
       onClick={handleOpenResume} 
+      variant="outline" // Changed to outline
       className={cn(
         "w-full shadow-md hover:shadow-lg",
-        "hover:scale-105 transition-transform duration-200 ease-out hover:bg-primary"
+        "hover:scale-105 transition-transform duration-200 ease-out hover:bg-background" // Changed hover background
       )}
       size="lg"
     >
