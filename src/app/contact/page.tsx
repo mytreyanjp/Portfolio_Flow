@@ -63,7 +63,7 @@ export default function ContactPage() {
     >
       <h1
         id="contact-page-main-heading"
-        className="text-4xl font-bold text-center mb-12 text-transparent bg-clip-text heading-hover-reveal relative overflow-hidden"
+        className="font-title text-4xl font-bold text-center mb-12 text-transparent bg-clip-text heading-hover-reveal relative overflow-hidden"
         style={{
           ...parallaxStyle,
           backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
@@ -75,9 +75,9 @@ export default function ContactPage() {
       <div className="grid md:grid-cols-2 gap-12 items-start">
         <section aria-labelledby="contact-form-section">
           <h2 id="contact-form-section" className="sr-only">Contact Form</h2>
-          <Card className="shadow-xl"> {/* Removed shadow-glow-primary */}
+          <Card className="shadow-xl"> 
             <CardHeader>
-              <CardTitle className="text-2xl">Send a Message</CardTitle>
+              <CardTitle className="text-2xl font-title">Send a Message</CardTitle>
               <CardDescription>Fill out the form below and I'll get back to you as soon as possible.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -89,16 +89,16 @@ export default function ContactPage() {
         <section aria-labelledby="contact-info-section" className="space-y-8">
            <h2
             id="contact-info-section-heading"
-            className="text-2xl font-semibold mb-6 text-center md:text-left text-foreground"
+            className="font-title text-2xl font-semibold mb-6 text-center md:text-left text-foreground"
            >
             Contact Information
            </h2>
-          <Card className="shadow-lg"> {/* Removed shadow-glow-primary */}
+          <Card className="shadow-lg"> 
             <CardContent className="pt-6 space-y-4">
               <div className="flex items-start space-x-4">
                 <Mail className="h-6 w-6 text-primary mt-1" />
                 <div>
-                  <h3 className="font-semibold">Email</h3>
+                  <h3 className="font-semibold font-title">Email</h3>
                   <a href="mailto:placeholder@example.com" className="text-accent hover:underline">
                     placeholder@example.com
                   </a>
@@ -107,14 +107,14 @@ export default function ContactPage() {
               <div className="flex items-start space-x-4">
                 <Phone className="h-6 w-6 text-primary mt-1" />
                 <div>
-                  <h3 className="font-semibold">Phone</h3>
+                  <h3 className="font-semibold font-title">Phone</h3>
                   <p className="text-muted-foreground">(123) 456-7890 (Placeholder)</p>
                 </div>
               </div>
               <div className="flex items-start space-x-4">
                 <MapPin className="h-6 w-6 text-primary mt-1" />
                 <div>
-                  <h3 className="font-semibold">Location</h3>
+                  <h3 className="font-semibold font-title">Location</h3>
                   <p className="text-muted-foreground">Planet Earth (Remote Friendly)</p>
                 </div>
               </div>

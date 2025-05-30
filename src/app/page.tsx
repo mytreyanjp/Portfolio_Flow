@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
-import { useTheme } from 'next-themes'; // Import useTheme
+import { useTheme } from 'next-themes'; 
 
 export default function PortfolioPage() {
   const [filters, setFilters] = useState<Filters>({ category: '', technologies: [] });
@@ -30,7 +30,7 @@ export default function PortfolioPage() {
   
   const introContentRef = useRef<HTMLDivElement>(null);
 
-  const { resolvedTheme } = useTheme(); // Get resolvedTheme
+  const { resolvedTheme } = useTheme(); 
 
   useEffect(() => {
     if (resolvedTheme) {
@@ -178,7 +178,7 @@ export default function PortfolioPage() {
         >
           <h1
             id="portfolio-page-main-heading"
-            className="text-7xl font-bold text-transparent bg-clip-text mb-2 relative overflow-hidden heading-hover-reveal"
+            className="font-display text-7xl text-transparent bg-clip-text mb-2 relative overflow-hidden heading-hover-reveal"
             style={{
               backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)',
             }}
@@ -186,7 +186,7 @@ export default function PortfolioPage() {
             Hello there
           </h1>
           <p
-            className="text-3xl md:text-4xl font-semibold mb-4 text-transparent bg-clip-text relative overflow-hidden"
+            className="font-title text-3xl md:text-4xl font-semibold mb-4 text-transparent bg-clip-text relative overflow-hidden"
             style={{ 
               backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)' 
             }}
@@ -218,7 +218,7 @@ export default function PortfolioPage() {
       >
         <h2
           id="quick-navigation-heading"
-          className="text-2xl font-semibold mb-6 text-foreground"
+          className="font-title text-2xl font-semibold mb-6 text-foreground"
         >
           Connect &amp; Explore
         </h2>
@@ -253,7 +253,7 @@ export default function PortfolioPage() {
       >
         <h2
           id="projects-heading"
-          className="text-3xl font-semibold mb-8 text-center text-foreground"
+          className="font-title text-3xl font-semibold mb-8 text-center text-foreground"
         >
           My Projects
         </h2>

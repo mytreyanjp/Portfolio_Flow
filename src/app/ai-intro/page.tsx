@@ -67,7 +67,7 @@ export default function AiIntroPage() {
           <Sparkles className="h-16 w-16 text-primary mx-auto mb-4 animate-pulse" />
           <h1 
             id="ai-intro-page-main-heading"
-            className="text-4xl font-bold text-transparent bg-clip-text mb-4 heading-hover-reveal relative overflow-hidden"
+            className="font-title text-4xl font-bold text-transparent bg-clip-text mb-4 heading-hover-reveal relative overflow-hidden"
             style={{
               ...parallaxStyle,
               backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
@@ -84,7 +84,7 @@ export default function AiIntroPage() {
 
       <Card className="shadow-xl">
         <CardHeader>
-          <CardTitle className="text-2xl text-foreground">Generate Your Custom Intro</CardTitle>
+          <CardTitle className="text-2xl font-title text-foreground">Generate Your Custom Intro</CardTitle>
           <CardDescription>
             Provide some details about yourself and the job you're applying for, 
             and our AI will whip up a personalized message.
@@ -97,7 +97,7 @@ export default function AiIntroPage() {
       
       <div className="mt-10 p-6 bg-card border border-border rounded-lg shadow-md">
         <h3 
-          className="text-xl font-semibold text-foreground mb-3"
+          className="font-title text-xl font-semibold text-foreground mb-3"
         >
           How it Works:
         </h3>

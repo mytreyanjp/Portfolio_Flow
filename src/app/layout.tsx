@@ -1,7 +1,8 @@
 
 'use client';
 
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Geist_Sans, Geist_Mono } from 'next/font/google'; // Changed: Removed 'as Geist' alias
+import { Lobster, Poppins } from 'next/font/google'; // Import new fonts
 import './globals.css';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -15,7 +16,7 @@ import { usePathname } from 'next/navigation';
 
 const CursorTail = dynamic(() => import('@/components/effects/CursorTail'), { ssr: false });
 
-const geistSans = Geist({
+const geistSans = Geist_Sans({ // Changed: Used Geist_Sans directly
   variable: '--font-geist-sans',
   subsets: ['latin'],
 });
@@ -23,6 +24,21 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
   subsets: ['latin'],
+});
+
+// Initialize custom fonts
+const lobster = Lobster({
+  weight: ['400'],
+  subsets: ['latin'],
+  variable: '--font-lobster', // CSS variable
+  display: 'swap',
+});
+
+const poppins = Poppins({
+  weight: ['400', '600', '700'], // Specify needed weights
+  subsets: ['latin'],
+  variable: '--font-poppins', // CSS variable
+  display: 'swap',
 });
 
 function MainContentWithTheme({ children }: { children: React.ReactNode }) {
@@ -44,12 +60,13 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
 
   const currentIsDarkTheme = resolvedTheme === 'dark';
   console.log('[MainContentWithTheme] RENDER: currentIsDarkTheme evaluates to:', currentIsDarkTheme);
-
-  const cursorTailKey = resolvedTheme || 'cursor-tail-default-key';
+  
+  // Condition to render CursorTail: only on client and when theme is resolved
+  const showCursorTail = isClient && (resolvedTheme === 'light' || resolvedTheme === 'dark');
 
   return (
     <>
-      {isClient && <CursorTail key={cursorTailKey} isDarkTheme={currentIsDarkTheme} />}
+      {showCursorTail && <CursorTail isDarkTheme={currentIsDarkTheme} />}
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
         {/* Responsive bottom padding: pb-20 for small screens (footer visible), pb-8 for md+ (footer hidden) */}
@@ -76,7 +93,7 @@ export default function RootLayout({
         <link rel="icon" href="/favicon22.png" type="image/png" sizes="any" />
       </head>
       <body className={cn(
-          `${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-background`,
+          `${geistSans.variable} ${geistMono.variable} ${lobster.variable} ${poppins.variable} antialiased flex flex-col min-h-screen bg-background`, // Add new font variables
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
