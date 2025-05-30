@@ -245,13 +245,13 @@ export default function ResumePage() {
 
         <Card className={cn("shadow-lg", "transition-transform duration-200 ease-out hover:scale-[1.02]")}>
           <CardHeader>
-            <CardTitle className="font-display text-2xl flex items-center text-foreground"><GraduationCap className="mr-2 h-6 w-6 text-primary"/> Education (Placeholder)</CardTitle>
+            <CardTitle className="font-display text-2xl flex items-center text-foreground"><GraduationCap className="mr-2 h-6 w-6 text-primary"/> Education</CardTitle>
           </CardHeader>
           <CardContent>
             <div>
-              <h3 className="font-semibold text-lg text-foreground">M.S. in Computer Science</h3>
-              <p className="text-sm text-muted-foreground">University of Technology - Graduated 2018</p>
-              <p className="mt-1 text-foreground/80">Specialized in Human-Computer Interaction and Graphics.</p>
+              <h3 className="font-semibold text-lg text-foreground">B.Tech Information Technology</h3>
+              <p className="text-sm text-muted-foreground">College of Engineering Guindy, Anna university</p>
+              <p className="mt-1 text-foreground/80">Practicing various domains of information services.</p>
             </div>
           </CardContent>
         </Card>
