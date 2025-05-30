@@ -1,7 +1,6 @@
 
 'use client';
 
-// Removed Geist_Sans import
 import './globals.css';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -12,10 +11,17 @@ import { useTheme } from 'next-themes';
 import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
+import localFont from 'next/font/local';
 
+// Dynamically import CursorTail to ensure it's client-side only
 const CursorTail = dynamic(() => import('@/components/effects/CursorTail'), { ssr: false });
 
-// Removed Geist_Sans initialization
+// Initialize the local font
+const greaterTheory = localFont({
+  src: '../assets/fonts/GreaterTheory.otf', // Relative path from src/app/ to src/assets/fonts/
+  variable: '--font-greater-theory',
+  display: 'swap',
+});
 
 function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   const [isClient, setIsClient] = useState(false);
@@ -37,8 +43,8 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   const currentIsDarkTheme = resolvedTheme === 'dark';
   console.log('[MainContentWithTheme] RENDER: currentIsDarkTheme evaluates to:', currentIsDarkTheme);
   
-  const showCursorTail = isClient && currentIsDarkTheme; 
-  console.log('[MainContentWithTheme] RENDER: showCursorTail condition evaluates to:', showCursorTail, '(isClient:', isClient, ', resolvedTheme:', resolvedTheme, ')');
+  const showCursorTail = isClient && currentIsDarkTheme;
+  console.log(`[RootLayout] RENDER: showCursorTail is ${showCursorTail}, isClient is ${isClient}, resolvedTheme is ${resolvedTheme}`);
   
 
   return (
@@ -69,8 +75,8 @@ export default function RootLayout({
         <link rel="icon" href="/favicon22.png" type="image/png" sizes="any" />
       </head>
       <body className={cn(
-          // Removed font variable from className
-          "antialiased flex flex-col min-h-screen bg-background", 
+          "antialiased flex flex-col min-h-screen bg-background",
+          greaterTheory.variable
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>

@@ -178,7 +178,7 @@ export default function PortfolioPage() {
         >
           <h1
             id="portfolio-page-main-heading"
-            className="text-7xl text-transparent bg-clip-text mb-2 relative overflow-hidden heading-hover-reveal" // font-display removed
+            className="font-display text-7xl text-transparent bg-clip-text mb-2 relative overflow-hidden"
             style={{
               backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)',
             }}
@@ -186,7 +186,7 @@ export default function PortfolioPage() {
             Hello there
           </h1>
           <p
-            className="text-3xl md:text-4xl font-semibold mb-4 text-transparent bg-clip-text relative overflow-hidden" // font-title removed
+            className="font-display text-3xl md:text-4xl font-semibold mb-4 text-transparent bg-clip-text relative overflow-hidden"
             style={{ 
               backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)' 
             }}
@@ -218,7 +218,7 @@ export default function PortfolioPage() {
       >
         <h2
           id="quick-navigation-heading"
-          className="text-2xl font-semibold mb-6 text-foreground" // font-title removed
+          className="text-2xl font-semibold mb-6 text-foreground"
         >
           Connect &amp; Explore
         </h2>
@@ -253,7 +253,7 @@ export default function PortfolioPage() {
       >
         <h2
           id="projects-heading"
-          className="text-3xl font-semibold mb-8 text-center text-foreground" // font-title removed
+          className="text-3xl font-semibold mb-8 text-center text-foreground"
         >
           My Projects
         </h2>
@@ -285,7 +285,7 @@ export default function PortfolioPage() {
             noProjectsMessageVisible && (
               <Alert
                 variant="destructive"
-                className="relative py-8 text-center animate-fadeInUpScale"
+                className="relative py-8 text-center animate-fadeInUpScale bg-destructive/10"
                 style={{ animationDelay: '0s' }}
               >
                 <button
