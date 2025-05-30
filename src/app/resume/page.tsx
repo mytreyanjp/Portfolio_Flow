@@ -26,7 +26,26 @@ const skills = [
 export default function ResumePage() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
   const [hoveredSkillLevel, setHoveredSkillLevel] = useState<number | null>(null);
+
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      const { clientX, clientY } = event;
+      const x = (clientX / window.innerWidth - 0.5) * 2;
+      const y = (clientY / window.innerHeight - 0.5) * 2;
+      const sensitivity = 10;
+      setParallaxOffset({ x: x * sensitivity, y: y * sensitivity });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  const parallaxStyle = {
+    transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`,
+    transition: 'transform 0.1s ease-out',
+  };
+
 
   useEffect(() => {
     const observerOptions = {
@@ -67,6 +86,7 @@ export default function ResumePage() {
           id="resume-page-main-heading"
           className="font-display text-3xl md:text-4xl font-bold text-transparent bg-clip-text heading-hover-reveal relative overflow-hidden"
           style={{
+            ...parallaxStyle,
             backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
           }}
         >
@@ -181,7 +201,7 @@ export default function ResumePage() {
               >
                 {hoveredSkillLevel !== null ? `${hoveredSkillLevel}` : '0'}
               </span>
-              <p className="text-xs text-muted-foreground font-display">PERCENTAGE</p>
+              <p className="text-xs text-primary font-display">PERCENTAGE</p>
             </div>
           </CardHeader>
           <CardContent>
@@ -249,3 +269,4 @@ export default function ResumePage() {
     </div>
   );
 }
+
