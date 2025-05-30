@@ -99,7 +99,7 @@ export default function ResumePage() {
                   alt="Profile Picture of Mytreyan JP"
                   width={120}
                   height={120}
-                  className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300 ease-in-out"
+                  className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-300 ease-in-out"
                   data-ai-hint="profile photo"
                 />
               </div>
@@ -120,7 +120,7 @@ export default function ResumePage() {
                 </a>
               </div>
             </div>
-            <h2 className="text-2xl font-semibold text-foreground">Mytreyan JP</h2>
+            <h2 className="text-2xl font-semibold text-foreground font-display">Mytreyan JP</h2>
             <p className="text-primary">
               BTech IT<br />
               <a
