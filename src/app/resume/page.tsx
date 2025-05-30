@@ -4,7 +4,7 @@
 import type { Metadata } from 'next';
 import ResumeDownloader from '@/components/resume/ResumeDownloader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Award, Briefcase, GraduationCap, Lightbulb, CheckCircle, Instagram, Github, Linkedin } from 'lucide-react';
+import { Award, Briefcase, GraduationCap, Lightbulb, CheckCircle, Instagram, Github, Linkedin, Percent } from 'lucide-react';
 import Image from 'next/image';
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
@@ -194,14 +194,14 @@ export default function ResumePage() {
             <CardTitle className="font-display text-2xl flex items-center text-foreground">
               <CheckCircle className="mr-2 h-6 w-6 text-primary"/> Key Skills
             </CardTitle>
-            <div className="flex items-baseline space-x-2 text-right">
+            <div className="flex items-baseline space-x-1 text-right">
               <span
                 key={hoveredSkillLevel === null ? 'placeholder' : hoveredSkillLevel} 
                 className="text-2xl font-bold text-primary animate-numberRollIn"
               >
                 {hoveredSkillLevel !== null ? `${hoveredSkillLevel}` : '0'}
               </span>
-              <p className="text-xs text-primary font-display">PERCENTAGE</p>
+              <Percent className="h-4 w-4 text-primary" />
             </div>
           </CardHeader>
           <CardContent>
