@@ -21,10 +21,42 @@ const formSchema = z.object({
 
 type ContactFormValues = z.infer<typeof formSchema>;
 
-async function submitContactForm(data: ContactFormValues): Promise<{ success: boolean; message: string }> {
-  console.log('Contact form submitted:', data);
+// This function simulates form submission and prepares email content.
+// For actual email sending, this data would be sent to a backend API.
+async function submitContactForm(data: ContactFormValues): Promise<{ success: boolean; message: string; emailContent?: string }> {
+  // Generate a simple unique ID for the submission
+  const submissionId = \`CONTACT-\${Date.now()}-\${Math.random().toString(36).substring(2, 9)}\`;
+
+  // Structure the email content
+  const emailBody = \`
+New Contact Form Submission
+-----------------------------
+ID: \${submissionId}
+Full Name: \${data.name}
+Email Address: \${data.email}
+-----------------------------
+Message:
+\${data.message}
+-----------------------------
+  \`;
+
+  console.log('--- Contact Form Submission Data ---');
+  console.log('Recipient: mytreyan197@gmail.com');
+  console.log('Email Content to be sent:');
+  console.log(emailBody);
+  console.log('Note: This email is NOT actually sent. This is a frontend simulation. A backend service is required to send emails.');
+
+  // Simulate API call delay
   await new Promise(resolve => setTimeout(resolve, 1500));
-  return { success: true, message: "Your message has been sent successfully! I'll get back to you soon." };
+
+  // In a real application, you would send 'data' (or 'emailBody') to your backend here.
+  // The backend would then use an email service to send the email.
+
+  return { 
+    success: true, 
+    message: "Your message has been logged (simulation)! I'll get back to you soon.",
+    emailContent: emailBody 
+  };
 }
 
 
@@ -47,7 +79,7 @@ export default function ContactForm() {
       const result = await submitContactForm(data);
       if (result.success) {
         toast({
-          title: 'Message Sent!',
+          title: 'Message "Sent" (Simulated)!',
           description: result.message,
         });
         form.reset();
@@ -115,7 +147,7 @@ export default function ContactForm() {
           type="submit" 
           className={cn(
             "w-full",
-            "hover:scale-105 transition-transform duration-200 ease-out hover:bg-primary" // Keeps primary bg on hover
+            "hover:scale-105 transition-transform duration-200 ease-out hover:bg-primary"
           )} 
           disabled={isSubmitting}
         >
