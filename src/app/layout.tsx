@@ -54,10 +54,13 @@ export default function RootLayout({
   // CursorTail is only shown if it's client-side AND the theme is dark.
   const showCursorTail = isClient && resolvedTheme === 'dark';
 
-  if (showCursorTail) {
-    console.log(`[RootLayout] About to render CursorTail because resolvedTheme is: "${resolvedTheme}"`);
-  } else if (isClient) {
-    console.log(`[RootLayout] NOT rendering CursorTail. resolvedTheme is: "${resolvedTheme}" (needs to be 'dark')`);
+  if (isClient) { // Only log this part if we are on the client
+    console.log(`[RootLayout] RENDER: showCursorTail condition evaluates to: ${showCursorTail} (isClient: ${isClient}, resolvedTheme: ${resolvedTheme})`);
+    if (showCursorTail) {
+      console.log(`[RootLayout] About to render CursorTail because resolvedTheme is: "${resolvedTheme}"`);
+    } else {
+      console.log(`[RootLayout] NOT rendering CursorTail. resolvedTheme is: "${resolvedTheme}" (needs to be 'dark' and client-side)`);
+    }
   }
 
 

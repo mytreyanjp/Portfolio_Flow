@@ -5,12 +5,13 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 
 // Appearance settings:
 const CIRCLE_RADIUS = 150;
-const FILL_COLOR_DARK_THEME_VISIBLE_OPACITY = 0.2; 
-const FILL_COLOR_LIGHT_THEME_INVISIBLE_OPACITY = 0.0;
-const BASE_FILL_COLOR_RGB = '107, 28, 117'; // Purple color base
+const FILL_COLOR_DARK_THEME_VISIBLE_OPACITY = 1; // DEBUG: Opaque
+const FILL_COLOR_LIGHT_THEME_INVISIBLE_OPACITY = 0.0; // Invisible for light theme
+const BASE_FILL_COLOR_RGB_DARK_THEME = '255, 0, 0'; // DEBUG: Bright Red for dark theme
+const BASE_FILL_COLOR_RGB_LIGHT_THEME = '107, 28, 117'; // Original Purple for light (but will be transparent)
 
-const BLUR_STD_DEVIATION = 15; 
-const Z_INDEX = -1; // Behind main content, above body background
+const BLUR_STD_DEVIATION = 0; // DEBUG: No blur
+const Z_INDEX = 9999; // DEBUG: Force on top
 
 interface Position {
   x: number;
@@ -60,10 +61,10 @@ export default function CursorTail(props: CursorTailProps) {
     };
     
     animationFrameId.current = requestAnimationFrame(updatePosition);
-    // console.log('[CursorTail] Mousemove listener added and animation loop started.');
+    console.log('[CursorTail] Mousemove listener added and animation loop started.');
     
     return () => {
-      // console.log('[CursorTail] Cleanup: Removing mousemove listener and cancelling animation frame.');
+      console.log('[CursorTail] Cleanup: Removing mousemove listener and cancelling animation frame.');
       isMounted = false; 
       window.removeEventListener('mousemove', handleMouseMove);
       if (animationFrameId.current) {
@@ -74,8 +75,9 @@ export default function CursorTail(props: CursorTailProps) {
   }, [isDarkTheme]); // Re-run effect if isDarkTheme changes (due to key prop in layout.tsx)
 
   const fillColor = useMemo(() => {
+    const baseRgb = isDarkTheme ? BASE_FILL_COLOR_RGB_DARK_THEME : BASE_FILL_COLOR_RGB_LIGHT_THEME;
     const opacity = isDarkTheme ? FILL_COLOR_DARK_THEME_VISIBLE_OPACITY : FILL_COLOR_LIGHT_THEME_INVISIBLE_OPACITY;
-    const color = `rgba(${BASE_FILL_COLOR_RGB}, ${opacity})`;
+    const color = `rgba(${baseRgb}, ${opacity})`;
     console.log(`[CursorTail] Calculated fillColor: ${color} for isDarkTheme: ${isDarkTheme}`);
     return color;
   }, [isDarkTheme]);
@@ -83,7 +85,7 @@ export default function CursorTail(props: CursorTailProps) {
 
   const blurFilterId = `cursorBlurFilter-${isDarkTheme ? 'dark' : 'light'}`;
 
-  // console.log('[CursorTail] Rendering SVG with fillColor:', fillColor, 'blur:', BLUR_STD_DEVIATION, 'zIndex:', Z_INDEX, 'for isDarkTheme:', isDarkTheme);
+  console.log('[CursorTail] Rendering SVG with fillColor:', fillColor, 'blur:', BLUR_STD_DEVIATION, 'zIndex:', Z_INDEX, 'for isDarkTheme:', isDarkTheme);
 
   return (
     <svg
@@ -111,7 +113,6 @@ export default function CursorTail(props: CursorTailProps) {
         filter={BLUR_STD_DEVIATION > 0 ? `url(#${blurFilterId})` : undefined}
         style={{
          // The transition is primarily handled by the animation loop for position.
-         // If fill color changes abruptly, it should be fine as the component remounts.
         }}
       />
     </svg>
