@@ -214,7 +214,7 @@ export default function PortfolioPage() {
       <section
         aria-labelledby="quick-navigation-heading"
         className={cn(
-          "py-8 text-center transition-all duration-700 ease-in-out",
+          "py-8 text-center transition-all duration-700 ease-in-out mt-36",
           isQuickNavVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
         )}
         ref={quickNavSectionRef}
