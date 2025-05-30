@@ -4,9 +4,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 // Appearance settings:
-const CIRCLE_RADIUS = 150; // Increased size
-const FILL_COLOR = 'rgba(107, 28, 117, 0.2)'; // Semi-transparent purple
-const BLUR_STD_DEVIATION = 15; // Increased blur
+const CIRCLE_RADIUS = 150;
+const FILL_COLOR_DARK_THEME = 'rgba(107, 28, 117, 0.2)'; // Semi-transparent purple for dark theme
+const FILL_COLOR_LIGHT_THEME = 'rgba(107, 28, 117, 0.0)'; // Fully transparent for light theme
+const BLUR_STD_DEVIATION = 15;
 const Z_INDEX = -1; // Positioned behind main content, above body background
 
 interface Position {
@@ -14,50 +15,44 @@ interface Position {
   y: number;
 }
 
-export default function CursorTail() {
-  const [position, setPosition] = useState<Position>({ x: -CIRCLE_RADIUS * 2, y: -CIRCLE_RADIUS * 2 }); // Start off-screen
+interface CursorTailProps {
+  currentTheme?: string; // 'light' or 'dark' or undefined initially
+}
+
+export default function CursorTail({ currentTheme }: CursorTailProps) {
+  const [position, setPosition] = useState<Position>({ x: -CIRCLE_RADIUS * 2, y: -CIRCLE_RADIUS * 2 });
   const animationFrameId = useRef<number | null>(null);
   const targetPosition = useRef<Position>({ x: -CIRCLE_RADIUS * 2, y: -CIRCLE_RADIUS * 2 });
 
   useEffect(() => {
-    // console.log('[CursorTail] Component mounted. Initializing...');
-    // Initialize position to center of screen or an initial mouse position quickly
     targetPosition.current = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
     setPosition(targetPosition.current);
 
     const handleMouseMove = (event: MouseEvent) => {
       targetPosition.current = { x: event.clientX, y: event.clientY };
-      // console.log('[CursorTail] Mouse move:', targetPosition.current);
     };
 
     window.addEventListener('mousemove', handleMouseMove);
-    // console.log('[CursorTail] Mouse move listener added.');
-
+    
     let lastTimestamp = 0;
     const updatePosition = (timestamp: number) => {
-      if (!isMounted) {
-        // console.log('[CursorTail] updatePosition: component unmounted, stopping animation loop.');
-        return;
-      }
+      if (!isMounted) return;
 
       if (timestamp - lastTimestamp < 16) { // Aim for roughly 60 FPS
-          animationFrameId.current = requestAnimationFrame(updatePosition);
-          return;
+        animationFrameId.current = requestAnimationFrame(updatePosition);
+        return;
       }
       lastTimestamp = timestamp;
       
       setPosition((prevPosition) => {
-        // Lerp for smooth following
-        const newX = prevPosition.x + (targetPosition.current.x - prevPosition.x) * 0.1; // Slower follow speed
-        const newY = prevPosition.y + (targetPosition.current.y - prevPosition.y) * 0.1; // Slower follow speed
+        const newX = prevPosition.x + (targetPosition.current.x - prevPosition.x) * 0.1;
+        const newY = prevPosition.y + (targetPosition.current.y - prevPosition.y) * 0.1;
         return { x: newX, y: newY };
       });
       animationFrameId.current = requestAnimationFrame(updatePosition);
     };
     
     let isMounted = true; 
-
-    // console.log('[CursorTail] Starting animation loop.');
     animationFrameId.current = requestAnimationFrame(updatePosition);
     
     return () => {
@@ -67,11 +62,11 @@ export default function CursorTail() {
         cancelAnimationFrame(animationFrameId.current);
         animationFrameId.current = null;
       }
-      // console.log('[CursorTail] Cleanup: Mouse move listener removed and animation frame cancelled.');
     };
   }, []);
 
-  // console.log('[CursorTail] Rendering SVG at position:', position, 'with zIndex:', Z_INDEX);
+  const fillColor = currentTheme === 'light' ? FILL_COLOR_LIGHT_THEME : FILL_COLOR_DARK_THEME;
+
   return (
     <svg
       style={{
@@ -94,7 +89,7 @@ export default function CursorTail() {
         cx={position.x}
         cy={position.y}
         r={CIRCLE_RADIUS}
-        fill={FILL_COLOR}
+        fill={fillColor}
         filter={BLUR_STD_DEVIATION > 0 ? "url(#cursorBlurFilter)" : undefined}
         style={{
           transition: 'transform 0.05s ease-out', 
