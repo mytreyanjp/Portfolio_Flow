@@ -41,12 +41,12 @@ export default function RootLayout({
   }, []);
   
   // For debugging CursorTail conditional rendering
-  // console.log('RootLayout Render: isClient is', isClient);
-  // console.log('RootLayout Render: rawTheme (from useTheme) is', theme);
-  // console.log('RootLayout Render: resolvedTheme is', resolvedTheme);
+  console.log('[RootLayout] Render: isClient is', isClient);
+  console.log('[RootLayout] Render: rawTheme (from useTheme) is', theme);
+  console.log('[RootLayout] Render: resolvedTheme is', resolvedTheme);
 
-  const showCursorTail = isClient && resolvedTheme === 'dark';
-  // console.log('[RootLayout] About to render CursorTail. showCursorTail:', showCursorTail, 'isClient:', isClient, 'resolvedTheme:', resolvedTheme);
+  const showCursorTail = isClient; // Always try to show if client for debugging
+  console.log('[RootLayout] About to render CursorTail. showCursorTail:', showCursorTail, 'isClient:', isClient);
 
 
   return (
