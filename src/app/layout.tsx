@@ -27,31 +27,58 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
+// New component to wrap content that needs theme context
+function MainContentWithTheme({ children }: { children: React.ReactNode }) {
+  const [isClient, setIsClient] = useState(false);
+  const { theme, resolvedTheme } = useTheme();
+
+  useEffect(() => {
+    setIsClient(true);
+    console.log('[MainContentWithTheme] useEffect: isClient set to true');
+  }, []);
+
+  useEffect(() => {
+    console.log('[MainContentWithTheme] useEffect: resolvedTheme changed to:', resolvedTheme);
+  }, [resolvedTheme]);
+
+  // Render phase logs
+  console.log('[MainContentWithTheme] RENDER: isClient is', isClient);
+  console.log('[MainContentWithTheme] RENDER: rawTheme (from useTheme) is', theme);
+  console.log('[MainContentWithTheme] RENDER: resolvedTheme is', resolvedTheme);
+
+  const currentIsDarkTheme = resolvedTheme === 'dark';
+  console.log('[MainContentWithTheme] RENDER: currentIsDarkTheme evaluates to:', currentIsDarkTheme);
+
+  const cursorTailKey = resolvedTheme || 'cursor-tail-default-key';
+
+  return (
+    <>
+      {isClient && (
+        <CursorTail
+          key={cursorTailKey}
+          isDarkTheme={currentIsDarkTheme}
+        />
+      )}
+      <div className="relative z-10 flex flex-col min-h-screen"> {/* Content wrapper above background */}
+        <Header />
+        <main className="flex-grow container mx-auto px-4 py-8">
+          {children}
+        </main>
+        <Footer />
+      </div>
+      <Toaster />
+    </>
+  );
+}
+
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [isClient, setIsClient] = useState(false);
-  const { theme, resolvedTheme } = useTheme(); 
-
-  useEffect(() => {
-    setIsClient(true);
-    console.log('[RootLayout] useEffect: isClient set to true');
-  }, []);
-  
-  useEffect(() => {
-    console.log('[RootLayout] useEffect: resolvedTheme changed to:', resolvedTheme);
-  }, [resolvedTheme]);
-
-  // Render phase logs
-  console.log('[RootLayout] RENDER: isClient is', isClient);
-  console.log('[RootLayout] RENDER: rawTheme (from useTheme) is', theme);
-  console.log('[RootLayout] RENDER: resolvedTheme is', resolvedTheme);
-  
-  const currentIsDarkTheme = resolvedTheme === 'dark';
-  console.log('[RootLayout] RENDER: currentIsDarkTheme evaluates to:', currentIsDarkTheme);
-
+  // Logs from RootLayout (which is outside ThemeProvider context for useTheme)
+  console.log('[RootLayout] RENDER: RootLayout component is rendering.');
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -63,17 +90,7 @@ export default function RootLayout({
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-          {isClient && (
-            <CursorTail key={resolvedTheme || 'cursor-tail-default-key'} isDarkTheme={currentIsDarkTheme} />
-          )}
-          <div className="relative z-10 flex flex-col min-h-screen"> {/* Content wrapper above background */}
-            <Header />
-            <main className="flex-grow container mx-auto px-4 py-8">
-              {children}
-            </main>
-            <Footer />
-          </div>
-          <Toaster />
+          <MainContentWithTheme>{children}</MainContentWithTheme>
         </ThemeProvider>
       </body>
     </html>
