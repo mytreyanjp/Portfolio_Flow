@@ -33,7 +33,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const [isClient, setIsClient] = useState(false);
-  const { theme, resolvedTheme } = useTheme(); // Get theme directly
+  const { theme, resolvedTheme } = useTheme(); 
 
   useEffect(() => {
     setIsClient(true);
@@ -45,8 +45,8 @@ export default function RootLayout({
   console.log('[RootLayout] Render: rawTheme (from useTheme) is', theme);
   console.log('[RootLayout] Render: resolvedTheme is', resolvedTheme);
 
-  const showCursorTail = isClient; // Always try to show if client for debugging
-  console.log('[RootLayout] About to render CursorTail. showCursorTail:', showCursorTail, 'isClient:', isClient);
+  const showCursorTail = isClient && resolvedTheme === 'dark';
+  console.log('[RootLayout] About to render CursorTail. showCursorTail:', showCursorTail, 'isClient:', isClient, 'resolvedTheme:', resolvedTheme);
 
 
   return (
