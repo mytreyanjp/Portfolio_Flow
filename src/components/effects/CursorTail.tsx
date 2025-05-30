@@ -7,6 +7,7 @@ import React, { useState, useEffect, useRef } from 'react';
 const CIRCLE_RADIUS = 150;
 const FILL_COLOR = 'rgba(255, 0, 0, 1)'; // Bright red, fully opaque for testing
 const BLUR_STD_DEVIATION = 0; // No blur for testing
+const DEBUG_Z_INDEX = 9999; // Extremely high z-index for debugging
 
 interface Position {
   x: number;
@@ -17,7 +18,6 @@ export default function CursorTail() {
   const [position, setPosition] = useState<Position>({ x: -1000, y: -1000 }); // Start off-screen
   const animationFrameId = useRef<number | null>(null);
   const targetPosition = useRef<Position>({ x: -1000, y: -1000 });
-  // const [isVisible, setIsVisible] = useState(false); // Removed isVisible to render immediately
 
   useEffect(() => {
     console.log('[CursorTail] Component mounted. Initializing...');
@@ -27,7 +27,7 @@ export default function CursorTail() {
 
     const handleMouseMove = (event: MouseEvent) => {
       targetPosition.current = { x: event.clientX, y: event.clientY };
-      // No longer need to set isVisible here as it's always visible if rendered
+      // console.log('[CursorTail] Mouse move:', targetPosition.current);
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -36,7 +36,7 @@ export default function CursorTail() {
     let lastTimestamp = 0;
     const updatePosition = (timestamp: number) => {
       if (!isMounted) { 
-        console.log('[CursorTail] updatePosition: component unmounted, stopping animation loop.');
+        // console.log('[CursorTail] updatePosition: component unmounted, stopping animation loop.');
         return;
       }
 
@@ -71,7 +71,7 @@ export default function CursorTail() {
     };
   }, []); // Empty dependency array ensures this runs once on mount
 
-  console.log('[CursorTail] Rendering SVG at position:', position);
+  // console.log('[CursorTail] Rendering SVG at position:', position, 'with zIndex:', DEBUG_Z_INDEX);
   return (
     <svg
       style={{
@@ -81,12 +81,12 @@ export default function CursorTail() {
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none',
-        zIndex: 5, // Temporarily high z-index for testing visibility
+        zIndex: DEBUG_Z_INDEX, 
       }}
       aria-hidden="true"
     >
       <defs>
-        <filter id="cursorBlurFilter" x="-50%" y="-50%" width="200%" height="200%">
+        <filter id="cursorBlurFilterDebug" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur in="SourceGraphic" stdDeviation={BLUR_STD_DEVIATION} />
         </filter>
       </defs>
@@ -95,7 +95,7 @@ export default function CursorTail() {
         cy={position.y}
         r={CIRCLE_RADIUS}
         fill={FILL_COLOR}
-        filter={BLUR_STD_DEVIATION > 0 ? "url(#cursorBlurFilter)" : undefined}
+        filter={BLUR_STD_DEVIATION > 0 ? "url(#cursorBlurFilterDebug)" : undefined}
         style={{
           transition: 'transform 0.05s ease-out', 
         }}

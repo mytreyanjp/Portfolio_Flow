@@ -12,6 +12,7 @@ import { useTheme } from 'next-themes';
 import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
+
 // Dynamically import CursorTail to ensure it's client-side only
 const CursorTail = dynamic(() => import('@/components/effects/CursorTail'), { ssr: false });
 
@@ -39,9 +40,13 @@ export default function RootLayout({
     console.log('RootLayout: isClient set to true');
   }, []);
   
-  console.log('RootLayout Render: isClient is', isClient);
-  console.log('RootLayout Render: rawTheme (from useTheme) is', theme);
-  console.log('RootLayout Render: resolvedTheme is', resolvedTheme);
+  // For debugging CursorTail conditional rendering
+  // console.log('RootLayout Render: isClient is', isClient);
+  // console.log('RootLayout Render: rawTheme (from useTheme) is', theme);
+  // console.log('RootLayout Render: resolvedTheme is', resolvedTheme);
+
+  const showCursorTail = isClient && resolvedTheme === 'dark';
+  // console.log('[RootLayout] About to render CursorTail. showCursorTail:', showCursorTail, 'isClient:', isClient, 'resolvedTheme:', resolvedTheme);
 
 
   return (
@@ -55,7 +60,7 @@ export default function RootLayout({
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           {/* Conditional rendering for CursorTail */}
-          {isClient && resolvedTheme === 'dark' && <CursorTail />}
+          {showCursorTail && <CursorTail />}
           <div className="relative z-10 flex flex-col min-h-screen"> {/* Content wrapper above background */}
             <Header />
             <main className="flex-grow container mx-auto px-4 py-8">
