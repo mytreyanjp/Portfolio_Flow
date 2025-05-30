@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
+import { useTheme } from 'next-themes'; // Import useTheme
 
 export default function PortfolioPage() {
   const [filters, setFilters] = useState<Filters>({ category: '', technologies: [] });
@@ -27,14 +28,22 @@ export default function PortfolioPage() {
   const [isQuickNavVisible, setIsQuickNavVisible] = useState(false);
   const [isProjectsVisible, setIsProjectsVisible] = useState(false);
   
-  const introContentRef = useRef<HTMLDivElement>(null); // Ref for the parent div of intro text
+  const introContentRef = useRef<HTMLDivElement>(null);
+
+  const { resolvedTheme } = useTheme(); // Get resolvedTheme
+
+  useEffect(() => {
+    if (resolvedTheme) {
+      const isDarkTheme = resolvedTheme === 'dark';
+      console.log('[PortfolioPage] Current theme isDark:', isDarkTheme, '(resolvedTheme:', resolvedTheme, ')');
+    }
+  }, [resolvedTheme]);
 
   useEffect(() => {
     const contentNode = introContentRef.current;
     if (!contentNode) return;
 
     const handleMouseMove = (event: MouseEvent) => {
-      // Calculate mouse position as a percentage of the viewport
       const x = (event.clientX / window.innerWidth) * 100;
       const y = (event.clientY / window.innerHeight) * 100;
       
@@ -45,11 +54,6 @@ export default function PortfolioPage() {
     window.addEventListener('mousemove', handleMouseMove);
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
-      // Optionally reset CSS variables on unmount if needed
-      // if (contentNode) {
-      //   contentNode.style.removeProperty('--gradient-center-x');
-      //   contentNode.style.removeProperty('--gradient-center-y');
-      // }
     };
   }, []);
 
@@ -174,7 +178,7 @@ export default function PortfolioPage() {
         >
           <h1
             id="portfolio-page-main-heading"
-            className="text-7xl font-bold text-transparent bg-clip-text mb-2 relative overflow-hidden"
+            className="text-7xl font-bold text-transparent bg-clip-text mb-2 relative overflow-hidden heading-hover-reveal"
             style={{
               backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)',
             }}
@@ -304,5 +308,3 @@ export default function PortfolioPage() {
     </div>
   );
 }
-
-    
