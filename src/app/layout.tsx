@@ -19,7 +19,7 @@ import { Terminal, X as XIcon, Laptop } from 'lucide-react';
 // CRUCIAL: Ensure your font file GreaterTheory.otf exists at the path:
 // /home/user/studio/public/fonts/GreaterTheory.otf
 const greaterTheory = localFont({
-  src: '../../public/fonts/GreaterTheory.otf', // Relative path from src/app/ to public/fonts/
+  src: '../../public/fonts/GreaterTheory.otf',
   variable: '--font-greater-theory',
   display: 'swap',
 });
@@ -27,33 +27,25 @@ const greaterTheory = localFont({
 // CRUCIAL: Ensure your font file Wasted-Vindey.ttf exists at the path:
 // /home/user/studio/public/fonts/Wasted-Vindey.ttf
 const wastedVindey = localFont({
-  src: '../../public/fonts/Wasted-Vindey.ttf', // Relative path from src/app/ to public/fonts/
+  src: '../../public/fonts/Wasted-Vindey.ttf',
   variable: '--font-wasted-vindey',
   display: 'swap',
 });
 
-// Dynamically import CursorTail to ensure it's client-side only
 const CursorTail = dynamic(() => import('@/components/effects/CursorTail'), { ssr: false });
 
 
 function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   const [isClient, setIsClient] = useState(false);
   const { theme, resolvedTheme } = useTheme();
-  const mobileStatus = useIsMobile(); // Can be true, false, or undefined
+  const mobileStatus = useIsMobile();
   const [showMobileMessage, setShowMobileMessage] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-    console.log('[MainContentWithTheme] useEffect: isClient set to true');
   }, []);
 
   useEffect(() => {
-    console.log('[MainContentWithTheme] useEffect: rawTheme changed to:', theme);
-    console.log('[MainContentWithTheme] useEffect: resolvedTheme changed to:', resolvedTheme);
-  }, [theme, resolvedTheme]);
-
-  useEffect(() => {
-    // Only act once mobileStatus is determined (not undefined)
     if (isClient && mobileStatus === true) {
       const dismissed = localStorage.getItem('dismissedMobileMessage');
       if (!dismissed) {
@@ -62,7 +54,6 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
     } else if (isClient && mobileStatus === false) {
       setShowMobileMessage(false);
     }
-    // If mobileStatus is undefined, we wait for it to resolve.
   }, [isClient, mobileStatus]);
 
   const handleDismissMobileMessage = () => {
@@ -84,20 +75,8 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
     };
   }, [showMobileMessage]);
 
-
-  console.log('[MainContentWithTheme] RENDER: isClient is', isClient);
-  console.log('[MainContentWithTheme] RENDER: rawTheme (from useTheme) is', theme);
-  console.log('[MainContentWithTheme] RENDER: resolvedTheme is', resolvedTheme);
-  console.log('[MainContentWithTheme] RENDER: mobileStatus from useIsMobile is', mobileStatus);
-
-
   const currentIsDarkTheme = resolvedTheme === 'dark';
-  console.log('[MainContentWithTheme] RENDER: currentIsDarkTheme evaluates to:', currentIsDarkTheme);
-  
   const showCursorTail = isClient && currentIsDarkTheme;
-  
-  console.log(`[MainContentWithTheme] RENDER: showCursorTail is ${showCursorTail}, isClient is ${isClient}, resolvedTheme is ${resolvedTheme}`);
-  
 
   return (
     <>
@@ -138,8 +117,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  console.log('[RootLayout] RENDER: RootLayout component is rendering.');
-
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
