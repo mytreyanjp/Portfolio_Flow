@@ -51,7 +51,10 @@ export default function RootLayout({
   // Determine if CursorTail should be shown
   const showCursorTail = isClient && (resolvedTheme === 'light' || resolvedTheme === 'dark');
 
-  console.log(`[RootLayout] RENDER: showCursorTail is ${showCursorTail}`);
+  if (showCursorTail) {
+    console.log(`[RootLayout] About to render CursorTail. resolvedTheme is: "${resolvedTheme}"`);
+  }
+
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -63,7 +66,7 @@ export default function RootLayout({
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-          {showCursorTail && resolvedTheme && (
+          {showCursorTail && (
             <CursorTail key={resolvedTheme} currentTheme={resolvedTheme} />
           )}
           <div className="relative z-10 flex flex-col min-h-screen"> {/* Content wrapper above background */}
