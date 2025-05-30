@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import ThemeSwitcher from './ThemeSwitcher';
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button'; // Added buttonVariants import
 import { cn } from '@/lib/utils';
 import { Briefcase, MessageSquare, FileText, Brain, Menu as MenuIcon } from 'lucide-react';
 import {
