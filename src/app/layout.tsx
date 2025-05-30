@@ -41,7 +41,6 @@ export default function RootLayout({
   }, []);
   
   useEffect(() => {
-    // This log will show when resolvedTheme changes or is initially set
     console.log('[RootLayout] useEffect: resolvedTheme changed to:', resolvedTheme);
   }, [resolvedTheme]);
 
@@ -49,19 +48,9 @@ export default function RootLayout({
   console.log('[RootLayout] RENDER: isClient is', isClient);
   console.log('[RootLayout] RENDER: rawTheme (from useTheme) is', theme);
   console.log('[RootLayout] RENDER: resolvedTheme is', resolvedTheme);
-
-  // Determine if CursorTail should be shown based on theme
-  // CursorTail is only shown if it's client-side AND the theme is dark.
-  const showCursorTail = isClient && resolvedTheme === 'dark';
-
-  if (isClient) { // Only log this part if we are on the client
-    console.log(`[RootLayout] RENDER: showCursorTail condition evaluates to: ${showCursorTail} (isClient: ${isClient}, resolvedTheme: ${resolvedTheme})`);
-    if (showCursorTail) {
-      console.log(`[RootLayout] About to render CursorTail because resolvedTheme is: "${resolvedTheme}"`);
-    } else {
-      console.log(`[RootLayout] NOT rendering CursorTail. resolvedTheme is: "${resolvedTheme}" (needs to be 'dark' and client-side)`);
-    }
-  }
+  
+  const currentIsDarkTheme = resolvedTheme === 'dark';
+  console.log('[RootLayout] RENDER: currentIsDarkTheme evaluates to:', currentIsDarkTheme);
 
 
   return (
@@ -74,8 +63,8 @@ export default function RootLayout({
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-          {showCursorTail && (
-            <CursorTail key={resolvedTheme} isDarkTheme={resolvedTheme === 'dark'} />
+          {isClient && (
+            <CursorTail key={resolvedTheme || 'cursor-tail-default-key'} isDarkTheme={currentIsDarkTheme} />
           )}
           <div className="relative z-10 flex flex-col min-h-screen"> {/* Content wrapper above background */}
             <Header />

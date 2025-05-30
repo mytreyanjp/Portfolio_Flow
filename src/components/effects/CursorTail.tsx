@@ -3,10 +3,10 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 
-// Appearance settings:
+// DEBUG Appearance settings:
 const CIRCLE_RADIUS = 150;
-const FILL_COLOR_DARK_THEME_VISIBLE_OPACITY = 1; // DEBUG: Opaque
-const FILL_COLOR_LIGHT_THEME_INVISIBLE_OPACITY = 0.0; // Invisible for light theme
+const FILL_COLOR_DARK_THEME_VISIBLE_OPACITY = 1; // Opaque for dark
+const FILL_COLOR_LIGHT_THEME_INVISIBLE_OPACITY = 0.0; // Invisible for light
 const BASE_FILL_COLOR_RGB_DARK_THEME = '255, 0, 0'; // DEBUG: Bright Red for dark theme
 const BASE_FILL_COLOR_RGB_LIGHT_THEME = '107, 28, 117'; // Original Purple for light (but will be transparent)
 
@@ -72,7 +72,7 @@ export default function CursorTail(props: CursorTailProps) {
         animationFrameId.current = null;
       }
     };
-  }, [isDarkTheme]); // Re-run effect if isDarkTheme changes (due to key prop in layout.tsx)
+  }, []); // Re-run effect if isDarkTheme changes (due to key prop in layout.tsx)
 
   const fillColor = useMemo(() => {
     const baseRgb = isDarkTheme ? BASE_FILL_COLOR_RGB_DARK_THEME : BASE_FILL_COLOR_RGB_LIGHT_THEME;
@@ -110,10 +110,7 @@ export default function CursorTail(props: CursorTailProps) {
         cy={position.y}
         r={CIRCLE_RADIUS}
         fill={fillColor}
-        filter={BLUR_STD_DEVIATION > 0 ? `url(#${blurFilterId})` : undefined}
-        style={{
-         // The transition is primarily handled by the animation loop for position.
-        }}
+        filter={BLUR_STD_DEVIATION > 0 && isDarkTheme ? `url(#${blurFilterId})` : undefined} // Apply blur only if >0 and darkTheme
       />
     </svg>
   );
