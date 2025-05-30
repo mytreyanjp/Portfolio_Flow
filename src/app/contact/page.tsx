@@ -63,7 +63,7 @@ export default function ContactPage() {
     >
       <h1
         id="contact-page-main-heading"
-        className="text-4xl font-display font-bold text-center mb-12 text-transparent bg-clip-text heading-hover-reveal relative overflow-hidden"
+        className="font-display text-4xl font-bold text-center mb-12 text-transparent bg-clip-text heading-hover-reveal relative overflow-hidden"
         style={{
           ...parallaxStyle,
           backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
@@ -75,7 +75,7 @@ export default function ContactPage() {
       <div className="grid md:grid-cols-2 gap-12 items-start">
         <section aria-labelledby="contact-form-section">
           <h2 id="contact-form-section" className="sr-only">Contact Form</h2>
-          <Card className="shadow-xl"> 
+          <Card className={cn("shadow-xl", "transition-transform duration-200 ease-out hover:scale-[1.02]")}>
             <CardHeader>
               <CardTitle className="text-2xl text-foreground font-title">Send a Message</CardTitle>
               <CardDescription>Fill out the form below and I'll get back to you as soon as possible.</CardDescription>
@@ -93,7 +93,7 @@ export default function ContactPage() {
            >
             Contact Information
            </h2>
-          <Card className="shadow-lg"> 
+          <Card className={cn("shadow-lg", "transition-transform duration-200 ease-out hover:scale-[1.02]")}>
             <CardContent className="pt-6 space-y-4">
               <div className="flex items-start space-x-4">
                 <Mail className="h-6 w-6 text-primary mt-1" />
@@ -117,9 +117,9 @@ export default function ContactPage() {
                 <MapPin className="h-6 w-6 text-primary mt-1" />
                 <div>
                   <h3 className="font-semibold text-foreground">Location</h3>
-                  <a 
-                    href="https://www.google.com/maps/search/?api=1&query=Chennai,Tamilnadu" 
-                    target="_blank" 
+                  <a
+                    href="https://www.google.com/maps/search/?api=1&query=Chennai,Tamilnadu"
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-accent hover:underline"
                   >

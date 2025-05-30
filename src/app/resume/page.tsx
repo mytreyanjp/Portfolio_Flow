@@ -90,10 +90,10 @@ export default function ResumePage() {
       </header>
 
       <div className="grid md:grid-cols-3 gap-8 mb-12">
-        <Card className="md:col-span-1 shadow-lg"> 
+        <Card className={cn("md:col-span-1 shadow-lg", "transition-transform duration-200 ease-out hover:scale-[1.02]")}>
           <CardContent className="pt-6 flex flex-col items-center text-center">
             <Image
-              src="/mytreyan.jpg" 
+              src="/mytreyan.jpg"
               alt="Profile Picture of Mytreyan JP"
               width={120}
               height={120}
@@ -103,9 +103,9 @@ export default function ResumePage() {
             <h2 className="text-2xl font-semibold text-foreground">Mytreyan JP</h2>
             <p className="text-primary">
               BTech IT<br />
-              <a 
-                href="https://www.annauniv.edu/#gsc.tab=0" 
-                target="_blank" 
+              <a
+                href="https://www.annauniv.edu/#gsc.tab=0"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-accent hover:underline"
               >
@@ -118,7 +118,7 @@ export default function ResumePage() {
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-2 shadow-lg"> 
+        <Card className={cn("md:col-span-2 shadow-lg", "transition-transform duration-200 ease-out hover:scale-[1.02]")}>
           <CardHeader>
             <CardTitle className="font-title text-2xl flex items-center text-foreground"><Lightbulb className="mr-2 h-6 w-6 text-primary"/> Summary</CardTitle>
           </CardHeader>
@@ -131,7 +131,7 @@ export default function ResumePage() {
       </div>
 
       <div className="space-y-10">
-        <Card className="shadow-lg"> 
+        <Card className={cn("shadow-lg", "transition-transform duration-200 ease-out hover:scale-[1.02]")}>
           <CardHeader>
             <CardTitle className="font-title text-2xl flex items-center text-foreground"><CheckCircle className="mr-2 h-6 w-6 text-primary"/> Key Skills</CardTitle>
           </CardHeader>
@@ -152,7 +152,7 @@ export default function ResumePage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg"> 
+        <Card className={cn("shadow-lg", "transition-transform duration-200 ease-out hover:scale-[1.02]")}>
           <CardHeader>
             <CardTitle className="font-title text-2xl flex items-center text-foreground"><Briefcase className="mr-2 h-6 w-6 text-primary"/> Experience (Placeholder)</CardTitle>
           </CardHeader>
@@ -177,7 +177,7 @@ export default function ResumePage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg"> 
+        <Card className={cn("shadow-lg", "transition-transform duration-200 ease-out hover:scale-[1.02]")}>
           <CardHeader>
             <CardTitle className="font-title text-2xl flex items-center text-foreground"><GraduationCap className="mr-2 h-6 w-6 text-primary"/> Education (Placeholder)</CardTitle>
           </CardHeader>
@@ -190,7 +190,7 @@ export default function ResumePage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg"> 
+        <Card className={cn("shadow-lg", "transition-transform duration-200 ease-out hover:scale-[1.02]")}>
           <CardHeader>
             <CardTitle className="font-title text-2xl flex items-center text-foreground"><Award className="mr-2 h-6 w-6 text-primary"/> Awards & Certifications (Placeholder)</CardTitle>
           </CardHeader>
