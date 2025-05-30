@@ -76,8 +76,8 @@ export default function CursorTail({ currentTheme }: CursorTailProps) {
     } else if (currentTheme === 'dark') {
       color = FILL_COLOR_DARK_THEME_VISIBLE;
     } else {
-      // Fallback if theme is undefined or an unexpected value, default to dark theme's visible state
-      console.warn(`[CursorTail] Unexpected theme value: "${currentTheme}". Defaulting to dark theme visibility.`);
+      // This path should ideally not be taken if layout.tsx guard is working
+      console.warn(`[CursorTail] Unexpected theme value: "${currentTheme}". Defaulting to dark theme visibility as a fallback.`);
       color = FILL_COLOR_DARK_THEME_VISIBLE; 
     }
     console.log(`[CursorTail] Calculated fillColor: ${color} for currentTheme: "${currentTheme}"`);
@@ -87,7 +87,7 @@ export default function CursorTail({ currentTheme }: CursorTailProps) {
 
   const blurFilterId = `cursorBlurFilter-${currentTheme || 'default'}`;
 
-  console.log('[CursorTail] Rendering SVG with calculated fillColor:', fillColor, 'blur:', BLUR_STD_DEVIATION, 'zIndex:', Z_INDEX, 'for theme:', currentTheme);
+  console.log('[CursorTail] Rendering SVG with fillColor:', fillColor, 'blur:', BLUR_STD_DEVIATION, 'zIndex:', Z_INDEX, 'for theme:', currentTheme);
 
   return (
     <svg
