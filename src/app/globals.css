@@ -4,7 +4,6 @@
 @tailwind utilities;
 
 body {
-  /* font-family: Arial, Helvetica, sans-serif; */ /* Reverted to allow Next/Font to take over */
   scroll-behavior: smooth;
 }
 
@@ -24,7 +23,7 @@ body {
     --secondary-foreground: 270 40% 20%;
     --muted: 275 50% 92%;
     --muted-foreground: 270 30% 50%; /* Slightly darker muted text */
-    --accent: 300 70% 80%; /* Brighter light violet/pink for accents */
+    --accent: 35 95% 60%; /* Brighter light violet/pink for accents */
     --accent-foreground: 0 0% 10%; /* Dark text on accent */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
@@ -109,9 +108,9 @@ body {
     }
   }
   @keyframes numberRollIn {
-    '0%': { opacity: '0', transform: 'translateY(15px) scale(0.9)' },
-    '60%': { opacity: '1', transform: 'translateY(-2px) scale(1.05)' },
-    '100%': { opacity: '1', transform: 'translateY(0px) scale(1)' },
+    '0%': { opacity: '0', transform: 'translateY(15px) scale(0.9)' };
+    '60%': { opacity: '1', transform: 'translateY(-2px) scale(1.05)' };
+    '100%': { opacity: '1', transform: 'translateY(0px) scale(1)' };
   }
 }
 
@@ -131,7 +130,6 @@ body {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent; /* Must be transparent for its own bg-clip to work */
-  -webkit-text-fill-color: transparent; /* For older Safari */
   clip-path: circle(0% at 50% 50%);
   transition: clip-path 0.4s ease-out;
   pointer-events: none; /* Allow clicks to pass through to the underlying <h1> text */
