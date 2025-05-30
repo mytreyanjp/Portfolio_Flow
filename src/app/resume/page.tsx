@@ -78,7 +78,7 @@ export default function ResumePage() {
       <header className="text-center mb-12">
         <h1
           id="resume-page-main-heading"
-          className="text-4xl font-display font-bold text-transparent bg-clip-text mb-4 heading-hover-reveal relative overflow-hidden"
+          className="font-display text-4xl font-bold text-transparent bg-clip-text mb-4 heading-hover-reveal relative overflow-hidden"
           style={{
             ...parallaxStyle,
             backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
@@ -101,7 +101,7 @@ export default function ResumePage() {
               data-ai-hint="profile avatar"
             />
             <h2 className="text-2xl font-semibold text-foreground">Mytreyan JP</h2>
-            <p className="text-primary">IT Student at CEG Anna University</p>
+            <p className="text-primary">BTech IT<br />CEG, Anna university</p>
             <div className="mt-6 w-full">
               <ResumeDownloader />
             </div>
@@ -110,7 +110,7 @@ export default function ResumePage() {
 
         <Card className="md:col-span-2 shadow-lg"> 
           <CardHeader>
-            <CardTitle className="text-2xl flex items-center text-foreground"><Lightbulb className="mr-2 h-6 w-6 text-primary"/> Summary</CardTitle>
+            <CardTitle className="font-title text-2xl flex items-center text-foreground"><Lightbulb className="mr-2 h-6 w-6 text-primary"/> Summary</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-foreground/80 leading-relaxed">
@@ -123,7 +123,7 @@ export default function ResumePage() {
       <div className="space-y-10">
         <Card className="shadow-lg"> 
           <CardHeader>
-            <CardTitle className="text-2xl flex items-center text-foreground"><CheckCircle className="mr-2 h-6 w-6 text-primary"/> Key Skills</CardTitle>
+            <CardTitle className="font-title text-2xl flex items-center text-foreground"><CheckCircle className="mr-2 h-6 w-6 text-primary"/> Key Skills</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -144,7 +144,7 @@ export default function ResumePage() {
 
         <Card className="shadow-lg"> 
           <CardHeader>
-            <CardTitle className="text-2xl flex items-center text-foreground"><Briefcase className="mr-2 h-6 w-6 text-primary"/> Experience (Placeholder)</CardTitle>
+            <CardTitle className="font-title text-2xl flex items-center text-foreground"><Briefcase className="mr-2 h-6 w-6 text-primary"/> Experience (Placeholder)</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
@@ -169,7 +169,7 @@ export default function ResumePage() {
 
         <Card className="shadow-lg"> 
           <CardHeader>
-            <CardTitle className="text-2xl flex items-center text-foreground"><GraduationCap className="mr-2 h-6 w-6 text-primary"/> Education (Placeholder)</CardTitle>
+            <CardTitle className="font-title text-2xl flex items-center text-foreground"><GraduationCap className="mr-2 h-6 w-6 text-primary"/> Education (Placeholder)</CardTitle>
           </CardHeader>
           <CardContent>
             <div>
@@ -182,7 +182,7 @@ export default function ResumePage() {
 
         <Card className="shadow-lg"> 
           <CardHeader>
-            <CardTitle className="text-2xl flex items-center text-foreground"><Award className="mr-2 h-6 w-6 text-primary"/> Awards & Certifications (Placeholder)</CardTitle>
+            <CardTitle className="font-title text-2xl flex items-center text-foreground"><Award className="mr-2 h-6 w-6 text-primary"/> Awards & Certifications (Placeholder)</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <p className="text-foreground/80">Certified Next.js Developer - 2022</p>
