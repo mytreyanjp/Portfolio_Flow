@@ -3,18 +3,15 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
-// Appearance settings:
+// DEBUG Appearance settings:
 const CIRCLE_RADIUS = 150;
-// DEBUG: Forcing highly visible color and no blur
 const FILL_COLOR_DEBUG = 'rgba(255, 0, 0, 1)'; // Opaque Red
 const BLUR_STD_DEVIATION_DEBUG = 0; 
-const Z_INDEX_DEBUG = 9999;
+const Z_INDEX_DEBUG = 9999; // Very high Z-index
 
 // Original theme-dependent colors (will be restored later)
-const FILL_COLOR_LIGHT_THEME = 'rgba(107, 28, 117, 0.0)'; 
-const FILL_COLOR_DARK_THEME = 'rgba(107, 28, 117, 0.2)';
-const BLUR_STD_DEVIATION_ORIGINAL = 15;
-const Z_INDEX_ORIGINAL = -1;
+const FILL_COLOR_LIGHT_THEME_OPACITY_ZERO = 'rgba(107, 28, 117, 0.0)'; 
+const FILL_COLOR_DARK_THEME_VISIBLE = 'rgba(107, 28, 117, 0.2)';
 
 
 interface Position {
@@ -34,8 +31,9 @@ export default function CursorTail({ currentTheme }: CursorTailProps) {
 
   useEffect(() => {
     console.log('[CursorTail] useEffect triggered, currentTheme in effect:', currentTheme);
-    targetPosition.current = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-    setPosition(targetPosition.current);
+    // Initialize position to center for immediate visibility if needed, or off-screen
+    targetPosition.current = { x: window.innerWidth / 2, y: window.innerHeight / 2 }; // Start at center
+    setPosition(targetPosition.current); // Set initial position
 
     const handleMouseMove = (event: MouseEvent) => {
       targetPosition.current = { x: event.clientX, y: event.clientY };
@@ -45,6 +43,8 @@ export default function CursorTail({ currentTheme }: CursorTailProps) {
     window.addEventListener('mousemove', handleMouseMove);
     
     let lastTimestamp = 0;
+    let isMounted = true; 
+    
     const updatePosition = (timestamp: number) => {
       if (!isMounted) return;
 
@@ -55,14 +55,13 @@ export default function CursorTail({ currentTheme }: CursorTailProps) {
       lastTimestamp = timestamp;
       
       setPosition((prevPosition) => {
-        const newX = prevPosition.x + (targetPosition.current.x - prevPosition.x) * 0.1; // Slower follow with 0.1
-        const newY = prevPosition.y + (targetPosition.current.y - prevPosition.y) * 0.1; // Slower follow with 0.1
+        const newX = prevPosition.x + (targetPosition.current.x - prevPosition.x) * 0.1;
+        const newY = prevPosition.y + (targetPosition.current.y - prevPosition.y) * 0.1;
         return { x: newX, y: newY };
       });
       animationFrameId.current = requestAnimationFrame(updatePosition);
     };
     
-    let isMounted = true; 
     animationFrameId.current = requestAnimationFrame(updatePosition);
     console.log('[CursorTail] Mousemove listener added and animation loop started.');
     
@@ -84,7 +83,6 @@ export default function CursorTail({ currentTheme }: CursorTailProps) {
 
   console.log('[CursorTail] Rendering SVG with fillColor:', fillColor, 'blur:', blurStdDeviation, 'zIndex:', zIndex, 'for theme:', currentTheme);
 
-
   return (
     <svg
       style={{
@@ -95,12 +93,12 @@ export default function CursorTail({ currentTheme }: CursorTailProps) {
         height: '100vh',
         pointerEvents: 'none',
         zIndex: zIndex, 
-        // transition: 'fill 0.3s ease-out', // Removed for debug
+        // No transition for fill color during debug
       }}
       aria-hidden="true"
     >
       <defs>
-        <filter id="cursorBlurFilter" x="-50%" y="-50%" width="200%" height="200%">
+        <filter id="cursorBlurFilterDebug" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur in="SourceGraphic" stdDeviation={blurStdDeviation} />
         </filter>
       </defs>
@@ -109,10 +107,8 @@ export default function CursorTail({ currentTheme }: CursorTailProps) {
         cy={position.y}
         r={CIRCLE_RADIUS}
         fill={fillColor}
-        filter={blurStdDeviation > 0 ? "url(#cursorBlurFilter)" : undefined}
-        style={{
-          // transition: 'transform 0.05s ease-out, fill 0.3s ease-out', // transform part might be ok
-        }}
+        filter={blurStdDeviation > 0 ? "url(#cursorBlurFilterDebug)" : undefined}
+        // No transition for transform during debug
       />
     </svg>
   );

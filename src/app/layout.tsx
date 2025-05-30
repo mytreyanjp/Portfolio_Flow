@@ -37,21 +37,22 @@ export default function RootLayout({
 
   useEffect(() => {
     setIsClient(true);
-    console.log('RootLayout: isClient set to true');
+    console.log('[RootLayout] useEffect: isClient set to true');
   }, []);
   
   useEffect(() => {
-    console.log('[RootLayout] resolvedTheme changed to:', resolvedTheme);
+    console.log('[RootLayout] useEffect: resolvedTheme changed to:', resolvedTheme);
   }, [resolvedTheme]);
 
-  // For debugging CursorTail conditional rendering
-  console.log('[RootLayout] Render: isClient is', isClient);
-  console.log('[RootLayout] Render: rawTheme (from useTheme) is', theme);
-  console.log('[RootLayout] Render: resolvedTheme is', resolvedTheme);
+  console.log('[RootLayout] RENDER: isClient is', isClient);
+  console.log('[RootLayout] RENDER: rawTheme (from useTheme) is', theme);
+  console.log('[RootLayout] RENDER: resolvedTheme is', resolvedTheme);
 
-  const showCursorTail = isClient && (resolvedTheme === 'light' || resolvedTheme === 'dark');
-  console.log('[RootLayout] About to render CursorTail. showCursorTail:', showCursorTail, 'isClient:', isClient, 'resolvedTheme:', resolvedTheme);
+  const showCursorTail = isClient; // Render CursorTail if client is ready
+  const cursorTailKey = resolvedTheme || 'initial-key-for-cursor-tail';
+  const currentThemeForCursorTail = resolvedTheme;
 
+  console.log(`[RootLayout] RENDER: showCursorTail is ${showCursorTail}, cursorTailKey is ${cursorTailKey}, currentThemeForCursorTail is ${currentThemeForCursorTail}`);
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -63,8 +64,15 @@ export default function RootLayout({
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-          {/* Conditional rendering for CursorTail */}
-          {showCursorTail && <CursorTail key={resolvedTheme} currentTheme={resolvedTheme} />}
+          {/* Debug log for CursorTail rendering conditions */}
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `console.log('[RootLayout] Directly before CursorTail render: isClient=${isClient}, resolvedTheme=${resolvedTheme}, showCursorTail=${showCursorTail}, cursorTailKey=${cursorTailKey}, currentThemeForCursorTail=${currentThemeForCursorTail}')`,
+            }}
+          />
+          {showCursorTail && (
+            <CursorTail key={cursorTailKey} currentTheme={currentThemeForCursorTail} />
+          )}
           <div className="relative z-10 flex flex-col min-h-screen"> {/* Content wrapper above background */}
             <Header />
             <main className="flex-grow container mx-auto px-4 py-8">
