@@ -28,17 +28,16 @@ async function submitContactForm(data: ContactFormValues): Promise<{ success: bo
   const submissionId = 'CONTACT-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
 
   // Structure the email content
-  const emailBody = \`
-New Contact Form Submission
------------------------------
-ID: \${submissionId}
-Full Name: \${data.name}
-Email Address: \${data.email}
------------------------------
-Message:
-\${data.message}
------------------------------
-  \`;
+  const emailBody = 
+    'New Contact Form Submission\n' +
+    '-----------------------------\n' +
+    'ID: ' + submissionId + '\n' +
+    'Full Name: ' + data.name + '\n' +
+    'Email Address: ' + data.email + '\n' +
+    '-----------------------------\n' +
+    'Message:\n' +
+    data.message + '\n' +
+    '-----------------------------';
 
   console.log('--- Contact Form Submission Data ---');
   console.log('Recipient: mytreyan197@gmail.com');
