@@ -15,7 +15,7 @@ import Link from 'next/link';
 import { useTheme } from 'next-themes';
 
 export default function PortfolioPage() {
-  const [filters, setFilters] = useState<Filters>({ category: '', technologies: [] });
+  const [filters, setFilters] = useState<Filters>({ category: '' });
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,9 +34,8 @@ export default function PortfolioPage() {
 
   const { resolvedTheme } = useTheme();
   const [hasButtonClicked, setHasButtonClicked] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: -1000, y: -1000 }); // Initialize off-screen
+  const [mousePosition, setMousePosition] = useState({ x: -1000, y: -1000 });
 
-  // Effect for dynamic gradient on intro text
   useEffect(() => {
     const contentNode = introContentRef.current;
     if (!contentNode) return;
@@ -54,7 +53,6 @@ export default function PortfolioPage() {
     };
   }, []);
 
-  // Effect for global mouse tracking for button spotlight
   useEffect(() => {
     const handleMouseMoveForSpotlight = (event: MouseEvent) => {
       setMousePosition({ x: event.clientX, y: event.clientY });
@@ -65,22 +63,24 @@ export default function PortfolioPage() {
     };
   }, []);
 
-  // Effect for button spotlight mask
   useEffect(() => {
     if (viewProjectsButtonRef.current) {
       const button = viewProjectsButtonRef.current;
-      if (resolvedTheme === 'dark' && !hasButtonClicked) {
+      const isDark = resolvedTheme === 'dark';
+
+      if (isDark && !hasButtonClicked) {
         const rect = button.getBoundingClientRect();
         const maskX = mousePosition.x - rect.left;
         const maskY = mousePosition.y - rect.top;
-        const maskRadius = '120px'; // Corresponds to CursorTail visual effect
+        const maskRadius = '170px'; // Increased radius for softer edge overlap
 
         button.style.setProperty('--mask-x', `${maskX}px`);
         button.style.setProperty('--mask-y', `${maskY}px`);
         button.style.setProperty('--mask-radius', maskRadius);
-        button.style.maskImage = `radial-gradient(circle var(--mask-radius) at var(--mask-x) var(--mask-y), black 100%, transparent 101%)`;
-        button.style.webkitMaskImage = `radial-gradient(circle var(--mask-radius) at var(--mask-x) var(--mask-y), black 100%, transparent 101%)`;
-        button.style.opacity = '1'; // Ensure it's "there" for the mask to work on
+        // Softened mask gradient
+        button.style.maskImage = `radial-gradient(circle var(--mask-radius) at var(--mask-x) var(--mask-y), black 0%, black 60%, transparent 100%)`;
+        button.style.webkitMaskImage = `radial-gradient(circle var(--mask-radius) at var(--mask-x) var(--mask-y), black 0%, black 60%, transparent 100%)`;
+        button.style.opacity = '1'; // Ensure button is "there" for mask to apply
       } else {
         button.style.maskImage = 'none';
         button.style.webkitMaskImage = 'none';
@@ -135,7 +135,6 @@ export default function PortfolioPage() {
     const observers: [React.RefObject<HTMLElement>, React.Dispatch<React.SetStateAction<boolean>>][] = [
       [welcomeSectionRef, setIsWelcomeVisible],
       [projectsSectionRef, setIsProjectsVisible],
-      [quickNavSectionRef, setIsQuickNavVisible],
     ];
     const intersectionObservers = observers.map(([ref, setVisible]) => {
       const observer = new IntersectionObserver(([entry]) => {
@@ -167,13 +166,13 @@ export default function PortfolioPage() {
 
   const handleFilterChange = (newFilters: Filters) => {
     setFilters(newFilters);
-    if (newFilters.category === '' && newFilters.technologies.length === 0) {
+    if (newFilters.category === '') {
       setNoProjectsMessageVisible(false);
     }
   };
 
   const handleResetFilters = () => {
-    setFilters({ category: '', technologies: [] });
+    setFilters({ category: '' });
     setNoProjectsMessageVisible(false);
   };
 
@@ -213,7 +212,7 @@ export default function PortfolioPage() {
   const isDark = resolvedTheme === 'dark';
 
   return (
-    <div className="py-6 px-12 space-y-12 mt-12">
+    <div className="py-6 px-12 mt-12">
       <section
         aria-labelledby="welcome-heading"
         className={cn(
@@ -225,7 +224,7 @@ export default function PortfolioPage() {
         <div className="max-w-3xl mx-auto" ref={introContentRef}>
           <h1
             id="portfolio-page-main-heading"
-            className="font-display text-5xl sm:text-6xl md:text-7xl text-transparent bg-clip-text mb-2 relative overflow-hidden"
+            className="font-display text-5xl sm:text-6xl md:text-7xl text-transparent bg-clip-text mb-2 relative overflow-hidden heading-hover-reveal"
             style={{
               backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)',
             }}
@@ -253,12 +252,11 @@ export default function PortfolioPage() {
             }}
             className={cn(
               "shadow-md",
-              "transition-transform duration-200 ease-out hover:scale-105 hover:bg-background",
-              // Opacity for light theme or if button has been clicked is handled by the mask effect removal
+              "transition-opacity duration-300 ease-out", // Added for opacity transition
+              "hover:scale-105 hover:bg-background"
             )}
             style={{
-              // Initial opacity will be 1, mask handles visibility in dark mode
-              // Transition for opacity can be added if desired for smoother appearance/disappearance with mask
+              // Opacity and mask are handled by useEffect
             }}
           >
             View Projects <ArrowDown className="ml-2 h-5 w-5 animate-bounce" />
@@ -376,3 +374,4 @@ export default function PortfolioPage() {
     </div>
   );
 }
+
