@@ -92,7 +92,7 @@ export default function ResumePage() {
       <div className="grid md:grid-cols-3 gap-8 mb-12">
         <Card className={cn("md:col-span-1 shadow-lg", "transition-transform duration-200 ease-out hover:scale-[1.02]")}>
           <CardContent className="pt-6 flex flex-col items-center text-center">
-            <div className="relative group mb-4"> {/* Added group here */}
+            <div className="relative group mb-4">
               <div className="rounded-full overflow-hidden w-[120px] h-[120px]">
                 <Image
                   src="/mytreyan.jpg"
@@ -103,11 +103,10 @@ export default function ResumePage() {
                   data-ai-hint="profile photo"
                 />
               </div>
-              {/* Icon container */}
               <div
                 className="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col space-y-2 
                            opacity-0 scale-75 pointer-events-none
-                           group-hover:opacity-100 group-hover:scale-100 group-hover:left-[calc(100%_+_1rem)] group-hover:pointer-events-auto
+                           group-hover:opacity-100 group-hover:scale-100 group-hover:left-[calc(100%_+_1.75rem)] group-hover:pointer-events-auto
                            transform transition-all duration-300 ease-in-out z-10"
               >
                 <a href="#" aria-label="Instagram" className="p-2 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-colors">
@@ -224,4 +223,3 @@ export default function ResumePage() {
     </div>
   );
 }
-
