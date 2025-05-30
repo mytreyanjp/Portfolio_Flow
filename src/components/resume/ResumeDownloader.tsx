@@ -7,11 +7,11 @@ import { cn } from '@/lib/utils';
 
 export default function ResumeDownloader() {
   const handleDownload = () => {
-    const resumeUrl = '/placeholder-resume.pdf'; 
+    const resumeUrl = '/mytreyan_resume.pdf'; 
     
     const link = document.createElement('a');
     link.href = resumeUrl;
-    link.setAttribute('download', 'My_Resume.pdf'); 
+    link.setAttribute('download', 'Mytreyan_JP_Resume.pdf'); 
     
     document.body.appendChild(link);
     link.click();
