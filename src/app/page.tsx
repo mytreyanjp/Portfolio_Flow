@@ -7,7 +7,7 @@ import ProjectFilter, { Filters } from '@/components/portfolio/ProjectFilter';
 import type { Project } from '@/data/projects';
 import { getProjects } from '@/services/projectsService';
 import { Button } from '@/components/ui/button';
-import { ArrowDown, Mail, FileText, AlertTriangle, X as XIcon } from 'lucide-react';
+import { ArrowDown, Mail, FileText, AlertTriangle, X as XIcon, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -169,7 +169,7 @@ export default function PortfolioPage() {
       <section
         aria-labelledby="welcome-heading"
         className={cn(
-          "text-center transition-all duration-700 ease-in-out mt-36", 
+          "text-center transition-all duration-700 ease-in-out mt-[8.75rem]", 
           isWelcomeVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
         )}
         ref={welcomeSectionRef}
@@ -214,7 +214,7 @@ export default function PortfolioPage() {
       <section
         aria-labelledby="quick-navigation-heading"
         className={cn(
-          "py-8 text-center transition-all duration-700 ease-in-out mt-36",
+          "py-8 text-center transition-all duration-700 ease-in-out mt-[8.75rem]",
           isQuickNavVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
         )}
         ref={quickNavSectionRef}
@@ -223,7 +223,7 @@ export default function PortfolioPage() {
           id="quick-navigation-heading"
           className="text-2xl font-semibold mb-6 text-foreground"
         >
-          Connect & Explore
+          Connect &amp; Explore
         </h2>
         <div className="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-4">
           <Button 
