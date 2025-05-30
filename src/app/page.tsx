@@ -178,7 +178,7 @@ export default function PortfolioPage() {
         >
           <h1
             id="portfolio-page-main-heading"
-            className="font-display text-7xl text-transparent bg-clip-text mb-2 relative overflow-hidden heading-hover-reveal"
+            className="font-display text-5xl sm:text-6xl md:text-7xl text-transparent bg-clip-text mb-2 relative overflow-hidden heading-hover-reveal"
             style={{
               backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)',
             }}
@@ -186,7 +186,7 @@ export default function PortfolioPage() {
             Hello there
           </h1>
           <p
-            className="font-display text-3xl md:text-4xl font-semibold mb-4 text-transparent bg-clip-text relative overflow-hidden"
+            className="font-display text-2xl sm:text-3xl md:text-4xl text-transparent bg-clip-text mb-4 relative overflow-hidden"
             style={{ 
               backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)' 
             }}
@@ -194,7 +194,7 @@ export default function PortfolioPage() {
             Mytreyan here
           </p>
           <p
-            className="text-lg md:text-xl text-foreground mb-4"
+            className="text-lg md:text-xl text-foreground mb-8"
           >
             Can create light outta a blackhole
           </p>
@@ -218,7 +218,7 @@ export default function PortfolioPage() {
       >
         <h2
           id="quick-navigation-heading"
-          className="text-2xl font-semibold mb-6 text-foreground"
+          className="text-2xl font-semibold mb-6 text-foreground" 
         >
           Connect & Explore
         </h2>
@@ -308,3 +308,4 @@ export default function PortfolioPage() {
     </div>
   );
 }
+
