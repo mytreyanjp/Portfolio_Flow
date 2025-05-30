@@ -169,7 +169,7 @@ export default function PortfolioPage() {
       <section
         aria-labelledby="welcome-heading"
         className={cn(
-          "text-center transition-all duration-700 ease-in-out mt-12", // Added mt-12 here
+          "text-center transition-all duration-700 ease-in-out mt-36", 
           isWelcomeVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
         )}
         ref={welcomeSectionRef}
@@ -196,7 +196,7 @@ export default function PortfolioPage() {
             Mytreyan here
           </p>
           <p
-            className="font-subtext text-lg md:text-xl text-foreground mb-8" 
+            className="font-subtext text-lg md:text-xl text-foreground mb-4" 
           >
             Can create light outta a blackhole
           </p>
