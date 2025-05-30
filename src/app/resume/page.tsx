@@ -78,7 +78,7 @@ export default function ResumePage() {
       <header className="text-center mb-12">
         <h1
           id="resume-page-main-heading"
-          className="font-display text-4xl font-bold text-transparent bg-clip-text relative overflow-hidden heading-hover-reveal"
+          className="font-display text-3xl md:text-4xl font-bold text-transparent bg-clip-text relative overflow-hidden heading-hover-reveal"
           style={{
             ...parallaxStyle,
             backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
@@ -224,3 +224,4 @@ export default function ResumePage() {
     </div>
   );
 }
+
