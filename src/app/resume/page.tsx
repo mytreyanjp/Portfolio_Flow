@@ -92,51 +92,18 @@ export default function ResumePage() {
       <div className="grid md:grid-cols-3 gap-8 mb-12">
         <Card className={cn("md:col-span-1 shadow-lg", "transition-transform duration-200 ease-out hover:scale-[1.02]")}>
           <CardContent className="pt-6 flex flex-col items-center text-center">
-            <div className="relative group mb-4">
+            <div className="relative mb-4"> {/* Removed group class here */}
               <div className="rounded-full overflow-hidden w-[120px] h-[120px]">
                 <Image
                   src="/mytreyan.jpg"
                   alt="Profile Picture of Mytreyan"
                   width={120}
                   height={120}
-                  className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-300 ease-in-out"
+                  className="object-cover w-full h-full hover:scale-110 transition-transform duration-300 ease-in-out"
                   data-ai-hint="profile photo"
                 />
               </div>
-              <div
-                className="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col space-y-2 
-                           opacity-0 scale-75 pointer-events-none
-                           group-hover:opacity-100 group-hover:scale-100 group-hover:left-[calc(100%_+_1.75rem)] group-hover:pointer-events-auto
-                           transform transition-all duration-300 ease-in-out z-10"
-              >
-                <a 
-                  href="https://www.instagram.com/mytreyn?igsh=YnZyanJmOTZwaW1l" 
-                  aria-label="Instagram" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="p-2 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-colors"
-                >
-                  <Instagram className="w-5 h-5" />
-                </a>
-                <a 
-                  href="https://github.com/mytreyanjp" 
-                  aria-label="GitHub" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="p-2 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-colors"
-                >
-                  <Github className="w-5 h-5" />
-                </a>
-                <a 
-                  href="https://in.linkedin.com/in/mytreyan-jp-49226a2a7" 
-                  aria-label="LinkedIn" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="p-2 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-colors"
-                >
-                  <Linkedin className="w-5 h-5" />
-                </a>
-              </div>
+              {/* Icon container removed from here */}
             </div>
             <h2 className="text-2xl font-semibold text-foreground font-display">Mytreyan</h2>
             <p className="text-primary">
@@ -166,6 +133,37 @@ export default function ResumePage() {
             </p>
           </CardContent>
         </Card>
+      </div>
+
+      {/* New Social Icons Section */}
+      <div className="flex justify-center space-x-6 mb-12">
+        <a 
+          href="https://www.instagram.com/mytreyn?igsh=YnZyanJmOTZwaW1l" 
+          aria-label="Instagram" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="p-3 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-all duration-200 ease-out hover:scale-110"
+        >
+          <Instagram className="w-6 h-6" />
+        </a>
+        <a 
+          href="https://github.com/mytreyanjp" 
+          aria-label="GitHub" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="p-3 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-all duration-200 ease-out hover:scale-110"
+        >
+          <Github className="w-6 h-6" />
+        </a>
+        <a 
+          href="https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://in.linkedin.com/in/mytreyan-jp-49226a2a7&ved=2ahUKEwj3rtuY_8qNAxWA2TgGHXl_O7gQFnoECBoQAQ&usg=AOvVaw3D68WydBGZLTSn9LRwey7Z" 
+          aria-label="LinkedIn" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="p-3 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-all duration-200 ease-out hover:scale-110"
+        >
+          <Linkedin className="w-6 h-6" />
+        </a>
       </div>
 
       <div className="space-y-10">
