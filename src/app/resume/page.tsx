@@ -92,7 +92,7 @@ export default function ResumePage() {
       <div className="grid md:grid-cols-3 gap-8 mb-12">
         <Card className={cn("md:col-span-1 shadow-lg", "transition-transform duration-200 ease-out hover:scale-[1.02]")}>
           <CardContent className="pt-6 flex flex-col items-center text-center">
-            <div className="relative mb-4">
+            <div className="relative mb-4 group">
               <div className="rounded-full overflow-hidden w-[120px] h-[120px]">
                 <Image
                   src="/mytreyan.jpg"
@@ -105,13 +105,13 @@ export default function ResumePage() {
               </div>
             </div>
             <h2 className="text-2xl font-semibold text-foreground font-display">Mytreyan</h2>
-            <p className="text-primary">
+            <p className="text-black dark:text-white">
               BTech IT<br />
               <a
                 href="https://www.annauniv.edu/#gsc.tab=0"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-accent hover:underline"
+                className="text-black dark:text-white hover:underline"
               >
                 CEG, Anna university
               </a>
