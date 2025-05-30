@@ -19,7 +19,7 @@ import { Terminal, X as XIcon, Laptop } from 'lucide-react';
 // CRUCIAL: Ensure your font file GreaterTheory.otf exists at the path:
 // /home/user/studio/public/fonts/GreaterTheory.otf
 const greaterTheory = localFont({
-  src: '../../public/fonts/GreaterTheory.otf',
+  src: '../../public/fonts/GreaterTheory.otf', // Relative path from src/app/ to public/fonts/
   variable: '--font-greater-theory',
   display: 'swap',
 });
@@ -27,7 +27,7 @@ const greaterTheory = localFont({
 // CRUCIAL: Ensure your font file Wasted-Vindey.ttf exists at the path:
 // /home/user/studio/public/fonts/Wasted-Vindey.ttf
 const wastedVindey = localFont({
-  src: '../../public/fonts/Wasted-Vindey.ttf',
+  src: '../../public/fonts/Wasted-Vindey.ttf', // Relative path from src/app/ to public/fonts/
   variable: '--font-wasted-vindey',
   display: 'swap',
 });
@@ -48,12 +48,12 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    console.log('[MainContentWithTheme] useEffect: rawTheme changed to:', theme);
     console.log('[MainContentWithTheme] useEffect: resolvedTheme changed to:', resolvedTheme);
-  }, [resolvedTheme]);
+  }, [theme, resolvedTheme]);
 
   useEffect(() => {
     if (isClient && isMobile) {
-      // Check if the message has been dismissed before
       const dismissed = localStorage.getItem('dismissedMobileMessage');
       if (!dismissed) {
         setShowMobileMessage(true);
@@ -68,6 +68,20 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
     localStorage.setItem('dismissedMobileMessage', 'true');
   };
 
+  useEffect(() => {
+    let timerId: number | undefined;
+    if (showMobileMessage) {
+      timerId = window.setTimeout(() => {
+        handleDismissMobileMessage();
+      }, 5000); // 5 seconds
+    }
+    return () => {
+      if (timerId) {
+        window.clearTimeout(timerId);
+      }
+    };
+  }, [showMobileMessage]);
+
 
   console.log('[MainContentWithTheme] RENDER: isClient is', isClient);
   console.log('[MainContentWithTheme] RENDER: rawTheme (from useTheme) is', theme);
@@ -77,6 +91,7 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   console.log('[MainContentWithTheme] RENDER: currentIsDarkTheme evaluates to:', currentIsDarkTheme);
   
   const showCursorTail = isClient && currentIsDarkTheme;
+  
   console.log(`[RootLayout] RENDER: showCursorTail is ${showCursorTail}, isClient is ${isClient}, resolvedTheme is ${resolvedTheme}`);
   
 
