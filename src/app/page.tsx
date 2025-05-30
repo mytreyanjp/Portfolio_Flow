@@ -98,6 +98,7 @@ export default function PortfolioPage() {
     if (isLoading || error) return [];
     const results = projects.filter(project => {
       const categoryMatch = filters.category ? project.category === filters.category : true;
+      // Technology filtering is removed, so no need to check project.technologies
       return categoryMatch;
     });
     setNoProjectsMessageVisible(results.length === 0 && !isLoading && (filters.category !== ''));
@@ -186,7 +187,7 @@ export default function PortfolioPage() {
           <Button
             size="lg"
             onClick={scrollToProjects}
-            className="rounded-full shadow-lg hover:shadow-primary/30 transition-shadow" // Removed shadow-glow-primary
+            className="rounded-full shadow-lg hover:shadow-primary/30 transition-shadow"
           >
             View Projects <ArrowDown className="ml-2 h-5 w-5 animate-bounce" />
           </Button>
@@ -208,16 +209,20 @@ export default function PortfolioPage() {
           Connect & Explore
         </h2>
         <div className="flex justify-center space-x-4">
-          <Button asChild size="lg" variant="outline" className="shadow-md hover:shadow-lg transition-shadow"> {/* Removed shadow-glow-primary */}
+          <Button asChild size="lg" variant="outline" className="shadow-md hover:shadow-lg transition-shadow">
             <Link href="/contact">
-              <Mail className="mr-2 h-5 w-5" />
-              Get in Touch
+              <span className="flex items-center">
+                <Mail className="mr-2 h-5 w-5" />
+                Get in Touch
+              </span>
             </Link>
           </Button>
-          <Button asChild size="lg" variant="outline" className="shadow-md hover:shadow-lg transition-shadow"> {/* Removed shadow-glow-primary */}
+          <Button asChild size="lg" variant="outline" className="shadow-md hover:shadow-lg transition-shadow">
             <Link href="/resume">
-              <FileText className="mr-2 h-5 w-5" />
-              View Resume
+              <span className="flex items-center">
+                <FileText className="mr-2 h-5 w-5" />
+                View Resume
+              </span>
             </Link>
           </Button>
         </div>
