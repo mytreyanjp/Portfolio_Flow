@@ -220,10 +220,10 @@ export default function PortfolioPage() {
           id="quick-navigation-heading"
           className="text-2xl font-semibold mb-6 text-foreground"
         >
-          Connect & Explore
+          Connect &amp; Explore
         </h2>
-        <div className="flex justify-center space-x-4">
-          <Button asChild size="lg" variant="outline" className="shadow-md hover:shadow-lg transition-shadow">
+        <div className="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-4">
+          <Button asChild size="lg" variant="outline" className="shadow-md hover:shadow-lg transition-shadow w-full md:w-auto">
             <Link href="/contact">
               <span className="flex items-center">
                 <Mail className="mr-2 h-5 w-5" />
@@ -231,7 +231,7 @@ export default function PortfolioPage() {
               </span>
             </Link>
           </Button>
-          <Button asChild size="lg" variant="outline" className="shadow-md hover:shadow-lg transition-shadow">
+          <Button asChild size="lg" variant="outline" className="shadow-md hover:shadow-lg transition-shadow w-full md:w-auto">
             <Link href="/resume">
               <span className="flex items-center">
                 <FileText className="mr-2 h-5 w-5" />
