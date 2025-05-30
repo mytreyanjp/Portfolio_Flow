@@ -75,7 +75,7 @@ export default function ContactPage() {
       <div className="grid md:grid-cols-2 gap-12 items-start">
         <section aria-labelledby="contact-form-section">
           <h2 id="contact-form-section" className="sr-only">Contact Form</h2>
-          <Card className="shadow-xl shadow-glow-primary">
+          <Card className="shadow-xl"> {/* Removed shadow-glow-primary */}
             <CardHeader>
               <CardTitle className="text-2xl">Send a Message</CardTitle>
               <CardDescription>Fill out the form below and I'll get back to you as soon as possible.</CardDescription>
@@ -93,7 +93,7 @@ export default function ContactPage() {
            >
             Contact Information
            </h2>
-          <Card className="shadow-lg shadow-glow-primary">
+          <Card className="shadow-lg"> {/* Removed shadow-glow-primary */}
             <CardContent className="pt-6 space-y-4">
               <div className="flex items-start space-x-4">
                 <Mail className="h-6 w-6 text-primary mt-1" />

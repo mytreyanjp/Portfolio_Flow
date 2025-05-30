@@ -28,7 +28,7 @@ export default function ResumeDownloader() {
   return (
     <Button 
       onClick={handleDownload} 
-      className={cn("w-full shadow-md hover:shadow-lg", "shadow-glow-primary")}
+      className={cn("w-full shadow-md hover:shadow-lg")} // Removed shadow-glow-primary
       size="lg"
     >
       <Download className="mr-2 h-5 w-5" />

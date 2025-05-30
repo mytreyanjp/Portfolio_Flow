@@ -186,7 +186,7 @@ export default function PortfolioPage() {
           <Button
             size="lg"
             onClick={scrollToProjects}
-            className="rounded-full shadow-lg hover:shadow-primary/30 transition-shadow shadow-glow-primary"
+            className="rounded-full shadow-lg hover:shadow-primary/30 transition-shadow" // Removed shadow-glow-primary
           >
             View Projects <ArrowDown className="ml-2 h-5 w-5 animate-bounce" />
           </Button>
@@ -208,13 +208,13 @@ export default function PortfolioPage() {
           Connect & Explore
         </h2>
         <div className="flex justify-center space-x-4">
-          <Button asChild size="lg" variant="outline" className="shadow-md hover:shadow-lg transition-shadow shadow-glow-primary">
+          <Button asChild size="lg" variant="outline" className="shadow-md hover:shadow-lg transition-shadow"> {/* Removed shadow-glow-primary */}
             <Link href="/contact">
               <Mail className="mr-2 h-5 w-5" />
               Get in Touch
             </Link>
           </Button>
-          <Button asChild size="lg" variant="outline" className="shadow-md hover:shadow-lg transition-shadow shadow-glow-primary">
+          <Button asChild size="lg" variant="outline" className="shadow-md hover:shadow-lg transition-shadow"> {/* Removed shadow-glow-primary */}
             <Link href="/resume">
               <FileText className="mr-2 h-5 w-5" />
               View Resume

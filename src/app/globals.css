@@ -107,12 +107,7 @@ body {
       transform: translateY(0) scale(1);
     }
   }
-  .shadow-glow-primary {
-    filter: drop-shadow(0 0 6px hsl(var(--primary) / 0.5)) drop-shadow(0 0 10px hsl(var(--primary) / 0.3));
-  }
-  .dark .shadow-glow-primary { /* Ensure it uses the dark theme's primary */
-    filter: drop-shadow(0 0 8px hsl(var(--primary) / 0.6)) drop-shadow(0 0 12px hsl(var(--primary) / 0.4));
-  }
+  /* Removed .shadow-glow-primary class */
 }
 
 .heading-hover-reveal {

@@ -6,7 +6,7 @@ import Image from 'next/image'; // Import next/image
 import { usePathname } from 'next/navigation';
 import { Briefcase, MessageSquare, FileText, Brain, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button'; // Import buttonVariants
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import ThemeSwitcher from './ThemeSwitcher';
 import React, { useState, useEffect } from 'react';
@@ -75,18 +75,20 @@ export default function Header() {
           <Image 
             src="/favicon22.png" 
             alt="Myth Logo" 
-            width={28} // Adjust width as needed
-            height={28} // Adjust height as needed
-            className="h-7 w-7" // Tailwind class for consistency if needed, or remove if width/height is enough
+            width={28}
+            height={28}
+            className="h-7 w-7"
           />
-          
+          Myth
         </Link>
 
         <div className="flex items-center space-x-2">
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-1">
-            <NavLinks />
-          </nav>
+          {mounted && (
+            <nav className="hidden md:flex items-center space-x-1">
+              <NavLinks />
+            </nav>
+          )}
 
           <ThemeSwitcher />
 
@@ -94,11 +96,9 @@ export default function Header() {
           {mounted && (
             <div className="md:hidden">
               <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Menu className="h-6 w-6" />
-                    <span className="sr-only">Toggle navigation menu</span>
-                  </Button>
+                <SheetTrigger className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}>
+                  <Menu className="h-6 w-6" />
+                  <span className="sr-only">Toggle navigation menu</span>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-[300px] sm:w-[400px] p-6 pt-10">
                   <SheetHeader className="mb-4 text-left">

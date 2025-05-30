@@ -37,8 +37,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
     <Card 
       ref={cardRef}
       className={cn(
-        "flex flex-col h-full overflow-hidden transform transition-all duration-300 hover:scale-[1.02] animate-fadeInUpScale shadow-glow-primary",
-        "dark:shadow-glow-primary" // Ensure dark mode also applies the glow if needed (or handled by utility)
+        "flex flex-col h-full overflow-hidden transform transition-all duration-300 hover:scale-[1.02] animate-fadeInUpScale shadow-lg", // Removed shadow-glow-primary
       )}
       style={{ animationDelay: `${index * 100}ms` }}
     >
