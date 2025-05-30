@@ -3,16 +3,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
-// DEBUG Appearance settings:
+// Appearance settings:
 const CIRCLE_RADIUS = 150;
-const FILL_COLOR_DEBUG = 'rgba(255, 0, 0, 1)'; // Opaque Red
-const BLUR_STD_DEVIATION_DEBUG = 0; 
-const Z_INDEX_DEBUG = 9999; // Very high Z-index
-
-// Original theme-dependent colors (will be restored later)
 const FILL_COLOR_LIGHT_THEME_OPACITY_ZERO = 'rgba(107, 28, 117, 0.0)'; 
 const FILL_COLOR_DARK_THEME_VISIBLE = 'rgba(107, 28, 117, 0.2)';
-
+const BLUR_STD_DEVIATION = 15; 
+const Z_INDEX = -1; // Behind main content, above body background
 
 interface Position {
   x: number;
@@ -20,7 +16,7 @@ interface Position {
 }
 
 interface CursorTailProps {
-  currentTheme?: string; // 'light' or 'dark' or undefined initially
+  currentTheme?: string; // 'light' or 'dark'
 }
 
 export default function CursorTail({ currentTheme }: CursorTailProps) {
@@ -31,13 +27,13 @@ export default function CursorTail({ currentTheme }: CursorTailProps) {
 
   useEffect(() => {
     console.log('[CursorTail] useEffect triggered, currentTheme in effect:', currentTheme);
+    
     // Initialize position to center for immediate visibility if needed, or off-screen
-    targetPosition.current = { x: window.innerWidth / 2, y: window.innerHeight / 2 }; // Start at center
-    setPosition(targetPosition.current); // Set initial position
+    // targetPosition.current = { x: window.innerWidth / 2, y: window.innerHeight / 2 }; 
+    // setPosition(targetPosition.current);
 
     const handleMouseMove = (event: MouseEvent) => {
       targetPosition.current = { x: event.clientX, y: event.clientY };
-      // console.log('[CursorTail] Mouse moved:', targetPosition.current);
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -55,8 +51,8 @@ export default function CursorTail({ currentTheme }: CursorTailProps) {
       lastTimestamp = timestamp;
       
       setPosition((prevPosition) => {
-        const newX = prevPosition.x + (targetPosition.current.x - prevPosition.x) * 0.1;
-        const newY = prevPosition.y + (targetPosition.current.y - prevPosition.y) * 0.1;
+        const newX = prevPosition.x + (targetPosition.current.x - prevPosition.x) * 0.07; // Smoother/slower follow
+        const newY = prevPosition.y + (targetPosition.current.y - prevPosition.y) * 0.07; // Smoother/slower follow
         return { x: newX, y: newY };
       });
       animationFrameId.current = requestAnimationFrame(updatePosition);
@@ -74,14 +70,15 @@ export default function CursorTail({ currentTheme }: CursorTailProps) {
         animationFrameId.current = null;
       }
     };
-  }, [currentTheme]); // Re-run effect if currentTheme changes (due to key prop)
+  }, [currentTheme]); // Re-run effect if currentTheme changes (due to key prop in layout.tsx)
 
-  // DEBUG: Override fillColor for visibility
-  const fillColor = FILL_COLOR_DEBUG;
-  const blurStdDeviation = BLUR_STD_DEVIATION_DEBUG;
-  const zIndex = Z_INDEX_DEBUG;
+  const fillColor = currentTheme === 'light' 
+    ? FILL_COLOR_LIGHT_THEME_OPACITY_ZERO 
+    : FILL_COLOR_DARK_THEME_VISIBLE;
 
-  console.log('[CursorTail] Rendering SVG with fillColor:', fillColor, 'blur:', blurStdDeviation, 'zIndex:', zIndex, 'for theme:', currentTheme);
+  const blurFilterId = `cursorBlurFilter-${currentTheme || 'default'}`; // Unique filter ID per theme to ensure re-evaluation
+
+  console.log('[CursorTail] Rendering SVG with fillColor:', fillColor, 'blur:', BLUR_STD_DEVIATION, 'zIndex:', Z_INDEX, 'for theme:', currentTheme);
 
   return (
     <svg
@@ -92,14 +89,13 @@ export default function CursorTail({ currentTheme }: CursorTailProps) {
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none',
-        zIndex: zIndex, 
-        // No transition for fill color during debug
+        zIndex: Z_INDEX, 
       }}
       aria-hidden="true"
     >
       <defs>
-        <filter id="cursorBlurFilterDebug" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation={blurStdDeviation} />
+        <filter id={blurFilterId} x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation={BLUR_STD_DEVIATION} />
         </filter>
       </defs>
       <circle
@@ -107,8 +103,8 @@ export default function CursorTail({ currentTheme }: CursorTailProps) {
         cy={position.y}
         r={CIRCLE_RADIUS}
         fill={fillColor}
-        filter={blurStdDeviation > 0 ? "url(#cursorBlurFilterDebug)" : undefined}
-        // No transition for transform during debug
+        filter={BLUR_STD_DEVIATION > 0 ? `url(#${blurFilterId})` : undefined}
+        style={{ transition: 'fill 0.3s ease-out' }} // Smooth transition for fill color (opacity)
       />
     </svg>
   );
