@@ -93,12 +93,12 @@ export default function ResumePage() {
         <Card className="md:col-span-1 shadow-lg"> 
           <CardContent className="pt-6 flex flex-col items-center text-center">
             <Image
-              src="https://placehold.co/150x150.png"
+              src="/photos/mytreyan.jpg"
               alt="Profile Picture of Mytreyan JP"
               width={120}
               height={120}
-              className="rounded-full mb-4 border-4 border-primary"
-              data-ai-hint="profile avatar"
+              className="rounded-full mb-4 border-4 border-primary object-cover"
+              data-ai-hint="profile photo"
             />
             <h2 className="text-2xl font-semibold text-foreground">Mytreyan JP</h2>
             <p className="text-primary">
