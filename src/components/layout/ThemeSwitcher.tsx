@@ -3,7 +3,7 @@
 
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
-import { Lightbulb } from 'lucide-react';
+import { ToggleLeft, ToggleRight } from 'lucide-react'; // Changed icons
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -20,14 +20,6 @@ export default function ThemeSwitcher() {
     return <div className="h-10 w-10" />; // Matches button size
   }
 
-  const glowStyle =
-    resolvedTheme === 'light'
-      ? {
-          filter:
-            'drop-shadow(0 0 6px hsl(var(--accent))) drop-shadow(0 0 12px hsl(var(--accent))) drop-shadow(0 0 18px hsl(var(--accent) / 0.7))',
-        }
-      : {};
-
   return (
     <Button
       variant="ghost"
@@ -35,10 +27,11 @@ export default function ThemeSwitcher() {
       onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
       aria-label="Toggle theme"
     >
-      <Lightbulb
-        className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out"
-        style={glowStyle}
-      />
+      {resolvedTheme === 'dark' ? (
+        <ToggleLeft className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out" />
+      ) : (
+        <ToggleRight className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out text-primary" />
+      )}
     </Button>
   );
 }
