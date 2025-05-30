@@ -7,7 +7,7 @@ import ProjectFilter, { Filters } from '@/components/portfolio/ProjectFilter';
 import type { Project } from '@/data/projects';
 import { getProjects } from '@/services/projectsService';
 import { Button } from '@/components/ui/button';
-import { ArrowDown, Mail, FileText, AlertTriangle, X as XIcon } from 'lucide-react';
+import { ArrowDown, Mail, FileText, AlertTriangle, X as XIcon, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -194,7 +194,7 @@ export default function PortfolioPage() {
             Mytreyan here
           </p>
           <p
-            className="text-lg md:text-xl text-foreground mb-8"
+            className="font-subtext text-lg md:text-xl text-foreground mb-8" // Applied font-subtext
           >
             Can create light outta a blackhole
           </p>
@@ -308,4 +308,3 @@ export default function PortfolioPage() {
     </div>
   );
 }
-

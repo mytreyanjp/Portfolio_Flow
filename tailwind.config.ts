@@ -11,7 +11,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        display: ["var(--font-greater-theory)"], // New custom font family
+        display: ["var(--font-greater-theory)"], // For "Hello there", "Mytreyan here"
+        subtext: ["var(--font-wasted-vindey)"], // New font family for subtext
       },
   		colors: {
   			background: 'hsl(var(--background))',
@@ -91,16 +92,11 @@ export default {
           '0%': { opacity: '0', transform: 'translateY(20px) scale(0.95)' },
           '100%': { opacity: '1', transform: 'translateY(0px) scale(1)' },
         },
-        'heading-reveal': { // This keyframe might be unused now, keeping it just in case
-          '0%': { clipPath: 'circle(0% at 50% 50%)' },
-          '100%': { clipPath: 'circle(75% at 50% 50%)' },
-        }
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
         'fadeInUpScale': 'fadeInUpScale 0.5s ease-out forwards',
-        'heading-reveal': 'heading-reveal 0.4s ease-out forwards', // This animation might be unused now
   		}
   	}
   },

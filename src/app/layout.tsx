@@ -27,6 +27,20 @@ const greaterTheory = localFont({
   display: 'swap',
 });
 
+// CRUCIAL: Ensure your font file Wasted-Vindey.ttf exists at the path:
+// /home/user/studio/public/fonts/Wasted-Vindey.ttf
+const wastedVindey = localFont({
+  src: [
+    {
+      path: '../../public/fonts/Wasted-Vindey.ttf',
+      weight: '400', // Adjust if your font has a different default weight
+      style: 'normal',
+    },
+  ],
+  variable: '--font-wasted-vindey',
+  display: 'swap',
+});
+
 // Dynamically import CursorTail to ensure it's client-side only
 const CursorTail = dynamic(() => import('@/components/effects/CursorTail'), { ssr: false });
 
@@ -84,7 +98,8 @@ export default function RootLayout({
       </head>
       <body className={cn(
           "antialiased flex flex-col min-h-screen bg-background",
-          greaterTheory.variable // Apply the font variable to the body
+          greaterTheory.variable, // Apply the font variable to the body
+          wastedVindey.variable // Apply the new font variable
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
