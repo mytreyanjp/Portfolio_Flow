@@ -90,30 +90,3 @@
     scroll-behavior: smooth;
   }
 }
-
-@layer utilities {
-  @keyframes fadeInUpScale {
-    from {
-      opacity: 0;
-      transform: translateY(20px) scale(0.95);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-  }
-  @keyframes numberRollIn {
-    '0%': {
-      opacity: 0;
-      transform: translateY(15px) scale(0.9);
-    }
-    '60%': {
-      opacity: 1;
-      transform: translateY(-2px) scale(1.05);
-    }
-    '100%': {
-      opacity: 1;
-      transform: translateY(0px) scale(1);
-    }
-  }
-}
