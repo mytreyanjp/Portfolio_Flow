@@ -92,16 +92,17 @@ export default {
           '0%': { opacity: '0', transform: 'translateY(20px) scale(0.95)' },
           '100%': { opacity: '1', transform: 'translateY(0px) scale(1)' },
         },
-        fadeInQuick: { // New animation for the percentage number
-          '0%': { opacity: '0', transform: 'translateY(5px) scale(0.95)' },
-          '100%': { opacity: '1', transform: 'translateY(0px) scale(1)' },
+        numberRollIn: { // Renamed and modified for a more pronounced slide
+          '0%': { opacity: '0', transform: 'translateY(15px) scale(0.9)' }, // Start further down and slightly smaller
+          '60%': { opacity: '1', transform: 'translateY(-2px) scale(1.05)' }, // Overshoot slightly
+          '100%': { opacity: '1', transform: 'translateY(0px) scale(1)' }, // Settle
         },
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
         'fadeInUpScale': 'fadeInUpScale 0.5s ease-out forwards',
-        'fadeInQuick': 'fadeInQuick 0.3s ease-out forwards', // New animation utility
+        'numberRollIn': 'numberRollIn 0.4s ease-out forwards', // Renamed animation utility
   		}
   	}
   },

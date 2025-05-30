@@ -83,8 +83,9 @@ export default function ResumePage() {
       <header className="text-center mb-12">
         <h1
           id="resume-page-main-heading"
-          className="font-display text-3xl md:text-4xl font-bold text-transparent bg-clip-text relative overflow-hidden heading-hover-reveal"
+          className="font-display text-3xl md:text-4xl font-bold text-transparent bg-clip-text heading-hover-reveal relative overflow-hidden"
           style={{
+            ...parallaxStyle,
             backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
           }}
         >
@@ -115,7 +116,7 @@ export default function ResumePage() {
               </div>
             </CardContent>
           </Card>
-          <div className="mt-4 text-center">
+           <div className="mt-4 text-center">
             <p className="text-sm text-black dark:text-white">
               BTech IT<br />
               <a
@@ -167,19 +168,19 @@ export default function ResumePage() {
             <ul className="space-y-3 text-foreground/80 leading-relaxed">
               <li className="flex items-start">
                 <span className="mr-2 mt-1 text-primary shrink-0 text-xl leading-none">&bull;</span>
-                <span>Skilled IT student: Web Dev, Data Structures, C++, Java, Python, JavaScript.</span>
+                <span>IT student skilled in web dev, data structures, C++, Java, Python, JavaScript.</span>
               </li>
               <li className="flex items-start">
                 <span className="mr-2 mt-1 text-primary shrink-0 text-xl leading-none">&bull;</span>
-                <span>Proficient: Machine Learning, 3D Modeling (Blender/Unity), SQL.</span>
+                <span>Proficient in Machine Learning, 3D Modeling (Blender/Unity), SQL.</span>
               </li>
               <li className="flex items-start">
                 <span className="mr-2 mt-1 text-primary shrink-0 text-xl leading-none">&bull;</span>
-                <span>Hands-on: 3D design, video/image editing, database admin, hardware basics.</span>
+                <span>Practical experience in 3D design, video/image editing, and hardware.</span>
               </li>
               <li className="flex items-start">
                 <span className="mr-2 mt-1 text-primary shrink-0 text-xl leading-none">&bull;</span>
-                <span>Proactive leader, eager for challenges and innovative solutions.</span>
+                <span>Proactive leader, eager for challenges and driving innovative solutions.</span>
               </li>
             </ul>
           </CardContent>
@@ -195,7 +196,7 @@ export default function ResumePage() {
             <div className="text-right">
               <span
                 key={hoveredSkillLevel === null ? 'placeholder' : hoveredSkillLevel} 
-                className="text-2xl font-bold text-primary animate-fadeInQuick"
+                className="text-2xl font-bold text-primary animate-numberRollIn"
               >
                 {hoveredSkillLevel !== null ? `${hoveredSkillLevel}%` : '0%'}
               </span>
