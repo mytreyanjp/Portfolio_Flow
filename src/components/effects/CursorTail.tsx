@@ -5,8 +5,10 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 
 // Appearance settings:
 const CIRCLE_RADIUS = 150;
-const FILL_COLOR_LIGHT_THEME_OPACITY_ZERO = 'rgba(107, 28, 117, 0.0)'; // For light theme, make it transparent
-const FILL_COLOR_DARK_THEME_VISIBLE = 'rgba(107, 28, 117, 0.2)';    // For dark theme, make it visible
+const FILL_COLOR_DARK_THEME_VISIBLE_OPACITY = 0.2; 
+const FILL_COLOR_LIGHT_THEME_INVISIBLE_OPACITY = 0.0;
+const BASE_FILL_COLOR_RGB = '107, 28, 117'; // Purple color base
+
 const BLUR_STD_DEVIATION = 15; 
 const Z_INDEX = -1; // Behind main content, above body background
 
@@ -16,18 +18,19 @@ interface Position {
 }
 
 interface CursorTailProps {
-  currentTheme?: 'light' | 'dark' | string; // Allow string for flexibility from next-themes
+  isDarkTheme: boolean; 
 }
 
-export default function CursorTail({ currentTheme }: CursorTailProps) {
-  console.log('[CursorTail] Component rendered. Received currentTheme prop:', currentTheme);
+export default function CursorTail(props: CursorTailProps) {
+  const { isDarkTheme } = props;
+  console.log('[CursorTail] Component rendered. Received isDarkTheme prop:', isDarkTheme);
   
   const [position, setPosition] = useState<Position>({ x: -CIRCLE_RADIUS * 2, y: -CIRCLE_RADIUS * 2 });
   const animationFrameId = useRef<number | null>(null);
   const targetPosition = useRef<Position>({ x: -CIRCLE_RADIUS * 2, y: -CIRCLE_RADIUS * 2 });
 
   useEffect(() => {
-    console.log('[CursorTail] useEffect triggered, currentTheme in effect:', currentTheme);
+    console.log('[CursorTail] useEffect triggered, isDarkTheme in effect:', isDarkTheme);
     
     const handleMouseMove = (event: MouseEvent) => {
       targetPosition.current = { x: event.clientX, y: event.clientY };
@@ -67,27 +70,19 @@ export default function CursorTail({ currentTheme }: CursorTailProps) {
         animationFrameId.current = null;
       }
     };
-  }, [currentTheme]); // Re-run effect if currentTheme changes (due to key prop in layout.tsx)
+  }, [isDarkTheme]); // Re-run effect if isDarkTheme changes (due to key prop in layout.tsx)
 
   const fillColor = useMemo(() => {
-    let color;
-    if (currentTheme === 'light') {
-      color = FILL_COLOR_LIGHT_THEME_OPACITY_ZERO;
-    } else if (currentTheme === 'dark') {
-      color = FILL_COLOR_DARK_THEME_VISIBLE;
-    } else {
-      // This path should ideally not be taken if layout.tsx guard is working
-      console.warn(`[CursorTail] Unexpected theme value: "${currentTheme}". Defaulting to dark theme visibility as a fallback.`);
-      color = FILL_COLOR_DARK_THEME_VISIBLE; 
-    }
-    console.log(`[CursorTail] Calculated fillColor: ${color} for currentTheme: "${currentTheme}"`);
+    const opacity = isDarkTheme ? FILL_COLOR_DARK_THEME_VISIBLE_OPACITY : FILL_COLOR_LIGHT_THEME_INVISIBLE_OPACITY;
+    const color = `rgba(${BASE_FILL_COLOR_RGB}, ${opacity})`;
+    console.log(`[CursorTail] Calculated fillColor: ${color} for isDarkTheme: ${isDarkTheme}`);
     return color;
-  }, [currentTheme]);
+  }, [isDarkTheme]);
 
 
-  const blurFilterId = `cursorBlurFilter-${currentTheme || 'default'}`;
+  const blurFilterId = `cursorBlurFilter-${isDarkTheme ? 'dark' : 'light'}`;
 
-  console.log('[CursorTail] Rendering SVG with fillColor:', fillColor, 'blur:', BLUR_STD_DEVIATION, 'zIndex:', Z_INDEX, 'for theme:', currentTheme);
+  // console.log('[CursorTail] Rendering SVG with fillColor:', fillColor, 'blur:', BLUR_STD_DEVIATION, 'zIndex:', Z_INDEX, 'for isDarkTheme:', isDarkTheme);
 
   return (
     <svg
@@ -113,7 +108,6 @@ export default function CursorTail({ currentTheme }: CursorTailProps) {
         r={CIRCLE_RADIUS}
         fill={fillColor}
         filter={BLUR_STD_DEVIATION > 0 ? `url(#${blurFilterId})` : undefined}
-        // Removed style={{ transition: 'fill 0.3s ease-out' }} as fill is now directly controlled by theme
       />
     </svg>
   );

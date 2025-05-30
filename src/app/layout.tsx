@@ -41,14 +41,16 @@ export default function RootLayout({
   }, []);
   
   useEffect(() => {
+    // This log will show when resolvedTheme changes or is initially set
     console.log('[RootLayout] useEffect: resolvedTheme changed to:', resolvedTheme);
   }, [resolvedTheme]);
 
+  // Render phase logs
   console.log('[RootLayout] RENDER: isClient is', isClient);
   console.log('[RootLayout] RENDER: rawTheme (from useTheme) is', theme);
   console.log('[RootLayout] RENDER: resolvedTheme is', resolvedTheme);
 
-  // Determine if CursorTail should be shown
+  // Determine if CursorTail should be shown based on theme
   const showCursorTail = isClient && (resolvedTheme === 'light' || resolvedTheme === 'dark');
 
   if (showCursorTail) {
@@ -67,7 +69,7 @@ export default function RootLayout({
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           {showCursorTail && (
-            <CursorTail key={resolvedTheme} currentTheme={resolvedTheme} />
+            <CursorTail key={resolvedTheme} isDarkTheme={resolvedTheme === 'dark'} />
           )}
           <div className="relative z-10 flex flex-col min-h-screen"> {/* Content wrapper above background */}
             <Header />
