@@ -178,7 +178,7 @@ export default function PortfolioPage() {
         >
           <h1
             id="portfolio-page-main-heading"
-            className="font-display text-7xl text-transparent bg-clip-text mb-2 relative overflow-hidden"
+            className="font-display text-7xl text-transparent bg-clip-text mb-2 relative overflow-hidden heading-hover-reveal"
             style={{
               backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)',
             }}
@@ -220,7 +220,7 @@ export default function PortfolioPage() {
           id="quick-navigation-heading"
           className="text-2xl font-semibold mb-6 text-foreground"
         >
-          Connect &amp; Explore
+          Connect & Explore
         </h2>
         <div className="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-4">
           <Button asChild size="lg" variant="outline" className="shadow-md hover:shadow-lg transition-shadow w-full md:w-auto">
