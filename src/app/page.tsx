@@ -38,8 +38,11 @@ export default function PortfolioPage() {
 
   const { resolvedTheme } = useTheme();
   const [hasButtonClicked, setHasButtonClicked] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: -1000, y: -1000 });
-  const [isButtonDirectlyHovered, setIsButtonDirectlyHovered] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  
+  // Flare effect state for the button
+  const [flareStyle, setFlareStyle] = useState({});
+
 
   useEffect(() => {
     const contentNode = introContentRef.current;
@@ -59,46 +62,54 @@ export default function PortfolioPage() {
   }, []);
 
   useEffect(() => {
-    const handleMouseMoveForSpotlight = (event: MouseEvent) => {
+    const handleGlobalMouseMove = (event: MouseEvent) => {
       setMousePosition({ x: event.clientX, y: event.clientY });
     };
-    window.addEventListener('mousemove', handleMouseMoveForSpotlight);
+    window.addEventListener('mousemove', handleGlobalMouseMove);
     return () => {
-      window.removeEventListener('mousemove', handleMouseMoveForSpotlight);
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
     };
   }, []);
 
-  const isDark = resolvedTheme === 'dark';
-
   useEffect(() => {
-    if (viewProjectsButtonRef.current) {
-      const button = viewProjectsButtonRef.current;
-      
-      if (isDark && !hasButtonClicked) {
-        const rect = button.getBoundingClientRect();
-        const maskX = mousePosition.x - rect.left;
-        const maskY = mousePosition.y - rect.top;
-        const maskRadius = '200px';
+    if (!viewProjectsButtonRef.current) return;
 
-        button.style.setProperty('--mask-x', `${maskX}px`);
-        button.style.setProperty('--mask-y', `${maskY}px`);
-        button.style.setProperty('--mask-radius', maskRadius);
-        button.style.maskImage = `radial-gradient(circle var(--mask-radius) at var(--mask-x) var(--mask-y), black 0%, black 60%, transparent 100%)`;
-        button.style.webkitMaskImage = `radial-gradient(circle var(--mask-radius) at var(--mask-x) var(--mask-y), black 0%, black 60%, transparent 100%)`;
-      } else {
-        button.style.maskImage = 'none';
-        button.style.webkitMaskImage = 'none';
-      }
-      button.style.opacity = '1'; 
+    const button = viewProjectsButtonRef.current;
+    const rect = button.getBoundingClientRect();
+    
+    const lightX = mousePosition.x - rect.left;
+    const lightY = mousePosition.y - rect.top;
+
+    const buttonCenterX = rect.width / 2;
+    const buttonCenterY = rect.height / 2;
+
+    const distance = Math.sqrt(
+      Math.pow(lightX - buttonCenterX, 2) + Math.pow(lightY - buttonCenterY, 2)
+    );
+
+    const MAX_LIGHT_DISTANCE = 200; // px, how far the light effect spreads
+    const MAX_INTENSITY = 0.6; // Max alpha for the light color
+
+    let calculatedIntensity = 0;
+    if (distance < MAX_LIGHT_DISTANCE) {
+      calculatedIntensity = MAX_INTENSITY * (1 - distance / MAX_LIGHT_DISTANCE);
     }
-  }, [mousePosition, resolvedTheme, hasButtonClicked, isDark]);
+    
+    const newFlareStyle = {
+      '--flare-x': `${lightX}px`,
+      '--flare-y': `${lightY}px`,
+      '--flare-intensity': calculatedIntensity.toFixed(2),
+    };
+
+    setFlareStyle(newFlareStyle);
+
+  }, [mousePosition, resolvedTheme, hasButtonClicked]);
 
 
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 0 && !hasScrolled) {
         setHasScrolled(true);
-        // No longer using quickNavSectionRef, this state controls "Connect & Explore" visibility
       }
     };
     window.addEventListener('scroll', handleScroll);
@@ -134,7 +145,6 @@ export default function PortfolioPage() {
     const observers: [React.RefObject<HTMLElement>, React.Dispatch<React.SetStateAction<boolean>>][] = [
       [welcomeSectionRef, setIsWelcomeVisible],
       [projectsSectionRef, setIsProjectsVisible],
-      // quickNavSectionRef observer removed
     ];
     const intersectionObservers = observers.map(([ref, setVisible]) => {
       const observer = new IntersectionObserver(([entry]) => {
@@ -245,28 +255,31 @@ export default function PortfolioPage() {
             ref={viewProjectsButtonRef}
             size="lg"
             variant="outline"
+            className={cn(
+              "shadow-md relative overflow-hidden", // Added relative overflow-hidden
+              "transition-all duration-200 ease-out", 
+              "hover:scale-105 hover:bg-background"
+            )}
+            style={flareStyle} // Apply dynamic flare styles
             onClick={() => {
               setHasButtonClicked(true);
-               if (viewProjectsButtonRef.current && isDark && !hasButtonClicked) { 
-                  viewProjectsButtonRef.current.style.maskImage = 'none';
-                  viewProjectsButtonRef.current.style.webkitMaskImage = 'none';
-              }
               scrollToProjects();
             }}
-            onMouseEnter={() => setIsButtonDirectlyHovered(true)}
-            onMouseLeave={() => setIsButtonDirectlyHovered(false)}
-            className={cn(
-              "shadow-md",
-              "transition-all duration-200 ease-out", 
-              "hover:scale-105 hover:bg-background",
-              isDark && !hasButtonClicked && isButtonDirectlyHovered && 
-                "shadow-[0_0_20px_3px_hsl(var(--primary))]" 
-            )}
-            style={{
-              opacity: 1, 
-            }}
           >
-            View Projects <ArrowDown className="ml-2 h-5 w-5 animate-bounce" />
+            {/* Flare Overlay: Only in dark theme and before click */}
+            {resolvedTheme === 'dark' && !hasButtonClicked && (
+              <div
+                className="absolute inset-0 rounded-[inherit] pointer-events-none"
+                style={{
+                  background: `radial-gradient(circle 150px at var(--flare-x) var(--flare-y), hsla(var(--primary-hsl-values), var(--flare-intensity)) 0%, transparent 70%)`,
+                  transition: 'opacity 0.1s ease-out', 
+                }}
+              />
+            )}
+            {/* Button Content */}
+            <span className="relative z-[1] flex items-center"> {/* Ensure content is above flare */}
+              View Projects <ArrowDown className="ml-2 h-5 w-5 animate-bounce" />
+            </span>
           </Button>
         </div>
       </section>

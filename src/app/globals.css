@@ -4,7 +4,7 @@
 @tailwind utilities;
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  /* font-family: Arial, Helvetica, sans-serif; */ /* Reverted to allow Next/Font to take over */
   scroll-behavior: smooth;
 }
 
@@ -19,13 +19,14 @@ body {
     --popover-foreground: 270 40% 25%;
     --primary: 280 65% 70%; /* Softer main purple */
     --primary-foreground: 280 60% 15%; /* Dark purple for text on primary */
+    --primary-hsl-values: 280 65% 70%; /* HSL components for primary */
     --secondary: 275 50% 90%; /* Light muted purple */
     --secondary-foreground: 270 40% 20%;
     --muted: 275 50% 92%;
     --muted-foreground: 270 30% 50%; /* Slightly darker muted text */
     --accent: 300 70% 80%; /* Brighter light violet/pink for accents */
     --accent-foreground: 0 0% 10%; /* Dark text on accent */
-    --destructive: 0 84.2% 60.2%; 
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 275 50% 85%; /* Light purple border */
     --input: 275 50% 93%; /* Light purple input background */
@@ -58,6 +59,7 @@ body {
     --popover-foreground: 275 50% 80%; /* Match main foreground */
     --primary: 280 70% 60%; /* Rich royal purple for primary elements */
     --primary-foreground: 280 60% 95%; /* Very light purple/white for text on primary */
+    --primary-hsl-values: 280 70% 60%; /* HSL components for primary */
     --secondary: 270 30% 15%; /* Dark muted purple for secondary elements */
     --secondary-foreground: 275 50% 80%; /* Lighter purple for text on secondary */
     --muted: 270 30% 12%; /* Similar to secondary, slightly darker */
@@ -76,7 +78,7 @@ body {
     --chart-5: 260 65% 65%;
     /* Sidebar variables for dark theme */
     --sidebar-background: 0 0% 4%; /* Very dark, almost black */
-    --sidebar-foreground: 275 50% 80%; 
+    --sidebar-foreground: 275 50% 80%;
     --sidebar-primary: 280 70% 60%;
     --sidebar-primary-foreground: 280 60% 95%;
     --sidebar-accent: 300 75% 70%;
@@ -95,7 +97,6 @@ body {
   }
 }
 
-/* Added for project card animation */
 @layer utilities {
   @keyframes fadeInUpScale {
     from {
@@ -107,31 +108,33 @@ body {
       transform: translateY(0) scale(1);
     }
   }
-  /* Removed .shadow-glow-primary class */
+  @keyframes numberRollIn {
+    '0%': { opacity: '0', transform: 'translateY(15px) scale(0.9)' },
+    '60%': { opacity: '1', transform: 'translateY(-2px) scale(1.05)' },
+    '100%': { opacity: '1', transform: 'translateY(0px) scale(1)' },
+  }
 }
 
 .heading-hover-reveal {
   position: relative;
   overflow: hidden;
-  display: inline-block; 
-  color: transparent; 
-  -webkit-text-fill-color: transparent; /* For Safari */
-  background-clip: text;
-  -webkit-background-clip: text;
+  display: inline-block;
+  /* The <h1> itself handles its default gradient and text clipping */
 }
 
 .heading-hover-reveal::after {
   content: '';
   position: absolute;
-  inset: 0; 
+  inset: 0;
+  /* HOVER gradient: primary in center, accent at edges for the ::after pseudo-element */
   background-image: radial-gradient(circle at center, hsl(var(--primary)) 10%, hsl(var(--accent)) 90%);
-  -webkit-background-clip: text; 
+  -webkit-background-clip: text;
   background-clip: text;
-  color: transparent; 
-  -webkit-text-fill-color: transparent;
-  clip-path: circle(0% at 50% 50%); 
+  color: transparent; /* Must be transparent for its own bg-clip to work */
+  -webkit-text-fill-color: transparent; /* For older Safari */
+  clip-path: circle(0% at 50% 50%);
   transition: clip-path 0.4s ease-out;
-  pointer-events: none; 
+  pointer-events: none; /* Allow clicks to pass through to the underlying <h1> text */
 }
 
 .heading-hover-reveal:hover::after {
