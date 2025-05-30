@@ -12,7 +12,9 @@ import { useTheme } from 'next-themes';
 import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
-import CursorTail from '@/components/effects/CursorTail';
+// Dynamically import CursorTail to ensure it's client-side only
+const CursorTail = dynamic(() => import('@/components/effects/CursorTail'), { ssr: false });
+
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -41,6 +43,7 @@ export default function RootLayout({
   console.log('RootLayout Render: rawTheme (from useTheme) is', theme);
   console.log('RootLayout Render: resolvedTheme is', resolvedTheme);
 
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -51,6 +54,7 @@ export default function RootLayout({
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+          {/* Conditional rendering for CursorTail */}
           {isClient && resolvedTheme === 'dark' && <CursorTail />}
           <div className="relative z-10 flex flex-col min-h-screen"> {/* Content wrapper above background */}
             <Header />
