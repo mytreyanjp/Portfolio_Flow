@@ -8,6 +8,7 @@ import { Award, Briefcase, GraduationCap, Lightbulb, CheckCircle, Instagram, Git
 import Image from 'next/image';
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
+import SkillBar from '@/components/resume/SkillBar'; // Import the new component
 
 const skills = [
   { name: 'JavaScript & Python', level: 90 },
@@ -112,7 +113,7 @@ export default function ResumePage() {
             </CardContent>
           </Card>
           <div className="mt-4 text-center">
-            <p className="text-sm text-black dark:text-white">
+            <p className="text-sm text-black dark:text-white font-subtext">
               BTech IT<br />
               <a
                 href="https://www.annauniv.edu/#gsc.tab=0"
@@ -157,7 +158,7 @@ export default function ResumePage() {
 
         <Card className={cn("md:col-span-2 shadow-lg", "transition-transform duration-200 ease-out hover:scale-[1.02]")}>
           <CardHeader>
-            <CardTitle className="font-title text-2xl flex items-center text-foreground"><Lightbulb className="mr-2 h-6 w-6 text-primary"/> Summary</CardTitle>
+            <CardTitle className="font-display text-2xl flex items-center text-foreground"><Lightbulb className="mr-2 h-6 w-6 text-primary"/> Summary</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-3 text-foreground/80 leading-relaxed">
@@ -185,20 +186,12 @@ export default function ResumePage() {
       <div className="space-y-10">
         <Card className={cn("shadow-lg", "transition-transform duration-200 ease-out hover:scale-[1.02]")}>
           <CardHeader>
-            <CardTitle className="font-title text-2xl flex items-center text-foreground"><CheckCircle className="mr-2 h-6 w-6 text-primary"/> Key Skills</CardTitle>
+            <CardTitle className="font-display text-2xl flex items-center text-foreground"><CheckCircle className="mr-2 h-6 w-6 text-primary"/> Key Skills</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-0"> {/* Adjusted gap */}
               {skills.map(skill => (
-                <div key={skill.name} className="mb-2">
-                  <div className="flex justify-between mb-1">
-                    <span className="text-sm font-medium text-foreground">{skill.name}</span>
-                    <span className="text-sm font-medium text-primary">{skill.level}%</span>
-                  </div>
-                  <div className="w-full bg-muted rounded-full h-2.5">
-                    <div className="bg-primary h-2.5 rounded-full" style={{ width: `${skill.level}%` }}></div>
-                  </div>
-                </div>
+                <SkillBar key={skill.name} name={skill.name} level={skill.level} />
               ))}
             </div>
           </CardContent>
@@ -206,7 +199,7 @@ export default function ResumePage() {
 
         <Card className={cn("shadow-lg", "transition-transform duration-200 ease-out hover:scale-[1.02]")}>
           <CardHeader>
-            <CardTitle className="font-title text-2xl flex items-center text-foreground"><Briefcase className="mr-2 h-6 w-6 text-primary"/> Experience (Placeholder)</CardTitle>
+            <CardTitle className="font-display text-2xl flex items-center text-foreground"><Briefcase className="mr-2 h-6 w-6 text-primary"/> Experience (Placeholder)</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
@@ -231,7 +224,7 @@ export default function ResumePage() {
 
         <Card className={cn("shadow-lg", "transition-transform duration-200 ease-out hover:scale-[1.02]")}>
           <CardHeader>
-            <CardTitle className="font-title text-2xl flex items-center text-foreground"><GraduationCap className="mr-2 h-6 w-6 text-primary"/> Education (Placeholder)</CardTitle>
+            <CardTitle className="font-display text-2xl flex items-center text-foreground"><GraduationCap className="mr-2 h-6 w-6 text-primary"/> Education (Placeholder)</CardTitle>
           </CardHeader>
           <CardContent>
             <div>
@@ -244,7 +237,7 @@ export default function ResumePage() {
 
         <Card className={cn("shadow-lg", "transition-transform duration-200 ease-out hover:scale-[1.02]")}>
           <CardHeader>
-            <CardTitle className="font-title text-2xl flex items-center text-foreground"><Award className="mr-2 h-6 w-6 text-primary"/> Awards & Certifications (Placeholder)</CardTitle>
+            <CardTitle className="font-display text-2xl flex items-center text-foreground"><Award className="mr-2 h-6 w-6 text-primary"/> Awards & Certifications (Placeholder)</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <p className="text-foreground/80">Certified Next.js Developer - 2022</p>
