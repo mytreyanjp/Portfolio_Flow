@@ -20,11 +20,13 @@ interface CursorTailProps {
 }
 
 export default function CursorTail({ currentTheme }: CursorTailProps) {
+  console.log('[CursorTail] Received currentTheme prop:', currentTheme);
   const [position, setPosition] = useState<Position>({ x: -CIRCLE_RADIUS * 2, y: -CIRCLE_RADIUS * 2 });
   const animationFrameId = useRef<number | null>(null);
   const targetPosition = useRef<Position>({ x: -CIRCLE_RADIUS * 2, y: -CIRCLE_RADIUS * 2 });
 
   useEffect(() => {
+    console.log('[CursorTail] useEffect triggered, currentTheme in effect:', currentTheme);
     targetPosition.current = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
     setPosition(targetPosition.current);
 
@@ -56,6 +58,7 @@ export default function CursorTail({ currentTheme }: CursorTailProps) {
     animationFrameId.current = requestAnimationFrame(updatePosition);
     
     return () => {
+      console.log('[CursorTail] Cleanup: Removing mousemove listener and cancelling animation frame.');
       isMounted = false; 
       window.removeEventListener('mousemove', handleMouseMove);
       if (animationFrameId.current) {
@@ -63,9 +66,11 @@ export default function CursorTail({ currentTheme }: CursorTailProps) {
         animationFrameId.current = null;
       }
     };
-  }, []);
+  }, [currentTheme]); // Re-run effect if currentTheme changes (though key prop should handle remount)
 
   const fillColor = currentTheme === 'light' ? FILL_COLOR_LIGHT_THEME : FILL_COLOR_DARK_THEME;
+  console.log('[CursorTail] Rendering with fillColor:', fillColor, 'for theme:', currentTheme);
+
 
   return (
     <svg
@@ -92,7 +97,7 @@ export default function CursorTail({ currentTheme }: CursorTailProps) {
         fill={fillColor}
         filter={BLUR_STD_DEVIATION > 0 ? "url(#cursorBlurFilter)" : undefined}
         style={{
-          transition: 'transform 0.05s ease-out', 
+          transition: 'transform 0.05s ease-out, fill 0.3s ease-out', 
         }}
       />
     </svg>

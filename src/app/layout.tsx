@@ -40,6 +40,10 @@ export default function RootLayout({
     console.log('RootLayout: isClient set to true');
   }, []);
   
+  useEffect(() => {
+    console.log('[RootLayout] resolvedTheme changed to:', resolvedTheme);
+  }, [resolvedTheme]);
+
   // For debugging CursorTail conditional rendering
   console.log('[RootLayout] Render: isClient is', isClient);
   console.log('[RootLayout] Render: rawTheme (from useTheme) is', theme);
@@ -60,7 +64,7 @@ export default function RootLayout({
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           {/* Conditional rendering for CursorTail */}
-          {showCursorTail && <CursorTail currentTheme={resolvedTheme} />}
+          {showCursorTail && <CursorTail key={resolvedTheme} currentTheme={resolvedTheme} />}
           <div className="relative z-10 flex flex-col min-h-screen"> {/* Content wrapper above background */}
             <Header />
             <main className="flex-grow container mx-auto px-4 py-8">
@@ -74,3 +78,4 @@ export default function RootLayout({
     </html>
   );
 }
+
