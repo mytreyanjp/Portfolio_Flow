@@ -7,7 +7,7 @@ import ProjectFilter, { Filters } from '@/components/portfolio/ProjectFilter';
 import type { Project } from '@/data/projects';
 import { getProjects } from '@/services/projectsService';
 import { Button } from '@/components/ui/button';
-import { ArrowDown, Mail, FileText, AlertTriangle, X as XIcon, Menu } from 'lucide-react';
+import { ArrowDown, Mail, FileText, AlertTriangle, X as XIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -22,10 +22,8 @@ export default function PortfolioPage() {
   const [noProjectsMessageVisible, setNoProjectsMessageVisible] = useState(false);
 
   const welcomeSectionRef = useRef<HTMLElement>(null);
-  // quickNavSectionRef and isQuickNavVisible removed
   const projectsSectionRef = useRef<HTMLElement>(null);
   const [isWelcomeVisible, setIsWelcomeVisible] = useState(false);
-  // isQuickNavVisible removed
   const [isProjectsVisible, setIsProjectsVisible] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
   
@@ -93,7 +91,6 @@ export default function PortfolioPage() {
       threshold: 0.1, // Trigger when 10% of the element is visible
     };
 
-    // Removed quickNavSectionRef from observers
     const observers: [React.RefObject<HTMLElement>, React.Dispatch<React.SetStateAction<boolean>>][] = [
       [welcomeSectionRef, setIsWelcomeVisible],
       [projectsSectionRef, setIsProjectsVisible],
@@ -122,7 +119,6 @@ export default function PortfolioPage() {
     if (isLoading || error) return [];
     const results = projects.filter(project => {
       const categoryMatch = filters.category ? project.category === filters.category : true;
-      // Technology filter logic removed as dropdown was removed
       return categoryMatch;
     });
     setNoProjectsMessageVisible(results.length === 0 && !isLoading && (filters.category !== ''));
@@ -197,7 +193,7 @@ export default function PortfolioPage() {
         >
           <h1
             id="portfolio-page-main-heading"
-            className="font-display text-5xl sm:text-6xl md:text-7xl text-transparent bg-clip-text mb-2 relative overflow-hidden"
+            className="font-display text-5xl sm:text-6xl md:text-7xl text-transparent bg-clip-text mb-2 relative overflow-hidden heading-hover-reveal"
             style={{
               backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)',
             }}
@@ -205,7 +201,7 @@ export default function PortfolioPage() {
             Hello there
           </h1>
           <p
-            className="font-display text-2xl sm:text-3xl md:text-4xl text-transparent bg-clip-text mb-4 relative overflow-hidden"
+            className="font-display text-2xl sm:text-3xl md:text-4xl text-transparent bg-clip-text mb-4 relative overflow-hidden heading-hover-reveal"
             style={{ 
               backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)' 
             }}
@@ -231,11 +227,9 @@ export default function PortfolioPage() {
       <section
         aria-labelledby="quick-navigation-heading"
         className={cn(
-          "py-8 text-center transition-all duration-700 ease-in-out mt-12",
-          // Updated to use hasScrolled state
+          "py-8 text-center transition-all duration-700 ease-in-out mt-18",
           hasScrolled ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
         )}
-        // ref removed as IntersectionObserver is no longer used for this section
       >
         <h2
           id="quick-navigation-heading"
@@ -339,3 +333,4 @@ export default function PortfolioPage() {
     </div>
   );
 }
+
