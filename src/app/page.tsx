@@ -27,21 +27,30 @@ export default function PortfolioPage() {
   const [isQuickNavVisible, setIsQuickNavVisible] = useState(false);
   const [isProjectsVisible, setIsProjectsVisible] = useState(false);
   
-  const headingRef = useRef<HTMLHeadingElement>(null);
+  const introContentRef = useRef<HTMLDivElement>(null); // Ref for the parent div of intro text
 
   useEffect(() => {
-    if (!headingRef.current) return;
+    const contentNode = introContentRef.current;
+    if (!contentNode) return;
+
     const handleMouseMove = (event: MouseEvent) => {
-      if (headingRef.current) {
-        const rect = headingRef.current.getBoundingClientRect();
-        const x = ((event.clientX - rect.left) / rect.width) * 100;
-        const y = ((event.clientY - rect.top) / rect.height) * 100;
-        headingRef.current.style.setProperty('--gradient-center-x', `${x}%`);
-        headingRef.current.style.setProperty('--gradient-center-y', `${y}%`);
-      }
+      // Calculate mouse position as a percentage of the viewport
+      const x = (event.clientX / window.innerWidth) * 100;
+      const y = (event.clientY / window.innerHeight) * 100;
+      
+      contentNode.style.setProperty('--gradient-center-x', `${x}%`);
+      contentNode.style.setProperty('--gradient-center-y', `${y}%`);
     };
+
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      // Optionally reset CSS variables on unmount if needed
+      // if (contentNode) {
+      //   contentNode.style.removeProperty('--gradient-center-x');
+      //   contentNode.style.removeProperty('--gradient-center-y');
+      // }
+    };
   }, []);
 
 
@@ -98,7 +107,6 @@ export default function PortfolioPage() {
     if (isLoading || error) return [];
     const results = projects.filter(project => {
       const categoryMatch = filters.category ? project.category === filters.category : true;
-      // Technology filtering is removed, so no need to check project.technologies
       return categoryMatch;
     });
     setNoProjectsMessageVisible(results.length === 0 && !isLoading && (filters.category !== ''));
@@ -162,20 +170,22 @@ export default function PortfolioPage() {
       >
         <div
           className="max-w-3xl mx-auto"
+          ref={introContentRef} 
         >
           <h1
             id="portfolio-page-main-heading"
-            ref={headingRef}
-            className="text-7xl font-bold text-transparent bg-clip-text mb-2 relative overflow-hidden heading-hover-reveal"
+            className="text-7xl font-bold text-transparent bg-clip-text mb-2 relative overflow-hidden"
             style={{
               backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)',
-              transition: 'background-position 0.1s ease-out',
             }}
           >
             Hello there
           </h1>
           <p
-            className="text-3xl md:text-4xl font-semibold mb-4 text-primary"
+            className="text-3xl md:text-4xl font-semibold mb-4 text-transparent bg-clip-text relative overflow-hidden"
+            style={{ 
+              backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)' 
+            }}
           >
             Mytreyan here
           </p>
@@ -294,3 +304,5 @@ export default function PortfolioPage() {
     </div>
   );
 }
+
+    
