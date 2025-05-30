@@ -18,12 +18,11 @@ body {
     --popover-foreground: 270 40% 25%;
     --primary: 280 65% 70%; /* Softer main purple */
     --primary-foreground: 280 60% 15%; /* Dark purple for text on primary */
-    --primary-hsl-values: 280 65% 70%; /* HSL components for primary */
     --secondary: 275 50% 90%; /* Light muted purple */
     --secondary-foreground: 270 40% 20%;
     --muted: 275 50% 92%;
     --muted-foreground: 270 30% 50%; /* Slightly darker muted text */
-    --accent: 35 95% 60%; /* Brighter light violet/pink for accents */
+    --accent: 35 95% 60%; /* Orange for light theme accent */
     --accent-foreground: 0 0% 10%; /* Dark text on accent */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
@@ -42,7 +41,7 @@ body {
     --sidebar-foreground: 270 40% 25%;
     --sidebar-primary: 280 65% 70%;
     --sidebar-primary-foreground: 280 60% 15%;
-    --sidebar-accent: 300 70% 80%;
+    --sidebar-accent: 35 70% 80%; /* Orange for light theme sidebar accent */
     --sidebar-accent-foreground: 0 0% 10%;
     --sidebar-border: 275 50% 80%;
     --sidebar-ring: 280 65% 70%;
@@ -58,7 +57,6 @@ body {
     --popover-foreground: 275 50% 80%; /* Match main foreground */
     --primary: 280 70% 60%; /* Rich royal purple for primary elements */
     --primary-foreground: 280 60% 95%; /* Very light purple/white for text on primary */
-    --primary-hsl-values: 280 70% 60%; /* HSL components for primary */
     --secondary: 270 30% 15%; /* Dark muted purple for secondary elements */
     --secondary-foreground: 275 50% 80%; /* Lighter purple for text on secondary */
     --muted: 270 30% 12%; /* Similar to secondary, slightly darker */

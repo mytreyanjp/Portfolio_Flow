@@ -7,7 +7,7 @@ import ProjectFilter from '@/components/portfolio/ProjectFilter';
 import type { Project } from '@/data/projects';
 import { getProjects } from '@/services/projectsService';
 import { Button } from '@/components/ui/button';
-import { ArrowDown, Mail, FileText, AlertTriangle, X as XIcon } from 'lucide-react';
+import { ArrowDown, Mail, FileText, AlertTriangle, X as XIcon, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -28,33 +28,57 @@ export default function PortfolioPage() {
   const welcomeSectionRef = useRef<HTMLElement>(null);
   const quickNavSectionRef = useRef<HTMLElement>(null);
   const projectsSectionRef = useRef<HTMLElement>(null);
-  
-  const [isWelcomeVisible, setIsWelcomeVisible] = useState(false);
-  const [isQuickNavVisible, setIsQuickNavVisible] = useState(false);
-  const [isProjectsVisible, setIsProjectsVisible] = useState(false);
-  
-  const [hasScrolled, setHasScrolled] = useState(false);
-
   const introContentRef = useRef<HTMLDivElement>(null);
   const viewProjectsButtonRef = useRef<HTMLButtonElement>(null);
 
+  const [isWelcomeVisible, setIsWelcomeVisible] = useState(false);
+  const [isProjectsVisible, setIsProjectsVisible] = useState(false);
+  const [hasScrolled, setHasScrolled] = useState(false);
   const { resolvedTheme } = useTheme();
   const [hasButtonClicked, setHasButtonClicked] = useState(false);
-  const [flareStyle, setFlareStyle] = useState({});
+
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [isMobile, setIsMobile] = useState<boolean | undefined>(undefined);
+  const [buttonMaskStyle, setButtonMaskStyle] = useState({});
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    const handleGlobalMouseMove = (event: MouseEvent) => {
+      setMousePosition({ x: event.clientX, y: event.clientY });
+    };
+    window.addEventListener('mousemove', handleGlobalMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
+    };
   }, []);
+
+  useEffect(() => {
+    if (viewProjectsButtonRef.current && resolvedTheme === 'dark' && !hasButtonClicked) {
+      const button = viewProjectsButtonRef.current;
+      const rect = button.getBoundingClientRect();
+      const maskX = mousePosition.x - rect.left;
+      const maskY = mousePosition.y - rect.top;
+      const maskRadius = 200; // Or your desired radius
+
+      setButtonMaskStyle({
+        '--mask-x': `${maskX}px`,
+        '--mask-y': `${maskY}px`,
+        '--mask-radius': `${maskRadius}px`,
+        maskImage: `radial-gradient(circle var(--mask-radius) at var(--mask-x) var(--mask-y), black 0%, black 60%, transparent 100%)`,
+        WebkitMaskImage: `radial-gradient(circle var(--mask-radius) at var(--mask-x) var(--mask-y), black 0%, black 60%, transparent 100%)`,
+        opacity: 1, // Ensure button is "there" for the mask to work on
+      });
+    } else {
+      setButtonMaskStyle({
+        maskImage: 'none',
+        WebkitMaskImage: 'none',
+        opacity: 1,
+      });
+    }
+  }, [mousePosition, resolvedTheme, hasButtonClicked, viewProjectsButtonRef]);
 
 
   useEffect(() => {
     const contentNode = introContentRef.current;
-    if (!contentNode || isMobile) return;
+    if (!contentNode) return;
 
     const handleMouseMoveForGradient = (event: MouseEvent) => {
       const x = (event.clientX / window.innerWidth) * 100;
@@ -67,60 +91,7 @@ export default function PortfolioPage() {
     return () => {
       window.removeEventListener('mousemove', handleMouseMoveForGradient);
     };
-  }, [isMobile]);
-
-  useEffect(() => {
-    if (isMobile) return; // Disable flare effect on mobile
-    const handleGlobalMouseMove = (event: MouseEvent) => {
-      setMousePosition({ x: event.clientX, y: event.clientY });
-    };
-    window.addEventListener('mousemove', handleGlobalMouseMove);
-    return () => {
-      window.removeEventListener('mousemove', handleGlobalMouseMove);
-    };
-  }, [isMobile]);
-
-  useEffect(() => {
-    if (!viewProjectsButtonRef.current || isMobile) {
-      setFlareStyle({}); // Clear flare style on mobile or if button ref is not available
-      return;
-    }
-    if (hasButtonClicked && resolvedTheme === 'dark') {
-      setFlareStyle({}); // Clear flare once button is clicked in dark mode
-      return;
-    }
-
-    const button = viewProjectsButtonRef.current;
-    const rect = button.getBoundingClientRect();
-    
-    const lightX = mousePosition.x - rect.left;
-    const lightY = mousePosition.y - rect.top;
-
-    const buttonCenterX = rect.width / 2;
-    const buttonCenterY = rect.height / 2;
-
-    const distance = Math.sqrt(
-      Math.pow(lightX - buttonCenterX, 2) + Math.pow(lightY - buttonCenterY, 2)
-    );
-
-    const MAX_LIGHT_DISTANCE = 200; 
-    const MAX_INTENSITY = 0.6; 
-
-    let calculatedIntensity = 0;
-    if (distance < MAX_LIGHT_DISTANCE) {
-      calculatedIntensity = MAX_INTENSITY * (1 - distance / MAX_LIGHT_DISTANCE);
-    }
-    
-    const newFlareStyle = {
-      '--flare-x': `${lightX}px`,
-      '--flare-y': `${lightY}px`,
-      '--flare-intensity': calculatedIntensity.toFixed(2),
-    };
-
-    setFlareStyle(newFlareStyle);
-
-  }, [mousePosition, resolvedTheme, hasButtonClicked, isMobile]);
-
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -129,7 +100,7 @@ export default function PortfolioPage() {
       }
     };
     window.addEventListener('scroll', handleScroll);
-    handleScroll(); 
+    handleScroll();
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
@@ -160,7 +131,6 @@ export default function PortfolioPage() {
     };
     const observers: [React.RefObject<HTMLElement>, React.Dispatch<React.SetStateAction<boolean>>][] = [
       [welcomeSectionRef, setIsWelcomeVisible],
-      [quickNavSectionRef, setIsQuickNavVisible],
       [projectsSectionRef, setIsProjectsVisible],
     ];
     const intersectionObservers = observers.map(([ref, setVisible]) => {
@@ -193,7 +163,7 @@ export default function PortfolioPage() {
 
   const handleFilterChange = (newFilters: Filters) => {
     setFilters(newFilters);
-    if (newFilters.category === '') { 
+    if (newFilters.category === '') {
       setNoProjectsMessageVisible(false);
     }
   };
@@ -235,7 +205,7 @@ export default function PortfolioPage() {
       </div>
     </div>
   );
-  
+
   return (
     <div className="py-6 px-12 mt-12">
       <section
@@ -249,7 +219,7 @@ export default function PortfolioPage() {
         <div className="max-w-3xl mx-auto" ref={introContentRef}>
           <h1
             id="portfolio-page-main-heading"
-            className="font-display text-5xl sm:text-6xl md:text-7xl text-transparent bg-clip-text mb-2 relative overflow-hidden"
+            className="font-display text-5xl sm:text-6xl md:text-7xl text-transparent bg-clip-text relative overflow-hidden"
             style={{
               backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)',
             }}
@@ -257,7 +227,7 @@ export default function PortfolioPage() {
             Hello there
           </h1>
           <p
-            className="font-display text-2xl sm:text-3xl md:text-4xl text-transparent bg-clip-text mb-4 relative overflow-hidden"
+            className="font-display text-2xl sm:text-3xl md:text-4xl text-transparent bg-clip-text relative overflow-hidden"
              style={{
               backgroundImage:
                 'radial-gradient(circle at calc(100% - var(--gradient-center-x, 50%)) calc(100% - var(--gradient-center-y, 50%)), hsl(var(--primary)) 5%, hsl(var(--accent)) 75%)',
@@ -265,7 +235,7 @@ export default function PortfolioPage() {
           >
             Mytreyan here
           </p>
-          <p className="font-subtext text-lg md:text-xl text-foreground mb-8">
+          <p className="font-subtext text-lg md:text-xl text-foreground mb-4">
             Can create light outta a blackhole
           </p>
           <Button
@@ -273,29 +243,20 @@ export default function PortfolioPage() {
             size="lg"
             variant="outline"
             className={cn(
-              "shadow-md relative overflow-hidden",
-              "transition-all duration-200 ease-out", 
-              "hover:scale-105 hover:bg-background",
-              {'opacity-0': resolvedTheme === 'dark' && !hasButtonClicked && !isMobile} // Initially hidden in dark mode
+              "shadow-md relative", // Removed overflow-hidden temporarily if mask is CSS-only
+              "transition-all duration-200 ease-out",
+              "hover:scale-105 hover:bg-background"
             )}
-            style={flareStyle} 
+            style={{
+              ...buttonMaskStyle,
+              opacity: (resolvedTheme === 'dark' && !hasButtonClicked) ? 1 : 1 // Opacity is now handled by mask or always 1
+            }}
             onClick={() => {
               setHasButtonClicked(true);
               scrollToProjects();
             }}
           >
-            {resolvedTheme === 'dark' && !hasButtonClicked && !isMobile && (
-              <div
-                className="absolute inset-0 rounded-[inherit] pointer-events-none"
-                style={{
-                  background: `radial-gradient(circle 150px at var(--flare-x) var(--flare-y), hsla(var(--primary-hsl-values), var(--flare-intensity)) 0%, transparent 70%)`,
-                  transition: 'opacity 0.1s ease-out', 
-                }}
-              />
-            )}
-            <span className="relative z-[1] flex items-center"> 
-              View Projects <ArrowDown className="ml-2 h-5 w-5 animate-bounce" />
-            </span>
+            View Projects <ArrowDown className="ml-2 h-5 w-5 animate-bounce" />
           </Button>
         </div>
       </section>
@@ -304,7 +265,7 @@ export default function PortfolioPage() {
         aria-labelledby="quick-navigation-heading"
         className={cn(
           "py-8 text-center transition-all duration-700 ease-in-out mt-23",
-          hasScrolled ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10" 
+          hasScrolled ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
         )}
         ref={quickNavSectionRef}
       >
