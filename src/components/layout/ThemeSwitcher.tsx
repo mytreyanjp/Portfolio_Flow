@@ -24,7 +24,7 @@ export default function ThemeSwitcher() {
     resolvedTheme === 'light'
       ? {
           filter:
-            'drop-shadow(0 0 5px hsl(var(--primary))) drop-shadow(0 0 10px hsl(var(--primary)))',
+            'drop-shadow(0 0 6px hsl(var(--accent))) drop-shadow(0 0 12px hsl(var(--accent))) drop-shadow(0 0 18px hsl(var(--accent) / 0.7))',
         }
       : {};
 
