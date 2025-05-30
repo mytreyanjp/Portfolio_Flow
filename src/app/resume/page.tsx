@@ -96,7 +96,7 @@ export default function ResumePage() {
               <div className="rounded-full overflow-hidden w-[120px] h-[120px]">
                 <Image
                   src="/mytreyan.jpg"
-                  alt="Profile Picture of Mytreyan JP"
+                  alt="Profile Picture of Mytreyan"
                   width={120}
                   height={120}
                   className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-300 ease-in-out"
@@ -120,7 +120,7 @@ export default function ResumePage() {
                 </a>
               </div>
             </div>
-            <h2 className="text-2xl font-semibold text-foreground font-display">Mytreyan JP</h2>
+            <h2 className="text-2xl font-semibold text-foreground font-display">Mytreyan</h2>
             <p className="text-primary">
               BTech IT<br />
               <a
