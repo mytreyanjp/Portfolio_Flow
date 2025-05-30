@@ -92,14 +92,16 @@ export default function ResumePage() {
       <div className="grid md:grid-cols-3 gap-8 mb-12">
         <Card className={cn("md:col-span-1 shadow-lg", "transition-transform duration-200 ease-out hover:scale-[1.02]")}>
           <CardContent className="pt-6 flex flex-col items-center text-center">
-            <Image
-              src="/mytreyan.jpg"
-              alt="Profile Picture of Mytreyan JP"
-              width={120}
-              height={120}
-              className="rounded-full mb-4 object-cover"
-              data-ai-hint="profile photo"
-            />
+            <div className="rounded-full overflow-hidden w-[120px] h-[120px] mb-4">
+              <Image
+                src="/mytreyan.jpg"
+                alt="Profile Picture of Mytreyan JP"
+                width={120}
+                height={120}
+                className="object-cover w-full h-full hover:scale-110 transition-transform duration-300 ease-in-out"
+                data-ai-hint="profile photo"
+              />
+            </div>
             <h2 className="text-2xl font-semibold text-foreground">Mytreyan JP</h2>
             <p className="text-primary">
               BTech IT<br />
