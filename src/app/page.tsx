@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import ProjectCard from '@/components/portfolio/ProjectCard';
-import ProjectFilter, { Filters } from '@/components/portfolio/ProjectFilter';
+import ProjectFilter from '@/components/portfolio/ProjectFilter'; // Assuming ProjectFilter no longer uses Filters type directly for technologies
 import type { Project } from '@/data/projects';
 import { getProjects } from '@/services/projectsService';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,11 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
 
+// Interface for filters if ProjectFilter still expects it for category
+interface Filters {
+  category: string;
+}
+
 export default function PortfolioPage() {
   const [filters, setFilters] = useState<Filters>({ category: '' });
   const [projects, setProjects] = useState<Project[]>([]);
@@ -23,10 +28,10 @@ export default function PortfolioPage() {
 
   const welcomeSectionRef = useRef<HTMLElement>(null);
   const projectsSectionRef = useRef<HTMLElement>(null);
-  const quickNavSectionRef = useRef<HTMLElement>(null);
+  const quickNavSectionRef = useRef<HTMLElement>(null); // Keep for animation
   const [isWelcomeVisible, setIsWelcomeVisible] = useState(false);
   const [isProjectsVisible, setIsProjectsVisible] = useState(false);
-  const [isQuickNavVisible, setIsQuickNavVisible] = useState(false);
+  const [isQuickNavVisible, setIsQuickNavVisible] = useState(false); // Keep for animation
   const [hasScrolled, setHasScrolled] = useState(false);
 
   const introContentRef = useRef<HTMLDivElement>(null);
@@ -35,6 +40,8 @@ export default function PortfolioPage() {
   const { resolvedTheme } = useTheme();
   const [hasButtonClicked, setHasButtonClicked] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: -1000, y: -1000 });
+  const [isButtonDirectlyHovered, setIsButtonDirectlyHovered] = useState(false);
+
 
   useEffect(() => {
     const contentNode = introContentRef.current;
@@ -63,31 +70,31 @@ export default function PortfolioPage() {
     };
   }, []);
 
+  const isDark = resolvedTheme === 'dark';
+
   useEffect(() => {
     if (viewProjectsButtonRef.current) {
       const button = viewProjectsButtonRef.current;
-      const isDark = resolvedTheme === 'dark';
-
+      
       if (isDark && !hasButtonClicked) {
         const rect = button.getBoundingClientRect();
         const maskX = mousePosition.x - rect.left;
         const maskY = mousePosition.y - rect.top;
-        const maskRadius = '200px'; // Increased radius
+        const maskRadius = '200px';
 
         button.style.setProperty('--mask-x', `${maskX}px`);
         button.style.setProperty('--mask-y', `${maskY}px`);
         button.style.setProperty('--mask-radius', maskRadius);
-        // Softened mask gradient for a light-like effect
         button.style.maskImage = `radial-gradient(circle var(--mask-radius) at var(--mask-x) var(--mask-y), black 0%, black 60%, transparent 100%)`;
         button.style.webkitMaskImage = `radial-gradient(circle var(--mask-radius) at var(--mask-x) var(--mask-y), black 0%, black 60%, transparent 100%)`;
-        button.style.opacity = '1'; // Ensure button is "there" for mask to apply
       } else {
         button.style.maskImage = 'none';
         button.style.webkitMaskImage = 'none';
-        button.style.opacity = '1';
       }
+      // Ensure button is always rendered with opacity 1, mask controls actual visibility
+      button.style.opacity = '1'; 
     }
-  }, [mousePosition, resolvedTheme, hasButtonClicked]);
+  }, [mousePosition, resolvedTheme, hasButtonClicked, isDark]);
 
 
   useEffect(() => {
@@ -103,7 +110,7 @@ export default function PortfolioPage() {
       }
     };
     window.addEventListener('scroll', handleScroll);
-    handleScroll(); // Call on mount to set initial state if already scrolled
+    handleScroll(); 
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
@@ -135,7 +142,7 @@ export default function PortfolioPage() {
     const observers: [React.RefObject<HTMLElement>, React.Dispatch<React.SetStateAction<boolean>>][] = [
       [welcomeSectionRef, setIsWelcomeVisible],
       [projectsSectionRef, setIsProjectsVisible],
-      // Removed quickNavSectionRef from observer as its visibility is tied to `hasScrolled`
+      [quickNavSectionRef, setIsQuickNavVisible], // Added back for "Connect & Explore"
     ];
     const intersectionObservers = observers.map(([ref, setVisible]) => {
       const observer = new IntersectionObserver(([entry]) => {
@@ -167,7 +174,7 @@ export default function PortfolioPage() {
 
   const handleFilterChange = (newFilters: Filters) => {
     setFilters(newFilters);
-    if (newFilters.category === '') { // Reset message if filters are cleared
+    if (newFilters.category === '') { 
       setNoProjectsMessageVisible(false);
     }
   };
@@ -210,8 +217,6 @@ export default function PortfolioPage() {
     </div>
   );
   
-  const isDark = resolvedTheme === 'dark';
-
   return (
     <div className="py-6 px-12 mt-12">
       <section
@@ -249,15 +254,23 @@ export default function PortfolioPage() {
             variant="outline"
             onClick={() => {
               setHasButtonClicked(true);
+               if (viewProjectsButtonRef.current && isDark && !hasButtonClicked) { // Check isDark and hasButtonClicked before resetting mask
+                  viewProjectsButtonRef.current.style.maskImage = 'none';
+                  viewProjectsButtonRef.current.style.webkitMaskImage = 'none';
+              }
               scrollToProjects();
             }}
+            onMouseEnter={() => setIsButtonDirectlyHovered(true)}
+            onMouseLeave={() => setIsButtonDirectlyHovered(false)}
             className={cn(
               "shadow-md",
-              "transition-opacity duration-300 ease-out",
-              "hover:scale-105 hover:bg-background"
+              "transition-all duration-200 ease-out", // Handles transform and box-shadow transitions
+              "hover:scale-105 hover:bg-background",
+              isDark && !hasButtonClicked && isButtonDirectlyHovered && 
+                "shadow-[0_0_20px_3px_hsl(var(--primary))]" // Purple glow effect
             )}
             style={{
-              // Opacity and mask are handled by useEffect
+              opacity: 1, // Mask controls visibility, not this opacity directly here unless overriding
             }}
           >
             View Projects <ArrowDown className="ml-2 h-5 w-5 animate-bounce" />
@@ -267,10 +280,10 @@ export default function PortfolioPage() {
 
       <section
         aria-labelledby="quick-navigation-heading"
-        ref={quickNavSectionRef} // This ref remains for potential future use, but visibility is now controlled by `hasScrolled`
+        ref={quickNavSectionRef} 
         className={cn(
           "py-8 text-center transition-all duration-700 ease-in-out mt-23",
-          hasScrolled ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+          isQuickNavVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10" // Use isQuickNavVisible for animation
         )}
       >
         <h2
