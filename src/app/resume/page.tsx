@@ -166,7 +166,7 @@ export default function ResumePage() {
           </CardHeader>
           <CardContent>
             <ul className="space-y-3 text-foreground/80 leading-relaxed">
-              <li className="flex items-start">
+               <li className="flex items-start">
                 <span className="mr-2 mt-1 text-primary shrink-0 text-xl leading-none">&bull;</span>
                 <span>IT student skilled in web dev, data structures, C++, Java, Python, JavaScript.</span>
               </li>
@@ -189,7 +189,7 @@ export default function ResumePage() {
 
       <div className="space-y-10">
         <Card className={cn("shadow-lg", "transition-transform duration-200 ease-out hover:scale-[1.02]")}>
-          <CardHeader className="flex flex-row items-center justify-between"> {/* Flex layout for title and number */}
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="font-display text-2xl flex items-center text-foreground">
               <CheckCircle className="mr-2 h-6 w-6 text-primary"/> Key Skills
             </CardTitle>
@@ -198,8 +198,9 @@ export default function ResumePage() {
                 key={hoveredSkillLevel === null ? 'placeholder' : hoveredSkillLevel} 
                 className="text-2xl font-bold text-primary animate-numberRollIn"
               >
-                {hoveredSkillLevel !== null ? `${hoveredSkillLevel}%` : '0%'}
+                {hoveredSkillLevel !== null ? `${hoveredSkillLevel}` : '0'}
               </span>
+              <p className="text-xs text-muted-foreground font-display mt-1">PERCENTAGE</p>
             </div>
           </CardHeader>
           <CardContent>
