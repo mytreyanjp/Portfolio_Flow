@@ -165,11 +165,11 @@ export default function PortfolioPage() {
   );
 
   return (
-    <div className="py-6 px-12 mt-8 space-y-12">
+    <div className="py-6 px-12 space-y-12">
       <section
         aria-labelledby="welcome-heading"
         className={cn(
-          "text-center transition-all duration-700 ease-in-out",
+          "text-center transition-all duration-700 ease-in-out mt-12", // Added mt-12 here
           isWelcomeVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
         )}
         ref={welcomeSectionRef}
