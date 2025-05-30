@@ -10,16 +10,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
 const skills = [
-  { name: 'JavaScript (ES6+)', level: 90 },
-  { name: 'TypeScript', level: 90 },
-  { name: 'React & Next.js', level: 95 },
-  { name: 'Three.js & WebGL', level: 80 },
-  { name: 'Node.js & Express', level: 85 },
-  { name: 'Python', level: 75 },
-  { name: 'AI & Genkit', level: 70 },
-  { name: 'UI/UX Design Principles', level: 80 },
-  { name: 'Database (SQL/NoSQL)', level: 70 },
-  { name: 'Cloud Platforms (Firebase/AWS)', level: 75 },
+  { name: 'JavaScript & Python', level: 90 },
+  { name: 'Web Development (React/Next.js)', level: 90 },
+  { name: 'Data Structures & Algorithms', level: 85 },
+  { name: 'C/C++ & Java', level: 75 },
+  { name: 'SQL & Databases', level: 80 },
+  { name: '3D Modeling (Blender, Unity)', level: 85 },
+  { name: 'Machine Learning Concepts', level: 70 },
+  { name: 'Video/Image Editing', level: 70 },
+  { name: 'Computer Hardware Basics', level: 65 },
+  { name: 'Leadership & Problem Solving', level: 90 },
 ];
 
 export default function ResumePage() {
@@ -111,45 +111,47 @@ export default function ResumePage() {
               </div>
             </CardContent>
           </Card>
-          <p className="text-sm text-black dark:text-white mt-4">
-            BTech IT<br />
-            <a
-              href="https://www.annauniv.edu/#gsc.tab=0"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-black dark:text-white hover:underline"
-            >
-              CEG, Anna university
-            </a>
-          </p>
-          <div className="flex justify-center space-x-3 mt-4">
-            <a
-              href="https://www.instagram.com/mytreyn?igsh=YnZyanJmOTZwaW1l"
-              aria-label="Instagram"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-all duration-200 ease-out hover:scale-110"
-            >
-              <Instagram className="w-4 h-4" />
-            </a>
-            <a
-              href="https://github.com/mytreyanjp"
-              aria-label="GitHub"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-all duration-200 ease-out hover:scale-110"
-            >
-              <Github className="w-4 h-4" />
-            </a>
-            <a
-              href="https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://in.linkedin.com/in/mytreyan-jp-49226a2a7&ved=2ahUKEwj3rtuY_8qNAxWA2TgGHXl_O7gQFnoECBoQAQ&usg=AOvVaw3D68WydBGZLTSn9LRwey7Z"
-              aria-label="LinkedIn"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-all duration-200 ease-out hover:scale-110"
-            >
-              <Linkedin className="w-4 h-4" />
-            </a>
+          <div className="mt-4 text-center">
+            <p className="text-sm text-black dark:text-white">
+              BTech IT<br />
+              <a
+                href="https://www.annauniv.edu/#gsc.tab=0"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-black dark:text-white hover:underline"
+              >
+                CEG, Anna university
+              </a>
+            </p>
+            <div className="flex justify-center space-x-3 mt-4">
+              <a
+                href="https://www.instagram.com/mytreyn?igsh=YnZyanJmOTZwaW1l"
+                aria-label="Instagram"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-all duration-200 ease-out hover:scale-110"
+              >
+                <Instagram className="w-4 h-4" />
+              </a>
+              <a
+                href="https://github.com/mytreyanjp"
+                aria-label="GitHub"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-all duration-200 ease-out hover:scale-110"
+              >
+                <Github className="w-4 h-4" />
+              </a>
+              <a
+                href="https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://in.linkedin.com/in/mytreyan-jp-49226a2a7&ved=2ahUKEwj3rtuY_8qNAxWA2TgGHXl_O7gQFnoECBoQAQ&usg=AOvVaw3D68WydBGZLTSn9LRwey7Z"
+                aria-label="LinkedIn"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 bg-card text-primary rounded-full shadow-md hover:bg-accent hover:text-accent-foreground transition-all duration-200 ease-out hover:scale-110"
+              >
+                <Linkedin className="w-4 h-4" />
+              </a>
+            </div>
           </div>
         </div>
 
@@ -161,19 +163,19 @@ export default function ResumePage() {
             <ul className="space-y-3 text-foreground/80 leading-relaxed">
               <li className="flex items-start">
                 <span className="mr-2 mt-1 text-primary shrink-0 text-xl leading-none">&bull;</span>
-                <span>BTech IT student skilled in web development, data structures, and languages like C++, Java, Python, JavaScript.</span>
+                <span>IT student skilled in web app development, data structures, and languages: C++, Java, Python, JavaScript.</span>
               </li>
               <li className="flex items-start">
                 <span className="mr-2 mt-1 text-primary shrink-0 text-xl leading-none">&bull;</span>
-                <span>Proficient in Machine Learning, 3D Modeling (Blender, Unity), and SQL.</span>
+                <span>Proficient in Machine Learning concepts, 3D Modeling (Blender, Unity), and SQL.</span>
               </li>
               <li className="flex items-start">
                 <span className="mr-2 mt-1 text-primary shrink-0 text-xl leading-none">&bull;</span>
-                <span>Practical skills in 3D modelling, video/image editing, database admin, and computer hardware.</span>
+                <span>Practical skills: 3D modelling, video/image editing, database admin, and computer hardware.</span>
               </li>
               <li className="flex items-start">
                 <span className="mr-2 mt-1 text-primary shrink-0 text-xl leading-none">&bull;</span>
-                <span>Proactive leader, eager to tackle challenges and deliver innovative solutions.</span>
+                <span>Proactive leader, eager for new challenges and driving innovative solutions.</span>
               </li>
             </ul>
           </CardContent>
