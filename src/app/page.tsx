@@ -72,12 +72,12 @@ export default function PortfolioPage() {
         const rect = button.getBoundingClientRect();
         const maskX = mousePosition.x - rect.left;
         const maskY = mousePosition.y - rect.top;
-        const maskRadius = '170px'; // Increased radius for softer edge overlap
+        const maskRadius = '200px'; // Increased radius
 
         button.style.setProperty('--mask-x', `${maskX}px`);
         button.style.setProperty('--mask-y', `${maskY}px`);
         button.style.setProperty('--mask-radius', maskRadius);
-        // Softened mask gradient
+        // Softened mask gradient for a light-like effect
         button.style.maskImage = `radial-gradient(circle var(--mask-radius) at var(--mask-x) var(--mask-y), black 0%, black 60%, transparent 100%)`;
         button.style.webkitMaskImage = `radial-gradient(circle var(--mask-radius) at var(--mask-x) var(--mask-y), black 0%, black 60%, transparent 100%)`;
         button.style.opacity = '1'; // Ensure button is "there" for mask to apply
@@ -103,7 +103,7 @@ export default function PortfolioPage() {
       }
     };
     window.addEventListener('scroll', handleScroll);
-    handleScroll();
+    handleScroll(); // Call on mount to set initial state if already scrolled
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
@@ -135,6 +135,7 @@ export default function PortfolioPage() {
     const observers: [React.RefObject<HTMLElement>, React.Dispatch<React.SetStateAction<boolean>>][] = [
       [welcomeSectionRef, setIsWelcomeVisible],
       [projectsSectionRef, setIsProjectsVisible],
+      // Removed quickNavSectionRef from observer as its visibility is tied to `hasScrolled`
     ];
     const intersectionObservers = observers.map(([ref, setVisible]) => {
       const observer = new IntersectionObserver(([entry]) => {
@@ -166,7 +167,7 @@ export default function PortfolioPage() {
 
   const handleFilterChange = (newFilters: Filters) => {
     setFilters(newFilters);
-    if (newFilters.category === '') {
+    if (newFilters.category === '') { // Reset message if filters are cleared
       setNoProjectsMessageVisible(false);
     }
   };
@@ -252,7 +253,7 @@ export default function PortfolioPage() {
             }}
             className={cn(
               "shadow-md",
-              "transition-opacity duration-300 ease-out", // Added for opacity transition
+              "transition-opacity duration-300 ease-out",
               "hover:scale-105 hover:bg-background"
             )}
             style={{
@@ -266,7 +267,7 @@ export default function PortfolioPage() {
 
       <section
         aria-labelledby="quick-navigation-heading"
-        ref={quickNavSectionRef}
+        ref={quickNavSectionRef} // This ref remains for potential future use, but visibility is now controlled by `hasScrolled`
         className={cn(
           "py-8 text-center transition-all duration-700 ease-in-out mt-23",
           hasScrolled ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
@@ -374,4 +375,3 @@ export default function PortfolioPage() {
     </div>
   );
 }
-
