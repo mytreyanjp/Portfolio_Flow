@@ -99,7 +99,7 @@ export default function ContactPage() {
                 <Mail className="h-6 w-6 text-primary mt-1" />
                 <div>
                   <h3 className="font-semibold text-foreground">Email</h3>
-                  <a href="mailto:mytreyan197@gmail.com" className="text-accent hover:underline">
+                  <a href="mailto:mytreyan197@gmail.com" className="text-primary hover:underline">
                     mytreyan197@gmail.com
                   </a>
                 </div>
@@ -108,7 +108,7 @@ export default function ContactPage() {
                 <Phone className="h-6 w-6 text-primary mt-1" />
                 <div>
                   <h3 className="font-semibold text-foreground">Phone</h3>
-                  <a href="tel:+919380744449" className="text-accent hover:underline">
+                  <a href="tel:+919380744449" className="text-primary hover:underline">
                     +91 9380744449
                   </a>
                 </div>
@@ -121,7 +121,7 @@ export default function ContactPage() {
                     href="https://www.google.com/maps/search/?api=1&query=Chennai,Tamilnadu"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-accent hover:underline"
+                    className="text-primary hover:underline"
                   >
                     Chennai, Tamilnadu
                   </a>
