@@ -26,25 +26,7 @@ const skills = [
 export default function ResumePage() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
   const [hoveredSkillLevel, setHoveredSkillLevel] = useState<number | null>(null);
-
-  useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      const { clientX, clientY } = event;
-      const x = (clientX / window.innerWidth - 0.5) * 2;
-      const y = (clientY / window.innerHeight - 0.5) * 2;
-      const sensitivity = 10;
-      setParallaxOffset({ x: x * sensitivity, y: y * sensitivity });
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
-
-  const parallaxStyle = {
-    transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`,
-    transition: 'transform 0.1s ease-out',
-  };
 
   useEffect(() => {
     const observerOptions = {
@@ -85,7 +67,6 @@ export default function ResumePage() {
           id="resume-page-main-heading"
           className="font-display text-3xl md:text-4xl font-bold text-transparent bg-clip-text heading-hover-reveal relative overflow-hidden"
           style={{
-            ...parallaxStyle,
             backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
           }}
         >
@@ -166,7 +147,7 @@ export default function ResumePage() {
           </CardHeader>
           <CardContent>
             <ul className="space-y-3 text-foreground/80 leading-relaxed">
-               <li className="flex items-start">
+              <li className="flex items-start">
                 <span className="mr-2 mt-1 text-primary shrink-0 text-xl leading-none">&bull;</span>
                 <span>IT student skilled in web dev, data structures, C++, Java, Python, JavaScript.</span>
               </li>
@@ -193,14 +174,14 @@ export default function ResumePage() {
             <CardTitle className="font-display text-2xl flex items-center text-foreground">
               <CheckCircle className="mr-2 h-6 w-6 text-primary"/> Key Skills
             </CardTitle>
-            <div className="text-right">
+            <div className="flex items-baseline space-x-2 text-right">
               <span
                 key={hoveredSkillLevel === null ? 'placeholder' : hoveredSkillLevel} 
                 className="text-2xl font-bold text-primary animate-numberRollIn"
               >
                 {hoveredSkillLevel !== null ? `${hoveredSkillLevel}` : '0'}
               </span>
-              <p className="text-xs text-muted-foreground font-display mt-1">PERCENTAGE</p>
+              <p className="text-xs text-muted-foreground font-display">PERCENTAGE</p>
             </div>
           </CardHeader>
           <CardContent>
