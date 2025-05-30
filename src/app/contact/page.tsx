@@ -63,7 +63,7 @@ export default function ContactPage() {
     >
       <h1
         id="contact-page-main-heading"
-        className="font-title text-4xl font-bold text-center mb-12 text-transparent bg-clip-text heading-hover-reveal relative overflow-hidden"
+        className="text-4xl font-bold text-center mb-12 text-transparent bg-clip-text heading-hover-reveal relative overflow-hidden" // font-title removed
         style={{
           ...parallaxStyle,
           backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
@@ -77,7 +77,7 @@ export default function ContactPage() {
           <h2 id="contact-form-section" className="sr-only">Contact Form</h2>
           <Card className="shadow-xl"> 
             <CardHeader>
-              <CardTitle className="text-2xl font-title">Send a Message</CardTitle>
+              <CardTitle className="text-2xl text-foreground">Send a Message</CardTitle> {/* font-title removed */}
               <CardDescription>Fill out the form below and I'll get back to you as soon as possible.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -89,7 +89,7 @@ export default function ContactPage() {
         <section aria-labelledby="contact-info-section" className="space-y-8">
            <h2
             id="contact-info-section-heading"
-            className="font-title text-2xl font-semibold mb-6 text-center md:text-left text-foreground"
+            className="text-2xl font-semibold mb-6 text-center md:text-left text-foreground" // font-title removed
            >
             Contact Information
            </h2>
@@ -98,7 +98,7 @@ export default function ContactPage() {
               <div className="flex items-start space-x-4">
                 <Mail className="h-6 w-6 text-primary mt-1" />
                 <div>
-                  <h3 className="font-semibold font-title">Email</h3>
+                  <h3 className="font-semibold text-foreground">Email</h3> {/* font-title removed */}
                   <a href="mailto:placeholder@example.com" className="text-accent hover:underline">
                     placeholder@example.com
                   </a>
@@ -107,14 +107,14 @@ export default function ContactPage() {
               <div className="flex items-start space-x-4">
                 <Phone className="h-6 w-6 text-primary mt-1" />
                 <div>
-                  <h3 className="font-semibold font-title">Phone</h3>
+                  <h3 className="font-semibold text-foreground">Phone</h3> {/* font-title removed */}
                   <p className="text-muted-foreground">(123) 456-7890 (Placeholder)</p>
                 </div>
               </div>
               <div className="flex items-start space-x-4">
                 <MapPin className="h-6 w-6 text-primary mt-1" />
                 <div>
-                  <h3 className="font-semibold font-title">Location</h3>
+                  <h3 className="font-semibold text-foreground">Location</h3> {/* font-title removed */}
                   <p className="text-muted-foreground">Planet Earth (Remote Friendly)</p>
                 </div>
               </div>

@@ -1,8 +1,7 @@
 
 'use client';
 
-import { Geist_Sans, Geist_Mono } from 'next/font/google'; // Changed: Removed 'as Geist' alias
-import { Lobster, Poppins } from 'next/font/google'; // Import new fonts
+import { Geist_Sans } from 'next/font/google'; // Removed Geist_Mono
 import './globals.css';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -16,30 +15,12 @@ import { usePathname } from 'next/navigation';
 
 const CursorTail = dynamic(() => import('@/components/effects/CursorTail'), { ssr: false });
 
-const geistSans = Geist_Sans({ // Changed: Used Geist_Sans directly
+const geistSans = Geist_Sans({ 
   variable: '--font-geist-sans',
   subsets: ['latin'],
 });
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-});
-
-// Initialize custom fonts
-const lobster = Lobster({
-  weight: ['400'],
-  subsets: ['latin'],
-  variable: '--font-lobster', // CSS variable
-  display: 'swap',
-});
-
-const poppins = Poppins({
-  weight: ['400', '600', '700'], // Specify needed weights
-  subsets: ['latin'],
-  variable: '--font-poppins', // CSS variable
-  display: 'swap',
-});
+// Removed Geist_Mono initialization
 
 function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   const [isClient, setIsClient] = useState(false);
@@ -61,19 +42,19 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   const currentIsDarkTheme = resolvedTheme === 'dark';
   console.log('[MainContentWithTheme] RENDER: currentIsDarkTheme evaluates to:', currentIsDarkTheme);
   
-  // Condition to render CursorTail: only on client and when theme is resolved
-  const showCursorTail = isClient && (resolvedTheme === 'light' || resolvedTheme === 'dark');
+  const showCursorTail = isClient; 
+  console.log('[MainContentWithTheme] RENDER: showCursorTail condition evaluates to:', showCursorTail, '(isClient:', isClient, ', resolvedTheme:', resolvedTheme, ')');
+  
 
   return (
     <>
       {showCursorTail && <CursorTail isDarkTheme={currentIsDarkTheme} />}
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
-        {/* Responsive bottom padding: pb-20 for small screens (footer visible), pb-8 for md+ (footer hidden) */}
         <main className="flex-grow container mx-auto px-4 py-8 pb-20 md:pb-8">
           {children}
         </main>
-        <Footer /> {/* This is now the mobile-only navigation footer */}
+        <Footer />
       </div>
       <Toaster />
     </>
@@ -93,7 +74,7 @@ export default function RootLayout({
         <link rel="icon" href="/favicon22.png" type="image/png" sizes="any" />
       </head>
       <body className={cn(
-          `${geistSans.variable} ${geistMono.variable} ${lobster.variable} ${poppins.variable} antialiased flex flex-col min-h-screen bg-background`, // Add new font variables
+          `${geistSans.variable} antialiased flex flex-col min-h-screen bg-background`, // Removed geistMono.variable
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>

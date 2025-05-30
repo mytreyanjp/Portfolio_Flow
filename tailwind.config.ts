@@ -1,6 +1,6 @@
 
 import type { Config } from "tailwindcss";
-import { fontFamily } from "tailwindcss/defaultTheme"; // Import defaultTheme
+import { fontFamily } from "tailwindcss/defaultTheme"; 
 
 export default {
     darkMode: ["class"],
@@ -11,11 +11,9 @@ export default {
   ],
   theme: {
     extend: {
-      fontFamily: { // Extend fontFamily
+      fontFamily: { 
         sans: ["var(--font-geist-sans)", ...fontFamily.sans],
-        mono: ["var(--font-geist-mono)", ...fontFamily.mono],
-        display: ["var(--font-lobster)", "cursive"], // New display font
-        title: ["var(--font-poppins)", "sans-serif"],   // New title font
+        // Removed mono: ["var(--font-geist-mono)", ...fontFamily.mono],
       },
   		colors: {
   			background: 'hsl(var(--background))',
@@ -95,11 +93,16 @@ export default {
           '0%': { opacity: '0', transform: 'translateY(20px) scale(0.95)' },
           '100%': { opacity: '1', transform: 'translateY(0px) scale(1)' },
         },
+        'heading-reveal': {
+          '0%': { clipPath: 'circle(0% at 50% 50%)' },
+          '100%': { clipPath: 'circle(75% at 50% 50%)' },
+        }
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
         'fadeInUpScale': 'fadeInUpScale 0.5s ease-out forwards',
+        'heading-reveal': 'heading-reveal 0.4s ease-out forwards',
   		}
   	}
   },
