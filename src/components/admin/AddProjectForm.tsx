@@ -33,9 +33,28 @@ const addProjectSchema = z.object({
   description: z.string().min(10, 'Short description must be at least 10 characters.'),
   longDescription: z.string().optional(),
   modelPath: z.string()
-    .refine(val => val === '' || (val.startsWith('/models/') && val.endsWith('.glb')), {
-      message: "Model path must start with /models/ and end with .glb (e.g., /models/my_model.glb), or be empty."
-    }).optional(),
+    .refine(val => {
+      if (val === '') return true; // Allow empty string
+
+      // Check for local path
+      if (val.startsWith('/models/') && val.endsWith('.glb')) {
+        return true;
+      }
+
+      // Check for absolute URL
+      if ((val.startsWith('http://') || val.startsWith('https://')) && val.endsWith('.glb')) {
+        try {
+          new URL(val); // Validate if it's a structurally sound URL
+          return true;
+        } catch (e) {
+          return false; // Invalid URL structure
+        }
+      }
+      return false; // Doesn't match either pattern
+    }, {
+      message: "Model path must be a valid HTTP/HTTPS URL ending with .glb (e.g., https://cdn.example.com/model.glb), a local path (e.g., /models/my_model.glb), or empty."
+    })
+    .optional(),
   dataAiHint: z.string()
     .max(50, "AI hint too long (max 50 chars).")
     .refine(val => val === '' || val.split(' ').length <= 2, {
@@ -94,7 +113,7 @@ export default function AddProjectForm() {
         description: `Project "${data.title}" has been successfully saved to the database with ID: ${docRef.id}.`,
         duration: 7000,
       });
-      if (data.modelPath) {
+      if (data.modelPath && data.modelPath.startsWith('/models/')) {
         toast({
             title: '3D Model Reminder',
             description: `Ensure your model ${data.modelPath} is placed in the public/models directory.`,
@@ -184,11 +203,10 @@ export default function AddProjectForm() {
             <FormItem>
               <FormLabel>3D Model Path (Optional, .glb format)</FormLabel>
               <FormControl>
-                <Input placeholder="/models/your-project-model.glb" {...field} />
+                <Input placeholder="/models/your-model.glb or https://example.com/model.glb" {...field} />
               </FormControl>
               <FormDescription>
-                Path to the .glb model file within your <code>public/models</code> directory. E.g., <code>/models/cool-robot.glb</code>.
-                Leave empty if not using a 3D model for this project.
+                Path to the .glb model file. Can be a local path within your <code>public/models</code> directory (e.g., <code>/models/cool-robot.glb</code>) or a full URL (e.g., <code>https://example.com/model.glb</code>). Leave empty if not using a 3D model.
               </FormDescription>
               <FormMessage />
             </FormItem>
