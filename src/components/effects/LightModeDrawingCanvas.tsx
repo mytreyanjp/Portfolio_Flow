@@ -68,12 +68,12 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
     
     setDrawnPoints(updatedPoints);
 
-    if (updatedPoints.length > 0 || isDrawingActive) { // Keep animating if drawing active or points exist
+    if (updatedPoints.length > 0 || isDrawingActive) {
       animationFrameIdRef.current = requestAnimationFrame(animate);
     } else {
       animationFrameIdRef.current = null;
     }
-  }, [drawnPoints, isDrawingActive]); // Added isDrawingActive dependency to keep animating if needed
+  }, [drawnPoints, isDrawingActive]);
 
   const handleMouseMove = useCallback((event: MouseEvent) => {
     if (!isDrawingActive) {
@@ -95,27 +95,30 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
     
     setDrawnPoints(prevPoints => [...prevPoints, currentPosition]);
     lastMousePositionRef.current = currentPosition;
+  }, [isDrawingActive]);
 
-    if (!animationFrameIdRef.current) {
-      animationFrameIdRef.current = requestAnimationFrame(animate);
-    }
-  }, [isDrawingActive, animate]);
-
-
+  // Effect for managing the animation loop state
   useEffect(() => {
-    if (!isDrawingActive) {
-      lastMousePositionRef.current = null; 
-      // Animation will stop naturally via `animate` if drawnPoints becomes empty
-    } else {
-      // If drawing becomes active and animation isn't running, start it.
-      // This handles cases where it might have stopped if all points faded while active.
-      if (!animationFrameIdRef.current) {
-        animationFrameIdRef.current = requestAnimationFrame(animate);
-      }
+    const needsAnimation = isDrawingActive || drawnPoints.length > 0;
+    if (needsAnimation && !animationFrameIdRef.current) {
+      animationFrameIdRef.current = requestAnimationFrame(animate);
+    } else if (!needsAnimation && animationFrameIdRef.current) {
+      // This case should be handled by animate itself setting animationFrameIdRef.current to null
+      // but as a safeguard if animate's condition changes:
+      // cancelAnimationFrame(animationFrameIdRef.current);
+      // animationFrameIdRef.current = null;
     }
-  }, [isDrawingActive, animate]);
 
+    // Cleanup for when the component unmounts or deps change significantly
+    return () => {
+      if (animationFrameIdRef.current) {
+        cancelAnimationFrame(animationFrameIdRef.current);
+        animationFrameIdRef.current = null;
+      }
+    };
+  }, [isDrawingActive, drawnPoints.length, animate]);
 
+  // Effect for setting up and tearing down global event listeners
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -123,32 +126,20 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
     const fitToContainer = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      // Re-trigger animation if it stopped, to ensure continuous drawing or fading
-      if ((isDrawingActive || drawnPoints.length > 0) && !animationFrameIdRef.current) {
-        animationFrameIdRef.current = requestAnimationFrame(animate);
-      }
     };
 
-    fitToContainer();
+    fitToContainer(); // Initial resize
     window.addEventListener('resize', fitToContainer);
     document.addEventListener('mousemove', handleMouseMove);
-
-    // Initial animation kick-off if needed (e.g. if active on load)
-    if ((isDrawingActive || drawnPoints.length > 0) && !animationFrameIdRef.current) {
-        animationFrameIdRef.current = requestAnimationFrame(animate);
-    }
 
     return () => {
       window.removeEventListener('resize', fitToContainer);
       document.removeEventListener('mousemove', handleMouseMove);
-      if (animationFrameIdRef.current) {
-        cancelAnimationFrame(animationFrameIdRef.current);
-        animationFrameIdRef.current = null;
-      }
     };
-  }, [handleMouseMove, animate, isDrawingActive, drawnPoints.length]);
+  }, [handleMouseMove]); // handleMouseMove is stable due to useCallback
 
-  // Render canvas if drawing is active or if there are points still fading
+
+  // Conditional rendering of the canvas element itself
   if (!isDrawingActive && drawnPoints.length === 0) { 
     return null;
   }
@@ -163,7 +154,7 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none',
-        zIndex: 1, // Changed from 0 to 1
+        zIndex: 1,
         opacity: (isDrawingActive || drawnPoints.length > 0) ? 1 : 0,
         transition: 'opacity 0.3s ease-in-out',
       }}
@@ -173,4 +164,3 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
 };
 
 export default LightModeDrawingCanvas;
-
