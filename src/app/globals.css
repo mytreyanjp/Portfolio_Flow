@@ -125,31 +125,11 @@
   height: 100vh;
   background: radial-gradient(
     circle 120vmax at 100% 0%, /* Centered at top right (100% X, 0% Y) */
-    hsla(var(--accent) / 0.3) 0%, /* Brighter core at 0% */
-    hsla(var(--accent) / 0.15) 20%, /* Fades out a bit by 20% */
+    hsla(var(--accent) / 0.35) 0%, /* Brighter core at 0% */
+    hsla(var(--accent) / 0.2) 20%, /* Fades out a bit by 20% */
     transparent 50% /* Fully transparent by 50% of the large circle */
   );
   pointer-events: none;
   z-index: -1; /* Behind main content, same layer as other effects */
-}
-
-.lens-flare-effect {
-  position: fixed;
-  top: 15px; /* Adjust for desired Y position from corner */
-  right: 15px; /* Adjust for desired X position from corner */
-  width: 250px; /* Area of the flare */
-  height: 250px;
-  pointer-events: none;
-  z-index: -1; /* Should be same layer as sun-ray or slightly above if needed */
-  border-radius: 50%; /* Makes the container circular */
-  opacity: 0.75; /* Overall visibility of the flare effect */
-  /* Multiple background gradients, first one is on top */
-  background:
-    /* Innermost, brightest point (small glint) */
-    radial-gradient(circle at center, hsla(var(--accent) / 0.9) 0%, hsla(var(--accent) / 0.7) 3%, transparent 6%),
-    /* Secondary brighter ring */
-    radial-gradient(circle at center, hsla(var(--accent) / 0.5) 2%, hsla(var(--accent) / 0.3) 10%, transparent 20%),
-    /* Outermost soft halo */
-    radial-gradient(circle at center, hsla(var(--accent) / 0.2) 10%, hsla(var(--accent) / 0.05) 50%, transparent 70%);
 }
 

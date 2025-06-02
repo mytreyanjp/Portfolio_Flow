@@ -85,7 +85,7 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
       {showDarkThemeEffects && <CursorTail isDarkTheme={currentIsDarkTheme} />}
       {showDarkThemeEffects && <FirefliesEffect isDarkTheme={currentIsDarkTheme} />}
       {showLightThemeEffects && <div className="sun-ray-effect" />}
-      {showLightThemeEffects && <div className="lens-flare-effect" />}
+      
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
         <main className="flex-grow container mx-auto px-4 py-8 pb-20 md:pb-8">
