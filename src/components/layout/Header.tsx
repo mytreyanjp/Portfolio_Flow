@@ -11,7 +11,6 @@ import { Briefcase, MessageSquare, FileText, Brain, LockKeyhole, Eye, EyeOff } f
 import { usePathname, useRouter } from 'next/navigation';
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -64,15 +63,14 @@ export default function Header() {
 
     if (newClickCount >= CLICKS_TO_ACTIVATE) {
       setShowPasswordDialog(true);
-      setLogoClickCount(0);
-      setLastClickTime(0);
+      // Reset attempts for the new dialog session
       setPasswordAttempt(''); 
       setShowPasswordAttemptVisual(false); 
+      // Do not reset logoClickCount here, let handleDialogClose do it
     }
   };
 
   const handlePasswordCheck = () => {
-    // Uses the current 'passwordAttempt' state directly
     console.log(`[Header] Attempting password: '${passwordAttempt}' (length: ${passwordAttempt.length})`);
     console.log(`[Header] Expected password: '${SECRET_PASSWORD}' (length: ${SECRET_PASSWORD.length})`);
 
@@ -83,7 +81,7 @@ export default function Header() {
         description: "Welcome to the Secret Lair.",
       });
       router.push('/secret-lair');
-      setShowPasswordDialog(false); // Close dialog ON SUCCESS
+      setShowPasswordDialog(false); // Explicitly close dialog on success
     } else {
       console.log('[Header] Password MISMATCH.');
       toast({
@@ -96,10 +94,10 @@ export default function Header() {
   };
   
   const handlePasswordSubmitFormEvent = (event: React.FormEvent) => {
-    event.preventDefault(); // Prevent default form submission which might close dialog prematurely
+    event.preventDefault(); 
+    console.log(`[Header] Form submit event. Password from state: '${passwordAttempt}'`);
     handlePasswordCheck();
   };
-
 
   const toggleShowPasswordAttemptVisual = () => {
     setShowPasswordAttemptVisual(prev => !prev);
@@ -107,8 +105,7 @@ export default function Header() {
 
   const handleDialogClose = () => {
     // This function is called when the dialog's open state changes to false
-    // (e.g., by clicking Cancel, pressing Esc, or explicitly calling setShowPasswordDialog(false))
-    // We reset everything here.
+    console.log('[Header] handleDialogClose called. Resetting states.');
     setPasswordAttempt('');
     setShowPasswordAttemptVisual(false);
     setLogoClickCount(0); 
@@ -184,13 +181,13 @@ export default function Header() {
       </header>
 
       <AlertDialog open={showPasswordDialog} onOpenChange={(isOpen) => {
-        setShowPasswordDialog(isOpen); // Keep state in sync
+        setShowPasswordDialog(isOpen); 
         if (!isOpen) {
           handleDialogClose(); 
         }
       }}>
         <AlertDialogContent>
-          <form onSubmit={handlePasswordSubmitFormEvent}> {/* form's onSubmit */}
+          <form onSubmit={handlePasswordSubmitFormEvent}> 
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center">
                 <LockKeyhole className="mr-2 h-5 w-5 text-primary" />
@@ -213,7 +210,7 @@ export default function Header() {
                 className="pr-10"
               />
               <Button
-                type="button" // Important: keep this as type="button" to not interfere with form submission
+                type="button" 
                 variant="ghost"
                 size="icon"
                 className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-foreground"
@@ -224,8 +221,9 @@ export default function Header() {
               </Button>
             </div>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel> {/* Default behavior is fine: sets open=false, triggers onOpenChange -> handleDialogClose */}
-              <AlertDialogAction type="submit">Unlock</AlertDialogAction> {/* type="submit" to trigger form's onSubmit */}
+              <AlertDialogCancel>Cancel</AlertDialogCancel> 
+              {/* Use a standard Button for unlock to prevent AlertDialog's default close-on-action behavior */}
+              <Button type="submit">Unlock</Button>
             </AlertDialogFooter>
           </form>
         </AlertDialogContent>
@@ -233,4 +231,3 @@ export default function Header() {
     </>
   );
 }
-
