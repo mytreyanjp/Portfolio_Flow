@@ -18,9 +18,6 @@ import { db } from '@/lib/firebase/firebase';
 import { doc, deleteDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-// Firebase Auth imports are no longer needed here for auth state checking.
-// import { getAuth, onAuthStateChanged, type User } from 'firebase/auth';
-// import { app } from '@/lib/firebase/firebase'; 
 
 export default function SecretLairPage() {
   const { toast } = useToast();
@@ -37,9 +34,6 @@ export default function SecretLairPage() {
 
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
-
-  // No longer tracking currentUser or authInitialized for page access control here.
-  // The page is assumed to be accessible if the client-side password was entered.
 
   const fetchProjectData = useCallback(async () => {
     setIsLoadingProjects(true);
@@ -69,8 +63,6 @@ export default function SecretLairPage() {
   }, [toast]);
 
   useEffect(() => {
-    // Fetch data immediately, assuming access to this page means the user is "authorized"
-    // by the client-side password mechanism.
     fetchProjectData();
   }, [fetchProjectData]);
 
@@ -81,7 +73,7 @@ export default function SecretLairPage() {
   };
 
   const handleConfirmDelete = async () => {
-    if (!projectToDelete) return; // No longer checking currentUser
+    if (!projectToDelete) return; 
     setIsDeleting(true);
     try {
       await deleteDoc(doc(db, 'projects', projectToDelete.id));
@@ -113,10 +105,6 @@ export default function SecretLairPage() {
     setShowEditDialog(true);
   };
 
-  // Removed the loading state for authentication.
-  // Removed the conditional rendering based on currentUser.
-  // The page will now render its content assuming access implies authorization.
-
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-3xl shadow-2xl animate-fadeInUpScale">
@@ -124,13 +112,12 @@ export default function SecretLairPage() {
           <Zap className="h-16 w-16 text-primary mx-auto mb-4 animate-pulse" />
           <CardTitle className="text-3xl font-bold text-primary">Secret Lair Control Panel</CardTitle>
           <CardDescription className="text-lg text-muted-foreground">
-            {/* Updated welcome message to be generic as no user display name is available without auth */}
             Welcome, Agent M. Manage your portfolio content.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <Tabs defaultValue="projects" className="w-full">
-            <TabsList className="grid w-full grid-cols-1 gap-2 md:grid-cols-3 md:gap-1">
+            <TabsList className="grid w-full grid-cols-1 gap-2 md:grid-cols-3 md:gap-1 mb-6">
               <TabsTrigger value="projects">
                 <PlusCircle className="mr-2 h-4 w-4" /> Manage Projects
               </TabsTrigger>
@@ -142,7 +129,7 @@ export default function SecretLairPage() {
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="projects" className="mt-6 space-y-8">
+            <TabsContent value="projects" className="space-y-8">
               <Card>
                 <CardHeader>
                   <CardTitle>Add New Project</CardTitle>
@@ -217,7 +204,7 @@ export default function SecretLairPage() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="resume" className="mt-6">
+            <TabsContent value="resume">
               <Card>
                 <CardHeader>
                   <CardTitle>Edit Resume Sections</CardTitle>
@@ -231,7 +218,7 @@ export default function SecretLairPage() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="messages" className="mt-6">
+            <TabsContent value="messages">
               <Card>
                 <CardHeader>
                   <CardTitle>Contact Form Submissions</CardTitle>
@@ -240,7 +227,6 @@ export default function SecretLairPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {/* ContactMessagesList will attempt to fetch data directly */}
                   <ContactMessagesList />
                 </CardContent>
               </Card>
