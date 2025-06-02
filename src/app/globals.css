@@ -93,8 +93,8 @@
       to bottom,
       transparent,
       transparent calc(2rem - 2px), /* Line thickness 2px */
-      hsl(0 0% 0% / 0.15),       /* Darker, semi-transparent black line color */
-      hsl(0 0% 0% / 0.15) 2rem
+      hsl(0 0% 0% / 0.25),       /* Darker, semi-transparent black line color, opacity increased */
+      hsl(0 0% 0% / 0.25) 2rem
     );
     background-size: 100% 2rem;    /* Line spacing */
     background-attachment: local;     /* Lines scroll with content */
@@ -127,3 +127,4 @@
     transform: translateY(0px) scale(1);
   }
 }
+
