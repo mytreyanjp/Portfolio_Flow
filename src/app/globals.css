@@ -116,33 +116,3 @@
   }
 }
 
-@keyframes animateSunPosition {
-  0%, 100% {
-    background-position: 0% 0%; /* Sun at top-right */
-  }
-  50% {
-    background-position: 100% 0%; /* Sun at top-left */
-  }
-}
-
-/* Sun ray effect for light theme - more yellow and smaller radius */
-.sun-ray-effect {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-image: radial-gradient(
-    circle 120vmax at 50% -5%, /* Origin shifted up */
-    hsla(var(--accent) / 0.4) 0%,       /* Brighter, slightly more intense yellow core */
-    hsla(var(--accent) / 0.25) 15%,     /* Mid yellow glow, fades a bit quicker */
-    transparent 40%                     /* Fade out completely by 40% of radius (smaller apparent radius) */
-  );
-  background-size: 200vw 100vh; /* Make background image twice the viewport width */
-  background-repeat: no-repeat;
-  /* background-position-y is implicitly 0% from the keyframes */
-  animation: animateSunPosition 30s linear infinite;
-  pointer-events: none;
-  z-index: -1; 
-}
-
