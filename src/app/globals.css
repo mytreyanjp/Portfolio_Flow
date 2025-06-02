@@ -92,9 +92,9 @@
     background-image: repeating-linear-gradient(
       to bottom,
       transparent,
-      transparent calc(2rem - 1px), /* 2rem line height, 1px line */
-      hsl(var(--border) / 0.35),       /* Subtle line color - increased opacity */
-      hsl(var(--border) / 0.35) 2rem
+      transparent calc(2rem - 2px), /* Line thickness 2px */
+      hsl(0 0% 0% / 0.15),       /* Darker, semi-transparent black line color */
+      hsl(0 0% 0% / 0.15) 2rem
     );
     background-size: 100% 2rem;    /* Line spacing */
     background-attachment: local;     /* Lines scroll with content */
@@ -127,5 +127,3 @@
     transform: translateY(0px) scale(1);
   }
 }
-
-
