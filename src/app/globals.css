@@ -87,6 +87,18 @@
     @apply bg-background text-foreground;
     scroll-behavior: smooth;
   }
+
+  .light body {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent calc(1.5rem - 1px), /* 1.5rem line height, 1px line */
+      hsl(var(--border) / 0.25),       /* Subtle line color */
+      hsl(var(--border) / 0.25) 1.5rem
+    );
+    background-size: 100% 1.5rem;    /* Line spacing */
+    background-attachment: local;     /* Lines scroll with content */
+  }
 }
 
 /* Keyframes for animations */
@@ -116,4 +128,3 @@
   }
 }
 
-/* Ensure no .sun-ray-effect or @keyframes animateSunPosition styles remain */

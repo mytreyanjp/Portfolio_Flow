@@ -78,7 +78,8 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
 
   const currentIsDarkTheme = resolvedTheme === 'dark';
   const showDarkThemeEffects = isClient && currentIsDarkTheme;
-  // const showLightThemeEffects = isClient && !currentIsDarkTheme; // This flag is no longer used for sun ray
+  const isLightNotebookTheme = isClient && !currentIsDarkTheme;
+
 
   return (
     <>
@@ -87,7 +88,12 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
       
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
-        <main className="flex-grow container mx-auto px-4 py-8 pb-20 md:pb-8">
+        <main className={cn(
+            "flex-grow container mx-auto py-8",
+            "px-4 pb-20 md:pb-8", // Default paddings for all themes
+            isLightNotebookTheme && "pl-10 border-l-[1.5px] border-destructive/25" // Light theme notebook overrides
+          )}
+        >
           {children}
         </main>
         <Footer />
@@ -127,7 +133,7 @@ export default function RootLayout({
         <link rel="icon" href="/favicon22.png" type="image/png" sizes="any" />
       </head>
       <body className={cn(
-          "antialiased flex flex-col min-h-screen bg-background",
+          "antialiased flex flex-col min-h-screen bg-background", // bg-background is applied here
           greaterTheory.variable, 
           wastedVindey.variable 
         )}
