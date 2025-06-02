@@ -88,7 +88,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
       )}
       style={{ animationDelay: `${index * 100}ms` }}
     >
-      <div className="relative w-full h-48 mb-4 rounded-t-md overflow-hidden group bg-muted">
+      <div className="relative w-full h-48 mb-4 rounded-t-md overflow-hidden group bg-white/50 dark:bg-muted">
         {displayModelViewer ? (
           <ProjectModelViewer
             modelPath={project.model}
@@ -96,7 +96,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
             onModelErrorOrMissing={handleModelErrorOrMissing}
           />
         ) : isGeneratingAiImage ? (
-          <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground text-sm bg-muted/50">
+          <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground text-sm bg-muted/50 dark:bg-muted/80">
             <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
             Generating Preview...
           </div>
@@ -181,3 +181,4 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
     </Card>
   );
 }
+
