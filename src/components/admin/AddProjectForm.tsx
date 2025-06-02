@@ -19,10 +19,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { categories as projectCategories, allTechnologies, Project } from '@/data/projects';
-import React, { useState } from 'react';
-import { Loader2, Save } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Loader2, Save, Edit } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/firebase';
 
 const categoryEnumValues = projectCategories as [string, ...string[]];
@@ -63,12 +63,15 @@ const addProjectSchema = z.object({
 export type AddProjectFormValues = z.infer<typeof addProjectSchema>;
 
 interface AddProjectFormProps {
-  onProjectAdded?: (newProject: Project) => void; // Updated callback signature
+  onProjectAdded: (newProject: Project) => void;
+  editingProject?: Project | null;
+  onProjectUpdated?: (updatedProject: Project) => void;
 }
 
-export default function AddProjectForm({ onProjectAdded }: AddProjectFormProps) {
+export default function AddProjectForm({ onProjectAdded, editingProject, onProjectUpdated }: AddProjectFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isEditMode = !!editingProject;
 
   const form = useForm<AddProjectFormValues>({
     resolver: zodResolver(addProjectSchema),
@@ -86,77 +89,118 @@ export default function AddProjectForm({ onProjectAdded }: AddProjectFormProps) 
     },
   });
 
+  useEffect(() => {
+    if (isEditMode && editingProject) {
+      form.reset({
+        title: editingProject.title || '',
+        description: editingProject.description || '',
+        longDescription: editingProject.longDescription || '',
+        modelPath: editingProject.model || '',
+        dataAiHint: editingProject.dataAiHint || '',
+        category: editingProject.category || projectCategories[0],
+        technologies: editingProject.technologies ? editingProject.technologies.join(', ') : '',
+        liveLink: editingProject.liveLink || '',
+        sourceLink: editingProject.sourceLink || '',
+        imageUrl: editingProject.imageUrl || '',
+      });
+    } else {
+      form.reset({ // Reset to default for add mode if editingProject becomes null
+        title: '',
+        description: '',
+        longDescription: '',
+        modelPath: '',
+        dataAiHint: '',
+        category: projectCategories[0],
+        technologies: '',
+        liveLink: '',
+        sourceLink: '',
+        imageUrl: '',
+      });
+    }
+  }, [editingProject, form, isEditMode]);
+
+
   async function onSubmit(data: AddProjectFormValues) {
     setIsSubmitting(true);
     try {
       const techArray = data.technologies.split(',').map(tech => tech.trim()).filter(Boolean);
 
-      const projectPayload: Omit<Project, 'id'> & { createdAt: any } = {
+      // Base payload, common to add and update
+      const projectData: any = {
         title: data.title,
         description: data.description,
         category: data.category,
         technologies: techArray,
         dataAiHint: data.dataAiHint || (data.modelPath && data.modelPath.trim() !== '' ? '3d model' : 'project image'),
-        createdAt: serverTimestamp(),
       };
 
-      if (data.longDescription && data.longDescription.trim() !== '') {
-        projectPayload.longDescription = data.longDescription;
-      }
-      if (data.imageUrl && data.imageUrl.trim() !== '') {
-        projectPayload.imageUrl = data.imageUrl;
-      }
-      if (data.modelPath && data.modelPath.trim() !== '') {
-        projectPayload.model = data.modelPath;
-      }
-      if (data.liveLink && data.liveLink.trim() !== '') {
-        projectPayload.liveLink = data.liveLink;
-      }
-      if (data.sourceLink && data.sourceLink.trim() !== '') {
-        projectPayload.sourceLink = data.sourceLink;
-      }
+      // Conditionally add optional fields to avoid sending `undefined`
+      if (data.longDescription && data.longDescription.trim() !== '') projectData.longDescription = data.longDescription;
+      if (data.imageUrl && data.imageUrl.trim() !== '') projectData.imageUrl = data.imageUrl;
+      if (data.modelPath && data.modelPath.trim() !== '') projectData.model = data.modelPath;
+      if (data.liveLink && data.liveLink.trim() !== '') projectData.liveLink = data.liveLink;
+      if (data.sourceLink && data.sourceLink.trim() !== '') projectData.sourceLink = data.sourceLink;
       
-      const docRef = await addDoc(collection(db, 'projects'), projectPayload);
-      
-      toast({
-        title: 'Project Added!',
-        description: `Project "${data.title}" has been successfully saved.`,
-        duration: 5000,
-      });
-
-      if (data.modelPath && data.modelPath.startsWith('/models/')) {
-        toast({
-            title: '3D Model Reminder',
-            description: `Ensure your model ${data.modelPath} is placed in the public/models directory.`,
-            duration: 7000,
+      if (isEditMode && editingProject) {
+        // Update existing project
+        const projectRef = doc(db, 'projects', editingProject.id);
+        await updateDoc(projectRef, {
+          ...projectData,
+          updatedAt: serverTimestamp(), // Add/update timestamp
         });
+        
+        toast({
+          title: 'Project Updated!',
+          description: `Project "${data.title}" has been successfully updated.`,
+        });
+
+        if (onProjectUpdated) {
+          onProjectUpdated({ ...editingProject, ...projectData, id: editingProject.id });
+        }
+
+      } else {
+        // Add new project
+        projectData.createdAt = serverTimestamp();
+        const docRef = await addDoc(collection(db, 'projects'), projectData);
+        
+        toast({
+          title: 'Project Added!',
+          description: `Project "${data.title}" has been successfully saved.`,
+        });
+        
+        if (data.modelPath && data.modelPath.startsWith('/models/')) {
+          toast({
+              title: '3D Model Reminder',
+              description: `Ensure your model ${data.modelPath} is placed in the public/models directory.`,
+              duration: 7000,
+          });
+        }
+
+        if (onProjectAdded) {
+          const newProject: Project = {
+              id: docRef.id,
+              title: projectData.title,
+              description: projectData.description,
+              category: projectData.category,
+              technologies: projectData.technologies,
+              dataAiHint: projectData.dataAiHint,
+              longDescription: projectData.longDescription,
+              imageUrl: projectData.imageUrl,
+              model: projectData.model,
+              liveLink: projectData.liveLink,
+              sourceLink: projectData.sourceLink,
+          };
+          onProjectAdded(newProject); 
+        }
+        form.reset(); // Reset form only in add mode
       }
-      
-      if (onProjectAdded) {
-        const newProject: Project = {
-            id: docRef.id,
-            title: projectPayload.title,
-            description: projectPayload.description,
-            category: projectPayload.category,
-            technologies: projectPayload.technologies,
-            dataAiHint: projectPayload.dataAiHint,
-            longDescription: projectPayload.longDescription,
-            imageUrl: projectPayload.imageUrl,
-            model: projectPayload.model,
-            liveLink: projectPayload.liveLink,
-            sourceLink: projectPayload.sourceLink,
-        };
-        onProjectAdded(newProject); 
-      }
-      form.reset();
 
     } catch (error) {
-      console.error("Error adding project to Firestore: ", error);
+      console.error(`Error ${isEditMode ? 'updating' : 'adding'} project: `, error);
       toast({
-        title: 'Error Saving Project',
-        description: `Failed to save project. ${error instanceof Error ? error.message : 'Unknown error'}`,
+        title: `Error ${isEditMode ? 'Updating' : 'Saving'} Project`,
+        description: `Failed to ${isEditMode ? 'update' : 'save'} project. ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: 'destructive',
-        duration: 7000,
       });
     } finally {
       setIsSubmitting(false);
@@ -235,7 +279,7 @@ export default function AddProjectForm({ onProjectAdded }: AddProjectFormProps) 
                 <Input placeholder="/models/your-model.glb or https://example.com/model.glb" {...field} />
               </FormControl>
               <FormDescription>
-                Path to the .glb model file. Can be a local path within your <code>public/models</code> directory (e.g., <code>/models/cool-robot.glb</code>) or a full URL (e.g., <code>https://example.com/model.glb</code>). Leave empty if not using a 3D model.
+                Path to the .glb model file. Can be a local path within your <code>public/models</code> directory (e.g., <code>/models/cool-robot.glb</code>) or a full URL. Leave empty if not using a 3D model.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -265,7 +309,7 @@ export default function AddProjectForm({ onProjectAdded }: AddProjectFormProps) 
           render={({ field }) => (
             <FormItem>
               <FormLabel>Category</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />
@@ -339,12 +383,12 @@ export default function AddProjectForm({ onProjectAdded }: AddProjectFormProps) 
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              Adding Project...
+              {isEditMode ? 'Updating Project...' : 'Adding Project...'}
             </>
           ) : (
             <>
-              <Save className="mr-2 h-5 w-5" />
-              Add Project
+              {isEditMode ? <Edit className="mr-2 h-5 w-5" /> : <Save className="mr-2 h-5 w-5" />}
+              {isEditMode ? 'Update Project' : 'Add Project'}
             </>
           )}
         </Button>
@@ -352,3 +396,4 @@ export default function AddProjectForm({ onProjectAdded }: AddProjectFormProps) 
     </Form>
   );
 }
+

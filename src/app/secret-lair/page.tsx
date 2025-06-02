@@ -5,14 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { ShieldCheck, Zap, Edit3, PlusCircle, Trash2, Loader2, AlertTriangle } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
+import { ShieldCheck, Zap, Edit3, PlusCircle, Trash2, Loader2, AlertTriangle, Pencil } from 'lucide-react';
 import Link from 'next/link';
 import React, { useState, useEffect, useCallback } from 'react';
 import AddProjectForm from '@/components/admin/AddProjectForm';
 import type { Project } from '@/data/projects';
 import { getProjects } from '@/services/projectsService';
 import { db } from '@/lib/firebase/firebase';
-import { doc, deleteDoc } from 'firebase/firestore';
+import { doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -21,9 +22,15 @@ export default function SecretLairPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
   const [errorLoadingProjects, setErrorLoadingProjects] = useState<string | null>(null);
+  
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
 
   const fetchProjectsList = useCallback(async () => {
     setIsLoadingProjects(true);
@@ -63,7 +70,6 @@ export default function SecretLairPage() {
         title: 'Project Removed',
         description: `"${projectToDelete.title}" has been successfully deleted.`,
       });
-      // Optimistically update UI
       setProjects(prevProjects => prevProjects.filter(p => p.id !== projectToDelete.id));
       setShowDeleteDialog(false);
       setProjectToDelete(null);
@@ -80,10 +86,22 @@ export default function SecretLairPage() {
   };
 
   const handleProjectAdded = (newProject: Project) => {
-    // Optimistically add the new project to the state and sort
     setProjects(prevProjects => 
       [...prevProjects, newProject].sort((a, b) => a.title.localeCompare(b.title))
     );
+  };
+
+  const handleOpenEditDialog = (project: Project) => {
+    setProjectToEdit(project);
+    setShowEditDialog(true);
+  };
+
+  const handleProjectUpdated = (updatedProject: Project) => {
+    setProjects(prevProjects =>
+      prevProjects.map(p => (p.id === updatedProject.id ? updatedProject : p)).sort((a, b) => a.title.localeCompare(b.title))
+    );
+    setShowEditDialog(false); // Close dialog on successful update
+    setProjectToEdit(null);
   };
 
 
@@ -125,7 +143,7 @@ export default function SecretLairPage() {
                 <CardHeader>
                   <CardTitle>Existing Projects</CardTitle>
                   <CardDescription>
-                    Review and remove existing projects.
+                    Edit or remove existing projects.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -145,23 +163,33 @@ export default function SecretLairPage() {
                      <p className="text-muted-foreground text-center py-4">No projects found. Add one above!</p>
                   )}
                   {!isLoadingProjects && !errorLoadingProjects && projects.length > 0 && (
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {projects.map((project) => (
-                        <Card key={project.id} className="flex items-center justify-between p-4 bg-muted/30">
-                          <span className="font-medium text-foreground">{project.title}</span>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleOpenDeleteDialog(project)}
-                            disabled={isDeleting && projectToDelete?.id === project.id}
-                          >
-                            {isDeleting && projectToDelete?.id === project.id ? (
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="mr-2 h-4 w-4" />
-                            )}
-                            Remove
-                          </Button>
+                        <Card key={project.id} className="flex items-center justify-between p-3 bg-muted/30">
+                          <span className="font-medium text-foreground truncate mr-2 flex-1">{project.title}</span>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleOpenEditDialog(project)}
+                              className="hover:bg-accent/80"
+                            >
+                              <Pencil className="mr-1 h-4 w-4" /> Edit
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleOpenDeleteDialog(project)}
+                              disabled={isDeleting && projectToDelete?.id === project.id}
+                            >
+                              {isDeleting && projectToDelete?.id === project.id ? (
+                                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="mr-1 h-4 w-4" />
+                              )}
+                              Remove
+                            </Button>
+                          </div>
                         </Card>
                       ))}
                     </div>
@@ -220,6 +248,30 @@ export default function SecretLairPage() {
           </AlertDialogContent>
         </AlertDialog>
       )}
+
+      {projectToEdit && (
+        <Dialog open={showEditDialog} onOpenChange={(isOpen) => {
+          setShowEditDialog(isOpen);
+          if (!isOpen) setProjectToEdit(null); // Clear projectToEdit when dialog closes
+        }}>
+          <DialogContent className="sm:max-w-[625px]">
+            <DialogHeader>
+              <DialogTitle>Edit Project: {projectToEdit.title}</DialogTitle>
+              <DialogDescription>
+                Make changes to your project details below. Click save when you're done.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 max-h-[70vh] overflow-y-auto pr-2"> {/* Added scroll for long forms */}
+              <AddProjectForm 
+                editingProject={projectToEdit} 
+                onProjectUpdated={handleProjectUpdated}
+                onProjectAdded={() => { /* This won't be called in edit mode */ }}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
+
