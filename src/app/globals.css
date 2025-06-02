@@ -133,7 +133,7 @@
   width: 100vw;
   height: 100vh;
   background-image: radial-gradient(
-    circle 120vmax at 50% 0%, /* Origin at top-center of this gradient image */
+    circle 120vmax at 50% -5%, /* Origin shifted up */
     hsla(var(--accent) / 0.4) 0%,       /* Brighter, slightly more intense yellow core */
     hsla(var(--accent) / 0.25) 15%,     /* Mid yellow glow, fades a bit quicker */
     transparent 40%                     /* Fade out completely by 40% of radius (smaller apparent radius) */
