@@ -6,7 +6,7 @@
 @layer base {
   :root {
     /* Light Theme - Sun is now #f4c14b */
-    --background: 275 80% 97%; /* Very light lavender */
+    --background: 50 15% 97%; /* Papery off-white */
     --foreground: 270 40% 25%; /* Darker purple for text */
     --card: 275 75% 99% / 0.95; /* Almost white lavender, 95% opacity */
     --card-foreground: 270 40% 25%;
@@ -127,4 +127,5 @@
     transform: translateY(0px) scale(1);
   }
 }
+
 
