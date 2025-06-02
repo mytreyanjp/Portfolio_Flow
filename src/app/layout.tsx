@@ -37,16 +37,16 @@ const greaterTheory = localFont({
   src: '../../public/fonts/GreaterTheory.otf',
   variable: '--font-greater-theory',
   display: 'swap',
-  preload: true, // Default, but explicit
-  fallback: ['sans-serif'], // Generic fallback
+  preload: true, 
+  fallback: ['sans-serif'], 
 });
 
 const wastedVindey = localFont({
   src: '../../public/fonts/Wasted-Vindey.ttf',
   variable: '--font-wasted-vindey',
   display: 'swap',
-  preload: true, // Default, but explicit
-  fallback: ['sans-serif'], // Generic fallback
+  preload: true, 
+  fallback: ['sans-serif'], 
 });
 
 const CursorTail = dynamic(() => import('@/components/effects/CursorTail'), { ssr: false });
@@ -60,73 +60,48 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   const [showMobileMessage, setShowMobileMessage] = useState(false);
   const [isSoundEnabled, setIsSoundEnabled] = useState(false); 
 
-  const lightThemeSoundRef = useRef<HTMLAudioElement | null>(null);
-  const darkThemeSoundRef = useRef<HTMLAudioElement | null>(null);
+  const backgroundAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     setIsClient(true);
-    // Initialize Audio objects on client-side
-    lightThemeSoundRef.current = new Audio('/sounds/dark-theme-sound.mp3'); 
-    if (lightThemeSoundRef.current) {
-      lightThemeSoundRef.current.volume = 0.5;
-      lightThemeSoundRef.current.loop = true; 
+    // Initialize Audio object on client-side
+    backgroundAudioRef.current = new Audio('/sounds/dark-theme-sound.mp3'); 
+    if (backgroundAudioRef.current) {
+      backgroundAudioRef.current.volume = 0.5;
+      backgroundAudioRef.current.loop = true; 
     }
-    darkThemeSoundRef.current = new Audio('/sounds/dark-theme-sound.mp3');
-    if (darkThemeSoundRef.current) {
-      darkThemeSoundRef.current.volume = 0.5;
-      darkThemeSoundRef.current.loop = true;
-    }
-
 
     // Load sound preference from localStorage
     const storedSoundPreference = localStorage.getItem('portfolioSoundEnabled');
     if (storedSoundPreference !== null) {
       setIsSoundEnabled(storedSoundPreference === 'true');
     } else {
-      // If no preference stored, set to default (which is already `false` from useState)
+      // If no preference stored, set to default (which is `false` from useState)
       localStorage.setItem('portfolioSoundEnabled', String(false));
+      setIsSoundEnabled(false); 
     }
 
     return () => {
-      lightThemeSoundRef.current?.pause();
-      darkThemeSoundRef.current?.pause();
-      lightThemeSoundRef.current = null;
-      darkThemeSoundRef.current = null;
+      backgroundAudioRef.current?.pause();
+      backgroundAudioRef.current = null;
     };
   }, []);
 
   const toggleSoundEnabled = () => {
-    setIsSoundEnabled(prev => {
-      const newState = !prev;
-      localStorage.setItem('portfolioSoundEnabled', String(newState));
-      if (!newState) { 
-        lightThemeSoundRef.current?.pause();
-        darkThemeSoundRef.current?.pause();
-      } else {
-        if (resolvedTheme === 'dark') {
-          darkThemeSoundRef.current?.play().catch(e => console.warn("Dark theme sound playback failed.", e));
-        } else if (resolvedTheme === 'light') {
-          lightThemeSoundRef.current?.play().catch(e => console.warn("Light theme sound playback failed.", e));
-        }
-      }
-      return newState;
-    });
+    const newSoundState = !isSoundEnabled;
+    setIsSoundEnabled(newSoundState);
+    localStorage.setItem('portfolioSoundEnabled', String(newSoundState));
   };
 
   useEffect(() => {
-    if (isClient && resolvedTheme && isSoundEnabled) {
-      if (resolvedTheme === 'dark') {
-        lightThemeSoundRef.current?.pause();
-        darkThemeSoundRef.current?.play().catch(e => console.warn("Dark theme sound playback failed.", e));
-      } else if (resolvedTheme === 'light') {
-        darkThemeSoundRef.current?.pause();
-        lightThemeSoundRef.current?.play().catch(e => console.warn("Light theme sound playback failed.", e));
+    if (isClient && backgroundAudioRef.current) {
+      if (isSoundEnabled) {
+        backgroundAudioRef.current.play().catch(e => console.warn("Background sound playback failed.", e));
+      } else {
+        backgroundAudioRef.current.pause();
       }
-    } else if (!isSoundEnabled) { 
-        lightThemeSoundRef.current?.pause();
-        darkThemeSoundRef.current?.pause();
     }
-  }, [resolvedTheme, isClient, isSoundEnabled]);
+  }, [isSoundEnabled, isClient]);
 
 
   useEffect(() => {
