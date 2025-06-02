@@ -12,7 +12,7 @@ const BASE_FILL_COLOR_RGB_LIGHT_THEME = '107, 28, 117'; // Base color for light 
 
 const BLUR_STD_DEVIATION = 15;
 const Z_INDEX = -1; // Place behind main content
-const LERP_FACTOR = 0.08; // For smooth following, slightly slower
+// LERP_FACTOR removed as there's no more LERP
 
 interface Position {
   x: number;
@@ -24,75 +24,54 @@ interface CursorTailProps {
 }
 
 export default function CursorTail({ isDarkTheme }: CursorTailProps) {
-  // Initialize position based on theme
   const [position, setPosition] = useState<Position>(() => {
     if (typeof window !== 'undefined' && isDarkTheme) {
-      // Start at top-right corner of the viewport for dark theme
       return { x: window.innerWidth, y: 0 };
     }
-    return { x: -CIRCLE_RADIUS * 2, y: -CIRCLE_RADIUS * 2 }; // Default off-screen if not dark or SSR
+    return { x: -CIRCLE_RADIUS * 2, y: -CIRCLE_RADIUS * 2 };
   });
 
-  const targetPosition = useRef<Position>(
-    typeof window !== 'undefined' && isDarkTheme
-      ? { x: window.innerWidth, y: 0 } // Initial target also top-right for dark theme
-      : { x: -CIRCLE_RADIUS * 2, y: -CIRCLE_RADIUS * 2 } // Default off-screen
-  );
-
-  const animationFrameId = useRef<number | null>(null);
   const isMountedRef = useRef(true);
 
   useEffect(() => {
     isMountedRef.current = true;
-    // console.log('[CursorTail] Component rendered/remounted. isDarkTheme prop:', isDarkTheme);
-    // If the theme changes and this component remounts, useState and useRef initializers handle the new starting position.
 
     const handleMouseMove = (event: MouseEvent) => {
       if (isMountedRef.current) {
-        targetPosition.current = { x: event.clientX, y: event.clientY };
+        // Update position directly to mouse coordinates
+        setPosition({ x: event.clientX, y: event.clientY });
       }
     };
     window.addEventListener('mousemove', handleMouseMove);
-    // console.log('[CursorTail] Mousemove listener added.');
 
-    const updatePosition = () => {
-      if (isMountedRef.current) {
-        setPosition(prevPosition => {
-          const newX = prevPosition.x + (targetPosition.current.x - prevPosition.x) * LERP_FACTOR;
-          const newY = prevPosition.y + (targetPosition.current.y - prevPosition.y) * LERP_FACTOR;
-          return { x: newX, y: newY };
-        });
-        animationFrameId.current = requestAnimationFrame(updatePosition);
-      }
-    };
-    // Ensure updatePosition is called to start animation if not already running
-    if (animationFrameId.current === null) {
-        animationFrameId.current = requestAnimationFrame(updatePosition);
+    // Set initial position if dark theme is active on mount
+    if (isDarkTheme && typeof window !== 'undefined') {
+        // To avoid a jump from default off-screen, we could try to get initial mouse pos here.
+        // However, mousemove will update it quickly. Initializing to a corner for dark theme.
+        // Or set it based on last known mouse position if available and reliable.
+        // For simplicity, if we want it to appear immediately, we could set it to center or a corner.
+        // Given the original logic, starting at top-right for dark theme.
+        // This might be slightly off from actual cursor if mouse hasn't moved yet, but will update.
+        // To truly start at mouse, would need a more complex initial sync or rely on first mousemove.
+        // For "exactly at pos", first mousemove will set it.
+        // If no mousemove yet, it's at its initial spot.
     }
 
 
     return () => {
-      // console.log('[CursorTail] Cleanup: Removing mousemove listener and cancelling animation frame.');
       isMountedRef.current = false;
       window.removeEventListener('mousemove', handleMouseMove);
-      if (animationFrameId.current) {
-        cancelAnimationFrame(animationFrameId.current);
-        animationFrameId.current = null;
-      }
     };
-  }, [isDarkTheme]); // Effect re-runs if isDarkTheme prop changes, handled by key in parent for remount
+  }, [isDarkTheme]); // Effect re-runs if isDarkTheme prop changes
 
   const fillColor = useMemo(() => {
-    const baseRgb = BASE_FILL_COLOR_RGB_DARK_THEME; // Using dark theme base color for styling
+    const baseRgb = BASE_FILL_COLOR_RGB_DARK_THEME;
     const opacity = isDarkTheme ? FILL_COLOR_DARK_THEME_VISIBLE_OPACITY : FILL_COLOR_LIGHT_THEME_INVISIBLE_OPACITY;
     const color = `rgba(${baseRgb}, ${opacity})`;
-    // console.log(`[CursorTail] Calculated fillColor: ${color} for isDarkTheme: ${isDarkTheme}`);
     return color;
   }, [isDarkTheme]);
 
   const blurFilterId = `cursorBlurFilter-${isDarkTheme ? 'dark' : 'light'}`;
-
-  // console.log('[CursorTail] Rendering SVG with position:', position, 'isDarkTheme:', isDarkTheme);
 
   return (
     <svg
@@ -104,7 +83,6 @@ export default function CursorTail({ isDarkTheme }: CursorTailProps) {
         height: '100vh',
         pointerEvents: 'none',
         zIndex: Z_INDEX,
-        // Opacity controlled by fillColor's alpha
       }}
       aria-hidden="true"
     >
