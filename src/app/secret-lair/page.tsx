@@ -118,7 +118,7 @@ export default function SecretLairPage() {
   // The page will now render its content assuming access implies authorization.
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] py-12">
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-3xl shadow-2xl animate-fadeInUpScale">
         <CardHeader className="text-center">
           <Zap className="h-16 w-16 text-primary mx-auto mb-4 animate-pulse" />
@@ -130,7 +130,7 @@ export default function SecretLairPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <Tabs defaultValue="projects" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-1 gap-2 md:grid-cols-3 md:gap-1">
               <TabsTrigger value="projects">
                 <PlusCircle className="mr-2 h-4 w-4" /> Manage Projects
               </TabsTrigger>
