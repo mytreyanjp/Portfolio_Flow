@@ -124,9 +124,9 @@
   width: 100vw;
   height: 100vh;
   background: radial-gradient(
-    circle 100vmax at top right, /* Large circle centered at top right */
-    hsla(var(--accent) / 0.1), /* Using light theme accent color, very transparent */
-    transparent 50% /* Fades out by 50% of the circle's radius */
+    circle 120vmax at 100% 0%, /* Centered at top right (100% X, 0% Y), larger circle for wider spread */
+    hsla(var(--accent) / 0.2), /* Increased opacity of accent color for more intensity */
+    transparent 60% /* Color fades out further, making the ray appear wider */
   );
   pointer-events: none;
   z-index: -1; /* Behind main content, same layer as other effects */
