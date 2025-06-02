@@ -10,6 +10,7 @@ import { ShieldCheck, Zap, Edit3, PlusCircle, Trash2, Loader2, AlertTriangle, Pe
 import Link from 'next/link';
 import React, { useState, useEffect, useCallback } from 'react';
 import AddProjectForm from '@/components/admin/AddProjectForm';
+import EditResumeForm from '@/components/admin/EditResumeForm'; // Import the new form
 import type { Project } from '@/data/projects';
 import { getProjects, getUniqueCategoriesFromProjects } from '@/services/projectsService';
 import { db } from '@/lib/firebase/firebase';
@@ -94,7 +95,7 @@ export default function SecretLairPage() {
   };
 
   const handleProjectAddedOrUpdated = () => {
-    fetchProjectData(); // This will re-fetch projects AND categories
+    fetchProjectData(); 
   };
 
   const handleOpenEditDialog = (project: Project) => {
@@ -204,19 +205,11 @@ export default function SecretLairPage() {
                 <CardHeader>
                   <CardTitle>Edit Resume Sections</CardTitle>
                   <CardDescription>
-                    Update your professional profile.
+                    Update your professional profile (Summary and Skills).
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="p-6 text-center bg-muted/50 border border-dashed border-primary/50 rounded-lg">
-                    <Edit3 className="h-12 w-12 text-primary mx-auto mb-3" />
-                    <p className="text-foreground/80 font-semibold">
-                      Resume Editing Functionality
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      This section is under construction. Soon you'll be able to edit your summary, skills, experience, and more directly here.
-                    </p>
-                  </div>
+                  <EditResumeForm />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -270,7 +263,7 @@ export default function SecretLairPage() {
                     setShowEditDialog(false); 
                     setProjectToEdit(null);
                   }}
-                  availableCategories={availableCategories} // Pass availableCategories for suggestions
+                  availableCategories={availableCategories} 
                   onProjectAdded={() => { /* This won't be called in edit mode */ }}
                 />
             </div>
@@ -280,4 +273,3 @@ export default function SecretLairPage() {
     </div>
   );
 }
-

@@ -4,24 +4,14 @@
 import type { Metadata } from 'next';
 import ResumeDownloader from '@/components/resume/ResumeDownloader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Award, Briefcase, GraduationCap, Lightbulb, CheckCircle, Instagram, Github, Linkedin, Percent } from 'lucide-react';
+import { Award, Briefcase, GraduationCap, Lightbulb, CheckCircle, Instagram, Github, Linkedin, Percent, Loader2 } from 'lucide-react';
 import Image from 'next/image';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import SkillBar from '@/components/resume/SkillBar';
-
-const skills = [
-  { name: 'Web Development (React/Next.js)', level: 90 },
-  { name: 'JavaScript & Python', level: 85 },
-  { name: 'Data Structures & Algorithms', level: 85 },
-  { name: 'C/C++ & Java', level: 75 },
-  { name: 'SQL & Databases', level: 80 },
-  { name: '3D Modeling (Blender, Unity)', level: 85 },
-  { name: 'Machine Learning Concepts', level: 70 },
-  { name: 'Video/Image Editing', level: 70 },
-  { name: 'Computer Hardware Basics', level: 65 },
-  { name: 'Leadership & Problem Solving', level: 90 },
-];
+import type { ResumeData, Skill } from '@/data/resumeData';
+import { getResumeData } from '@/services/resumeService';
+import { DEFAULT_RESUME_DATA } from '@/data/resumeData';
 
 export default function ResumePage() {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -29,6 +19,28 @@ export default function ResumePage() {
   const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
   const [hoveredSkillLevel, setHoveredSkillLevel] = useState<number | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
+
+  const [resumeContent, setResumeContent] = useState<ResumeData>(DEFAULT_RESUME_DATA);
+  const [isLoadingResume, setIsLoadingResume] = useState(true);
+
+  const fetchResumeDetails = useCallback(async () => {
+    setIsLoadingResume(true);
+    try {
+      const data = await getResumeData();
+      setResumeContent(data);
+    } catch (error) {
+      console.error("Failed to fetch resume details:", error);
+      // Keep default data on error
+      setResumeContent(DEFAULT_RESUME_DATA);
+    } finally {
+      setIsLoadingResume(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchResumeDetails();
+  }, [fetchResumeDetails]);
+
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
@@ -39,7 +51,6 @@ export default function ResumePage() {
         const sensitivity = 10; 
         setParallaxOffset({ x: x * sensitivity, y: y * sensitivity });
 
-        // For dynamic gradient on heading
         const gradientX = (event.clientX / window.innerWidth) * 100;
         const gradientY = (event.clientY / window.innerHeight) * 100;
         headingRef.current.style.setProperty('--gradient-center-x', `${gradientX}%`);
@@ -175,24 +186,21 @@ export default function ResumePage() {
             <CardTitle className="font-display text-2xl flex items-center text-foreground"><Lightbulb className="mr-2 h-6 w-6 text-primary"/> Summary</CardTitle>
           </CardHeader>
           <CardContent>
-             <ul className="space-y-3 text-foreground/80 leading-relaxed">
-              <li className="flex items-start">
-                <span className="mr-2 mt-1 text-primary shrink-0 text-xl leading-none">&bull;</span>
-                <span>IT student skilled in web dev, data structures, C++, Java, Python, JavaScript.</span>
-              </li>
-              <li className="flex items-start">
-                <span className="mr-2 mt-1 text-primary shrink-0 text-xl leading-none">&bull;</span>
-                <span>Proficient in Machine Learning, 3D Modeling (Blender/Unity), SQL.</span>
-              </li>
-              <li className="flex items-start">
-                <span className="mr-2 mt-1 text-primary shrink-0 text-xl leading-none">&bull;</span>
-                <span>Practical experience in 3D design, video/image editing, and hardware.</span>
-              </li>
-              <li className="flex items-start">
-                <span className="mr-2 mt-1 text-primary shrink-0 text-xl leading-none">&bull;</span>
-                <span>Proactive leader, eager for challenges and driving innovative solutions.</span>
-              </li>
-            </ul>
+             {isLoadingResume ? (
+                <div className="flex items-center justify-center py-4 space-x-2">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  <span className="text-muted-foreground">Loading summary...</span>
+                </div>
+              ) : (
+                <ul className="space-y-3 text-foreground/80 leading-relaxed">
+                  {resumeContent.summaryItems.map((item, index) => (
+                    <li key={index} className="flex items-start">
+                      <span className="mr-2 mt-1 text-primary shrink-0 text-xl leading-none">&bull;</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
           </CardContent>
         </Card>
       </div>
@@ -208,22 +216,33 @@ export default function ResumePage() {
                 key={hoveredSkillLevel === null ? 'infinity' : hoveredSkillLevel} 
                 className="text-2xl font-bold text-primary animate-numberRollIn"
               >
-                {hoveredSkillLevel !== null ? `${hoveredSkillLevel}` : '∞'}
+                {hoveredSkillLevel !== null ? `${hoveredSkillLevel}` : (isLoadingResume ? '...' : '∞')}
               </span>
               <Percent className="h-4 w-4 text-primary" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-0">
-              {skills.map(skill => (
-                <SkillBar
-                  key={skill.name}
-                  name={skill.name}
-                  level={skill.level}
-                  onHoverSkill={handleSkillHover}
-                />
-              ))}
-            </div>
+            {isLoadingResume ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="space-y-2">
+                    <div className="h-4 bg-muted rounded w-3/4 animate-pulse"></div>
+                    <div className="h-2.5 bg-muted rounded-full animate-pulse"></div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-0">
+                {resumeContent.skills.map(skill => (
+                  <SkillBar
+                    key={skill.id || skill.name} // Use skill.id if available, otherwise fallback to name
+                    name={skill.name}
+                    level={skill.level}
+                    onHoverSkill={handleSkillHover}
+                  />
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
