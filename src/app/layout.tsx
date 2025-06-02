@@ -16,20 +16,37 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal, X as XIcon, Laptop } from 'lucide-react';
 
-// CRUCIAL: Ensure your font file GreaterTheory.otf exists at the path:
-// /home/user/studio/public/fonts/GreaterTheory.otf
+// --- CUSTOM FONT LOADING ---
+// If custom fonts are not appearing, especially on mobile:
+// 1. VERIFY FILE PATHS & NAMES:
+//    - Ensure 'GreaterTheory.otf' and 'Wasted-Vindey.ttf' are EXACTLY named (case-sensitive).
+//    - Ensure they are located at '/home/user/studio/public/fonts/GreaterTheory.otf'
+//      and '/home/user/studio/public/fonts/Wasted-Vindey.ttf' respectively in your project structure.
+//      The `src` paths below are relative to this file (src/app/layout.tsx) and should correctly
+//      point to PROJECT_ROOT/public/fonts/.
+// 2. CHECK MOBILE BROWSER DEVTOOLS:
+//    - Connect your phone to a desktop browser for debugging.
+//    - Network Tab: Look for requests for font files (e.g., .otf, .ttf, or hashed .woff2 files under _next/static/media).
+//      Are they 404 (Not Found) or another error?
+//    - Console Tab: Check for any font-related error messages.
+// 3. CLEAR CACHE: Clear the browser cache and site data on your mobile device.
+// 4. FONT FILE INTEGRITY: Ensure the font files are not corrupted.
+// 5. SERVER LOGS: Check server logs (if accessible for your .cloudworkstations.dev environment) for any errors related to serving static files.
+
 const greaterTheory = localFont({
   src: '../../public/fonts/GreaterTheory.otf',
   variable: '--font-greater-theory',
   display: 'swap',
+  preload: true, // Default, but explicit
+  fallback: ['sans-serif'], // Generic fallback
 });
 
-// CRUCIAL: Ensure your font file Wasted-Vindey.ttf exists at the path:
-// /home/user/studio/public/fonts/Wasted-Vindey.ttf
 const wastedVindey = localFont({
   src: '../../public/fonts/Wasted-Vindey.ttf',
   variable: '--font-wasted-vindey',
   display: 'swap',
+  preload: true, // Default, but explicit
+  fallback: ['sans-serif'], // Generic fallback
 });
 
 const CursorTail = dynamic(() => import('@/components/effects/CursorTail'), { ssr: false });
@@ -41,7 +58,7 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   const { theme, resolvedTheme } = useTheme();
   const mobileStatus = useIsMobile();
   const [showMobileMessage, setShowMobileMessage] = useState(false);
-  const [isSoundEnabled, setIsSoundEnabled] = useState(false); // Changed default to false
+  const [isSoundEnabled, setIsSoundEnabled] = useState(false); 
 
   const lightThemeSoundRef = useRef<HTMLAudioElement | null>(null);
   const darkThemeSoundRef = useRef<HTMLAudioElement | null>(null);
@@ -65,6 +82,9 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
     const storedSoundPreference = localStorage.getItem('portfolioSoundEnabled');
     if (storedSoundPreference !== null) {
       setIsSoundEnabled(storedSoundPreference === 'true');
+    } else {
+      // If no preference stored, set to default (which is already `false` from useState)
+      localStorage.setItem('portfolioSoundEnabled', String(false));
     }
 
     return () => {
@@ -79,12 +99,10 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
     setIsSoundEnabled(prev => {
       const newState = !prev;
       localStorage.setItem('portfolioSoundEnabled', String(newState));
-      if (!newState) { // If sound is being disabled, pause sounds
+      if (!newState) { 
         lightThemeSoundRef.current?.pause();
-        // No need to reset currentTime if loop is true, it will restart from beginning on next play
         darkThemeSoundRef.current?.pause();
       } else {
-        // If sound is being re-enabled, play the current theme's sound
         if (resolvedTheme === 'dark') {
           darkThemeSoundRef.current?.play().catch(e => console.warn("Dark theme sound playback failed.", e));
         } else if (resolvedTheme === 'light') {
@@ -99,14 +117,12 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
     if (isClient && resolvedTheme && isSoundEnabled) {
       if (resolvedTheme === 'dark') {
         lightThemeSoundRef.current?.pause();
-        // if (lightThemeSoundRef.current) lightThemeSoundRef.current.currentTime = 0; // Not needed for looping
         darkThemeSoundRef.current?.play().catch(e => console.warn("Dark theme sound playback failed.", e));
       } else if (resolvedTheme === 'light') {
         darkThemeSoundRef.current?.pause();
-        // if (darkThemeSoundRef.current) darkThemeSoundRef.current.currentTime = 0; // Not needed for looping
         lightThemeSoundRef.current?.play().catch(e => console.warn("Light theme sound playback failed.", e));
       }
-    } else if (!isSoundEnabled) { // Ensure sounds are paused if sound is globally disabled
+    } else if (!isSoundEnabled) { 
         lightThemeSoundRef.current?.pause();
         darkThemeSoundRef.current?.pause();
     }
