@@ -190,7 +190,7 @@ export default function Header({
                 size="icon"
                 onClick={togglePencilDrawing}
                 aria-label={isPencilDrawingEnabled ? "Disable pencil drawing" : "Enable pencil drawing"}
-                className={cn(isPencilDrawingEnabled && "text-primary bg-accent")}
+                className={cn(isPencilDrawingEnabled && "text-primary")}
               >
                 <Pencil className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out" />
               </Button>
