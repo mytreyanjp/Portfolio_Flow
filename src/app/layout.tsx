@@ -42,9 +42,43 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   const mobileStatus = useIsMobile();
   const [showMobileMessage, setShowMobileMessage] = useState(false);
 
+  const lightThemeSoundRef = useRef<HTMLAudioElement | null>(null);
+  const darkThemeSoundRef = useRef<HTMLAudioElement | null>(null);
+
   useEffect(() => {
     setIsClient(true);
+    // Initialize Audio objects on client-side
+    // IMPORTANT: Replace these paths with your actual sound file paths in /public/sounds/
+    lightThemeSoundRef.current = new Audio('/sounds/light-theme-sound.mp3'); 
+    darkThemeSoundRef.current = new Audio('/sounds/dark-theme-sound.mp3');
+
+    // Optional: Set loop if you want continuous sound
+    // if (lightThemeSoundRef.current) lightThemeSoundRef.current.loop = true;
+    // if (darkThemeSoundRef.current) darkThemeSoundRef.current.loop = true;
+
+    return () => {
+      // Cleanup audio elements on unmount
+      lightThemeSoundRef.current?.pause();
+      darkThemeSoundRef.current?.pause();
+      lightThemeSoundRef.current = null;
+      darkThemeSoundRef.current = null;
+    };
   }, []);
+
+  useEffect(() => {
+    if (isClient && resolvedTheme) {
+      if (resolvedTheme === 'dark') {
+        lightThemeSoundRef.current?.pause();
+        if (lightThemeSoundRef.current) lightThemeSoundRef.current.currentTime = 0;
+        darkThemeSoundRef.current?.play().catch(e => console.warn("Dark theme sound playback failed. Browser autoplay policies might be active.", e));
+      } else if (resolvedTheme === 'light') {
+        darkThemeSoundRef.current?.pause();
+        if (darkThemeSoundRef.current) darkThemeSoundRef.current.currentTime = 0;
+        lightThemeSoundRef.current?.play().catch(e => console.warn("Light theme sound playback failed. Browser autoplay policies might be active.", e));
+      }
+    }
+  }, [resolvedTheme, isClient]);
+
 
   useEffect(() => {
     if (isClient && mobileStatus === true) {
