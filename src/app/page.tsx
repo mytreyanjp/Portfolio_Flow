@@ -184,7 +184,24 @@ export default function PortfolioPage() {
   };
 
   const scrollToProjects = () => {
-    document.getElementById('projects-section')?.scrollIntoView({ behavior: 'smooth' });
+    const projectsHeadingElement = document.getElementById('projects-heading');
+    const headerElement = document.querySelector('header'); // Assuming your header has a <header> tag
+
+    if (projectsHeadingElement) {
+      let headerHeight = 0;
+      if (headerElement) {
+        headerHeight = headerElement.offsetHeight;
+      }
+      // Adjust the offset: projectsHeadingElement.offsetTop is the top of the heading.
+      // Subtract headerHeight to account for the sticky header.
+      // Subtract an additional 70px to provide more space above the title.
+      const offsetTop = projectsHeadingElement.offsetTop - headerHeight - 70; 
+
+      window.scrollTo({
+        top: offsetTop,
+        behavior: 'smooth',
+      });
+    }
   };
 
   const gridKey = useMemo(() => JSON.stringify(filters) + `_loading:${isLoading}_error:${!!error}`, [filters, isLoading, error]);
