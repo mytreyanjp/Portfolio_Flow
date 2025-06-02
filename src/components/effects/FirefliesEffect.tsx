@@ -8,8 +8,8 @@ const FIREFLY_BASE_COLOR_HSLA = '270, 80%, 70%'; // HSL part of hsla(H, S, L, A)
 const MAX_SPEED = 0.3;
 const MIN_RADIUS = 1;
 const MAX_RADIUS = 2.5;
-const MIN_OPACITY = 0.1;
-const MAX_OPACITY = 0.7;
+const MIN_OPACITY = 0.2; // Slightly increased min opacity
+const MAX_OPACITY = 0.9; // Increased max opacity for brighter effect
 
 interface Firefly {
   x: number;
@@ -124,9 +124,10 @@ const FirefliesEffect: React.FC<FirefliesEffectProps> = ({ isDarkTheme }) => {
           firefly.y,
           firefly.radius
         );
-        gradient.addColorStop(0, `hsla(${FIREFLY_BASE_COLOR_HSLA}, ${firefly.opacity * 0.8})`); // Center brighter
-        gradient.addColorStop(0.7, `hsla(${FIREFLY_BASE_COLOR_HSLA}, ${firefly.opacity * 0.5})`);
-        gradient.addColorStop(1, `hsla(${FIREFLY_BASE_COLOR_HSLA}, 0)`); // Fade to transparent
+        // Adjusted gradient stops for brighter core
+        gradient.addColorStop(0, `hsla(${FIREFLY_BASE_COLOR_HSLA}, ${firefly.opacity})`); 
+        gradient.addColorStop(0.6, `hsla(${FIREFLY_BASE_COLOR_HSLA}, ${firefly.opacity * 0.6})`);
+        gradient.addColorStop(1, `hsla(${FIREFLY_BASE_COLOR_HSLA}, 0)`); 
 
         ctx.fillStyle = gradient;
         ctx.arc(firefly.x, firefly.y, firefly.radius, 0, Math.PI * 2);
