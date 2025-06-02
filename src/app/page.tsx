@@ -248,7 +248,9 @@ export default function PortfolioPage() {
                 'radial-gradient(circle at calc(100% - var(--gradient-center-x, 50%)) calc(100% - var(--gradient-center-y, 50%)), hsl(var(--primary)) 5%, hsl(var(--accent)) 75%)',
             }}
           >
-            Mytreyan here
+            <Link href="/resume" className="hover:underline focus:underline outline-none">
+              Mytreyan
+            </Link> here
           </p>
           <p className="font-subtext text-lg md:text-xl text-foreground mb-4">
             Can create light outta a blackhole
@@ -394,3 +396,4 @@ export default function PortfolioPage() {
     </div>
   );
 }
+
