@@ -12,45 +12,38 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { db } from '@/lib/firebase/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.').max(50, 'Name must be less than 50 characters.'),
   email: z.string().email('Invalid email address.'),
-  message: z.string().min(10, 'Message must be at least 10 characters.').max(500, 'Message must be less than 500 characters.'),
+  message: z.string().min(10, 'Message must be at least 10 characters.').max(1000, 'Message must be less than 1000 characters.'), // Increased max length
 });
 
 type ContactFormValues = z.infer<typeof formSchema>;
 
-async function submitContactForm(data: ContactFormValues): Promise<{ success: boolean; message: string; emailContent?: string, submissionId?: string }> {
-  // Generate a simple unique ID for the submission
-  const submissionId = 'CONTACT-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
-
-  // Structure the email content
-  const emailBody =
-    'New Contact Form Submission\n' +
-    '-----------------------------\n' +
-    'ID: ' + submissionId + '\n' +
-    'Full Name: ' + data.name + '\n' +
-    'Email Address: ' + data.email + '\n' +
-    'Message: ' + data.message + '\n' +
-    '-----------------------------';
-
-  // Simulate sending the email by logging it to the console
-  console.log('--- SIMULATED EMAIL ---');
-  console.log('To: mytreyan197@gmail.com');
-  console.log('Subject: New Contact Form Submission - ID: ' + submissionId);
-  console.log('Body:\n' + emailBody);
-  console.log('--- END SIMULATED EMAIL ---');
-
-  // Simulate a delay and success
-  await new Promise(resolve => setTimeout(resolve, 1000));
-
-  return {
-    success: true,
-    message: 'Your message has been logged to the console (simulation). In a real app, this would be emailed!',
-    emailContent: emailBody,
-    submissionId: submissionId,
-  };
+async function saveContactMessageToFirestore(data: ContactFormValues): Promise<{ success: boolean; message: string; submissionId?: string }> {
+  try {
+    const docRef = await addDoc(collection(db, "contactMessages"), {
+      name: data.name,
+      email: data.email,
+      message: data.message,
+      createdAt: serverTimestamp(),
+      isRead: false, // Default to unread
+    });
+    return {
+      success: true,
+      message: 'Your message has been successfully sent and saved!',
+      submissionId: docRef.id,
+    };
+  } catch (error) {
+    console.error("Error writing document to Firestore: ", error);
+    return {
+      success: false,
+      message: `Failed to send message. ${error instanceof Error ? error.message : 'Please try again.'}`,
+    };
+  }
 }
 
 
@@ -70,16 +63,16 @@ export default function ContactForm() {
   async function onSubmit(data: ContactFormValues) {
     setIsSubmitting(true);
     try {
-      const result = await submitContactForm(data);
+      const result = await saveContactMessageToFirestore(data);
       if (result.success) {
         toast({
-          title: 'Message Submitted (Simulation)!',
+          title: 'Message Sent!',
           description: result.message,
         });
         form.reset();
       } else {
         toast({
-          title: 'Error Simulating Submission',
+          title: 'Error Sending Message',
           description: result.message,
           variant: 'destructive',
         });
@@ -87,7 +80,7 @@ export default function ContactForm() {
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'An unexpected error occurred during submission simulation. Please try again.',
+        description: 'An unexpected error occurred. Please try again.',
         variant: 'destructive',
       });
     } finally {

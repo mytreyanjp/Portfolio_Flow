@@ -6,11 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ShieldCheck, Zap, Edit3, PlusCircle, Trash2, Loader2, AlertTriangle, Pencil } from 'lucide-react';
+import { ShieldCheck, Zap, Edit3, PlusCircle, Trash2, Loader2, AlertTriangle, Pencil, MessageSquareText } from 'lucide-react';
 import Link from 'next/link';
 import React, { useState, useEffect, useCallback } from 'react';
 import AddProjectForm from '@/components/admin/AddProjectForm';
-import EditResumeForm from '@/components/admin/EditResumeForm'; // Import the new form
+import EditResumeForm from '@/components/admin/EditResumeForm';
+import ContactMessagesList from '@/components/admin/ContactMessagesList'; // Import the new component
 import type { Project } from '@/data/projects';
 import { getProjects, getUniqueCategoriesFromProjects } from '@/services/projectsService';
 import { db } from '@/lib/firebase/firebase';
@@ -116,12 +117,15 @@ export default function SecretLairPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <Tabs defaultValue="projects" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="projects">
                 <PlusCircle className="mr-2 h-4 w-4" /> Manage Projects
               </TabsTrigger>
               <TabsTrigger value="resume">
                 <Edit3 className="mr-2 h-4 w-4" /> Manage Resume
+              </TabsTrigger>
+              <TabsTrigger value="messages">
+                <MessageSquareText className="mr-2 h-4 w-4" /> View Messages
               </TabsTrigger>
             </TabsList>
             
@@ -210,6 +214,20 @@ export default function SecretLairPage() {
                 </CardHeader>
                 <CardContent>
                   <EditResumeForm />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="messages" className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Contact Form Submissions</CardTitle>
+                  <CardDescription>
+                    Review messages sent through your contact form.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ContactMessagesList />
                 </CardContent>
               </Card>
             </TabsContent>
