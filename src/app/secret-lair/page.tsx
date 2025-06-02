@@ -32,9 +32,10 @@ export default function SecretLairPage() {
       const fetchedProjects = await getProjects();
       // Filter out the default project if it exists and other projects are present
       if (fetchedProjects.length > 1) {
-        setProjects(fetchedProjects.filter(p => p.id !== 'default-project-1'));
+        setProjects(fetchedProjects.filter(p => p.id !== 'default-project-1').sort((a, b) => a.title.localeCompare(b.title)));
       } else {
-        setProjects(fetchedProjects.filter(p => p.id !== 'default-project-1' || fetchedProjects[0]?.title === 'Sample Project: Interactive Model')); // Show default only if it's the *only* one
+        // Show default only if it's the *only* one, or if it's explicitly added (though it shouldn't be by form)
+        setProjects(fetchedProjects.filter(p => p.id !== 'default-project-1' || fetchedProjects[0]?.title === 'Sample Project: Interactive Model').sort((a, b) => a.title.localeCompare(b.title)));
       }
     } catch (err) {
       setErrorLoadingProjects(err instanceof Error ? err.message : 'Failed to load projects.');
@@ -62,7 +63,8 @@ export default function SecretLairPage() {
         title: 'Project Removed',
         description: `"${projectToDelete.title}" has been successfully deleted.`,
       });
-      fetchProjectsList(); // Refresh the list
+      // Optimistically update UI
+      setProjects(prevProjects => prevProjects.filter(p => p.id !== projectToDelete.id));
       setShowDeleteDialog(false);
       setProjectToDelete(null);
     } catch (error) {
@@ -77,9 +79,12 @@ export default function SecretLairPage() {
     }
   };
 
-  const onProjectAdded = () => {
-    fetchProjectsList(); // Callback to refresh projects after adding a new one
-  }
+  const handleProjectAdded = (newProject: Project) => {
+    // Optimistically add the new project to the state and sort
+    setProjects(prevProjects => 
+      [...prevProjects, newProject].sort((a, b) => a.title.localeCompare(b.title))
+    );
+  };
 
 
   return (
@@ -112,7 +117,7 @@ export default function SecretLairPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <AddProjectForm onProjectAdded={onProjectAdded} />
+                  <AddProjectForm onProjectAdded={handleProjectAdded} />
                 </CardContent>
               </Card>
 

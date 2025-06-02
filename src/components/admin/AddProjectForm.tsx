@@ -25,7 +25,6 @@ import { cn } from '@/lib/utils';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase/firebase';
 
-// Ensure projectCategories is correctly typed for z.enum
 const categoryEnumValues = projectCategories as [string, ...string[]];
 
 const addProjectSchema = z.object({
@@ -34,7 +33,7 @@ const addProjectSchema = z.object({
   longDescription: z.string().optional(),
   modelPath: z.string()
     .refine(val => {
-      if (val === '') return true; // Allow empty string
+      if (val === '') return true; 
       if (val.startsWith('/models/') && val.endsWith('.glb')) return true;
       if ((val.startsWith('http://') || val.startsWith('https://')) && val.endsWith('.glb')) {
         try {
@@ -64,7 +63,7 @@ const addProjectSchema = z.object({
 export type AddProjectFormValues = z.infer<typeof addProjectSchema>;
 
 interface AddProjectFormProps {
-  onProjectAdded?: () => void; // Optional callback
+  onProjectAdded?: (newProject: Project) => void; // Updated callback signature
 }
 
 export default function AddProjectForm({ onProjectAdded }: AddProjectFormProps) {
@@ -92,8 +91,7 @@ export default function AddProjectForm({ onProjectAdded }: AddProjectFormProps) 
     try {
       const techArray = data.technologies.split(',').map(tech => tech.trim()).filter(Boolean);
 
-      // Base project data with required fields and those with defaults
-      const projectPayload: any = { // Using 'any' for easier conditional property assignment
+      const projectPayload: Omit<Project, 'id'> & { createdAt: any } = {
         title: data.title,
         description: data.description,
         category: data.category,
@@ -102,7 +100,6 @@ export default function AddProjectForm({ onProjectAdded }: AddProjectFormProps) 
         createdAt: serverTimestamp(),
       };
 
-      // Conditionally add optional fields if they have a non-empty value
       if (data.longDescription && data.longDescription.trim() !== '') {
         projectPayload.longDescription = data.longDescription;
       }
@@ -123,9 +120,10 @@ export default function AddProjectForm({ onProjectAdded }: AddProjectFormProps) 
       
       toast({
         title: 'Project Added!',
-        description: `Project "${data.title}" has been successfully saved with ID: ${docRef.id}.`,
-        duration: 7000,
+        description: `Project "${data.title}" has been successfully saved.`,
+        duration: 5000,
       });
+
       if (data.modelPath && data.modelPath.startsWith('/models/')) {
         toast({
             title: '3D Model Reminder',
@@ -133,10 +131,25 @@ export default function AddProjectForm({ onProjectAdded }: AddProjectFormProps) 
             duration: 7000,
         });
       }
-      form.reset();
+      
       if (onProjectAdded) {
-        onProjectAdded(); 
+        const newProject: Project = {
+            id: docRef.id,
+            title: projectPayload.title,
+            description: projectPayload.description,
+            category: projectPayload.category,
+            technologies: projectPayload.technologies,
+            dataAiHint: projectPayload.dataAiHint,
+            longDescription: projectPayload.longDescription,
+            imageUrl: projectPayload.imageUrl,
+            model: projectPayload.model,
+            liveLink: projectPayload.liveLink,
+            sourceLink: projectPayload.sourceLink,
+        };
+        onProjectAdded(newProject); 
       }
+      form.reset();
+
     } catch (error) {
       console.error("Error adding project to Firestore: ", error);
       toast({
