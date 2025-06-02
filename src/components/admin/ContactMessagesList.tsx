@@ -39,14 +39,12 @@ export default function ContactMessagesList() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Firebase auth state (currentUser, authInitialized) is no longer needed here
-  // as delete operation will not require authentication as per the new rules.
-
   const fetchMessages = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
       const messagesCollection = collection(db, 'contactMessages');
+      // Initial fetch ordered by creation date
       const q = query(messagesCollection, orderBy('createdAt', 'desc'));
       const querySnapshot = await getDocs(q);
       const fetchedMessages: ContactMessage[] = [];
@@ -61,6 +59,15 @@ export default function ContactMessagesList() {
           isRead: data.isRead || false,
         });
       });
+
+      // Sort messages: unread first, then read, both groups sorted by newest first.
+      fetchedMessages.sort((a, b) => {
+        if (a.isRead === b.isRead) {
+          return b.createdAt.getTime() - a.createdAt.getTime(); // Newest first within same read status
+        }
+        return a.isRead ? 1 : -1; // Unread (false) comes before read (true)
+      });
+
       setMessages(fetchedMessages);
     } catch (err) {
       console.error("Error fetching contact messages:", err);
@@ -80,11 +87,8 @@ export default function ContactMessagesList() {
     try {
       const messageRef = doc(db, 'contactMessages', messageId);
       await updateDoc(messageRef, { isRead: !currentStatus });
-      setMessages(prevMessages =>
-        prevMessages.map(msg =>
-          msg.id === messageId ? { ...msg, isRead: !currentStatus } : msg
-        )
-      );
+      // Instead of just mapping, we re-fetch and re-sort to maintain the new order
+      fetchMessages(); 
       toast({
         title: `Message marked as ${!currentStatus ? 'read' : 'unread'}.`,
       });
@@ -149,13 +153,12 @@ export default function ContactMessagesList() {
   return (
     <div className="space-y-4">
        <div className="flex justify-between items-center mb-4">
-        <Button onClick={fetchMessages} variant="outline" size="sm">
+        <Button onClick={fetchMessages} variant="outline" size="sm" disabled={isLoading}>
             <RefreshCw className={cn("mr-2 h-4 w-4", isLoading && "animate-spin")} /> Refresh Messages
         </Button>
-        {/* Informational message about admin controls removed as sign-in is no longer checked for delete */}
        </div>
       {messages.map((msg) => (
-        <Card key={msg.id} className={cn("transition-all", msg.isRead ? "bg-muted/20 border-border/50" : "bg-card border-primary/30")}>
+        <Card key={msg.id} className={cn("transition-all", msg.isRead ? "bg-muted/20 border-border/50 opacity-80 hover:opacity-100" : "bg-card border-primary/30")}>
           <CardHeader>
             <div className="flex justify-between items-start">
               <div>
