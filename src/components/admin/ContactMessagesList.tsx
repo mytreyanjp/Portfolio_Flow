@@ -2,12 +2,11 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { db, app } from '@/lib/firebase/firebase'; // Ensure app is exported from firebase.ts
-import { getAuth, onAuthStateChanged, type User } from 'firebase/auth';
+import { db } from '@/lib/firebase/firebase';
 import { collection, query, orderBy, getDocs, Timestamp, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, AlertTriangle, Trash2, Eye, EyeOff, RefreshCw, ShieldAlert } from 'lucide-react';
+import { Loader2, AlertTriangle, Trash2, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -40,17 +39,8 @@ export default function ContactMessagesList() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [authInitialized, setAuthInitialized] = useState(false);
-
-  useEffect(() => {
-    const auth = getAuth(app);
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      setAuthInitialized(true);
-    });
-    return () => unsubscribe();
-  }, []);
+  // Firebase auth state (currentUser, authInitialized) is no longer needed here
+  // as delete operation will not require authentication as per the new rules.
 
   const fetchMessages = useCallback(async () => {
     setIsLoading(true);
@@ -87,7 +77,6 @@ export default function ContactMessagesList() {
   }, [fetchMessages]);
 
   const toggleReadStatus = async (messageId: string, currentStatus: boolean) => {
-    // This operation is allowed for anyone by rules (allow update: if true)
     try {
       const messageRef = doc(db, 'contactMessages', messageId);
       await updateDoc(messageRef, { isRead: !currentStatus });
@@ -113,24 +102,6 @@ export default function ContactMessagesList() {
   const confirmDeleteMessage = async () => {
     if (!messageToDelete) return;
 
-    if (!authInitialized) {
-        toast({ title: "Hold on...", description: "Checking authentication status...", variant: "default" });
-        return;
-    }
-    
-    if (!currentUser) {
-      toast({
-        title: "Authentication Required",
-        description: "You must be signed in to delete messages.",
-        variant: "destructive",
-        duration: 5000,
-        action: <Button variant="outline" size="sm" onClick={() => console.log("Sign in action placeholder")}>Sign In (Placeholder)</Button>
-      });
-      setShowDeleteDialog(false);
-      setMessageToDelete(null);
-      return;
-    }
-
     setIsDeleting(true);
     try {
       await deleteDoc(doc(db, 'contactMessages', messageToDelete.id));
@@ -150,11 +121,11 @@ export default function ContactMessagesList() {
   };
 
 
-  if (isLoading || !authInitialized) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-10">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="ml-2">{!authInitialized ? "Initializing..." : "Loading messages..."}</p>
+        <p className="ml-2">Loading messages...</p>
       </div>
     );
   }
@@ -181,12 +152,7 @@ export default function ContactMessagesList() {
         <Button onClick={fetchMessages} variant="outline" size="sm">
             <RefreshCw className={cn("mr-2 h-4 w-4", isLoading && "animate-spin")} /> Refresh Messages
         </Button>
-        {!currentUser && authInitialized && (
-            <div className="flex items-center text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 p-2 rounded-md border border-amber-300 dark:border-amber-700">
-                <ShieldAlert className="mr-2 h-5 w-5" />
-                <span>Sign in for full admin controls (e.g., delete messages).</span>
-            </div>
-        )}
+        {/* Informational message about admin controls removed as sign-in is no longer checked for delete */}
        </div>
       {messages.map((msg) => (
         <Card key={msg.id} className={cn("transition-all", msg.isRead ? "bg-muted/20 border-border/50" : "bg-card border-primary/30")}>
@@ -220,8 +186,8 @@ export default function ContactMessagesList() {
               variant="destructive"
               size="sm"
               onClick={() => openDeleteDialog(msg)}
-              disabled={!authInitialized || isDeleting} // Also disable while auth is initializing
-              title={!currentUser && authInitialized ? "Sign in to delete messages" : "Delete message"}
+              disabled={isDeleting}
+              title="Delete message"
             >
               <Trash2 className="mr-1 h-4 w-4" /> Delete
             </Button>
@@ -235,14 +201,13 @@ export default function ContactMessagesList() {
               <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
               <AlertDialogDescription>
                 Are you sure you want to delete the message from "{messageToDelete.name}"? This action cannot be undone.
-                {!currentUser && authInitialized && <p className="mt-2 text-destructive-foreground font-semibold">Note: Deletion requires you to be signed in.</p>}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => setShowDeleteDialog(false)} disabled={isDeleting}>Cancel</AlertDialogCancel>
               <AlertDialogAction 
                 onClick={confirmDeleteMessage} 
-                disabled={isDeleting || (!currentUser && authInitialized)} // Disable if not authenticated and auth has initialized
+                disabled={isDeleting}
                 className={cn(isDeleting && "bg-destructive/80")}
               >
                 {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
