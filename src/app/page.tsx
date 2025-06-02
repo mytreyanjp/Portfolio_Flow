@@ -185,20 +185,26 @@ export default function PortfolioPage() {
 
   const scrollToProjects = () => {
     const projectsHeadingElement = document.getElementById('projects-heading');
-    const headerElement = document.querySelector('header'); // Assuming your header has a <header> tag
+    const headerElement = document.querySelector('header');
 
-    if (projectsHeadingElement) {
+    if (projectsHeadingElement && typeof window !== 'undefined') {
+      const rect = projectsHeadingElement.getBoundingClientRect();
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const elementTopRelativeToDocument = rect.top + scrollTop;
+
       let headerHeight = 0;
       if (headerElement) {
         headerHeight = headerElement.offsetHeight;
       }
-      // Adjust the offset: projectsHeadingElement.offsetTop is the top of the heading.
+      
+      // Calculate the target scroll position:
+      // elementTopRelativeToDocument is the absolute top of the heading.
       // Subtract headerHeight to account for the sticky header.
-      // Subtract an additional 20px to provide more space above the title.
-      const offsetTop = projectsHeadingElement.offsetTop - headerHeight - 20; 
+      // Subtract an additional 20px to provide space above the title.
+      const targetScrollY = elementTopRelativeToDocument - headerHeight - 20;
 
       window.scrollTo({
-        top: offsetTop,
+        top: targetScrollY,
         behavior: 'smooth',
       });
     }
