@@ -78,7 +78,7 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
 
   const currentIsDarkTheme = resolvedTheme === 'dark';
   const showDarkThemeEffects = isClient && currentIsDarkTheme;
-  const showLightThemeEffects = isClient && !currentIsDarkTheme;
+  // const showLightThemeEffects = isClient && !currentIsDarkTheme; // This flag is no longer used for sun ray
 
   return (
     <>
