@@ -4,7 +4,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 
 const PENCIL_COLOR_RGB = '50, 50, 50'; // Dark gray for pencil
-const LINE_WIDTH = 1.5;
+const LINE_WIDTH = 3.5; // Increased line width for a thicker tail
 const FADE_START_DELAY_MS = 2000; // Start fading after 2 seconds
 const FADE_DURATION_MS = 1500;   // Fade over 1.5 seconds
 const TOTAL_FADE_TIME_MS = FADE_START_DELAY_MS + FADE_DURATION_MS;
@@ -68,7 +68,7 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
     
     setDrawnPoints(updatedPoints);
 
-    if (updatedPoints.length > 0 || isDrawingActive) {
+    if (updatedPoints.length > 0 || isDrawingActive) { // Keep animating if drawing is active OR points still exist
       animationFrameIdRef.current = requestAnimationFrame(animate);
     } else {
       animationFrameIdRef.current = null;
@@ -77,6 +77,8 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
 
   const handleMouseMove = useCallback((event: MouseEvent) => {
     if (!isDrawingActive) {
+      // Reset lastMousePositionRef when drawing becomes inactive, so a new line starts cleanly
+      // when re-enabled, rather than connecting to an old point.
       lastMousePositionRef.current = null; 
       return;
     }
@@ -95,20 +97,21 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
     
     setDrawnPoints(prevPoints => [...prevPoints, currentPosition]);
     lastMousePositionRef.current = currentPosition;
-  }, [isDrawingActive]);
+    
+    // Ensure animation loop is running if it's not already
+    if (!animationFrameIdRef.current) {
+      animationFrameIdRef.current = requestAnimationFrame(animate);
+    }
 
-  // Effect for managing the animation loop state
+  }, [isDrawingActive, animate]); // Added animate to dependency array of useCallback
+
+  // Effect for managing the animation loop state based on activity and points
   useEffect(() => {
     const needsAnimation = isDrawingActive || drawnPoints.length > 0;
     if (needsAnimation && !animationFrameIdRef.current) {
       animationFrameIdRef.current = requestAnimationFrame(animate);
-    } else if (!needsAnimation && animationFrameIdRef.current) {
-      // This case should be handled by animate itself setting animationFrameIdRef.current to null
-      // but as a safeguard if animate's condition changes:
-      // cancelAnimationFrame(animationFrameIdRef.current);
-      // animationFrameIdRef.current = null;
     }
-
+    // The animate function itself will clear animationFrameIdRef.current when no longer needed.
     // Cleanup for when the component unmounts or deps change significantly
     return () => {
       if (animationFrameIdRef.current) {
@@ -136,7 +139,7 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
       window.removeEventListener('resize', fitToContainer);
       document.removeEventListener('mousemove', handleMouseMove);
     };
-  }, [handleMouseMove]); // handleMouseMove is stable due to useCallback
+  }, [handleMouseMove]);
 
 
   // Conditional rendering of the canvas element itself
@@ -154,7 +157,7 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none',
-        zIndex: 1,
+        zIndex: 1, // Ensures it's above background lines but below main content
         opacity: (isDrawingActive || drawnPoints.length > 0) ? 1 : 0,
         transition: 'opacity 0.3s ease-in-out',
       }}
@@ -164,3 +167,4 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
 };
 
 export default LightModeDrawingCanvas;
+
