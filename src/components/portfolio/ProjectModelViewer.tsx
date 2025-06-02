@@ -27,9 +27,9 @@ dracoLoaderInstance.setDecoderConfig({ type: 'wasm' });
 const gltfLoaderInstance = new GLTFLoader();
 gltfLoaderInstance.setDRACOLoader(dracoLoaderInstance);
 
-const MIN_CAMERA_Z = 1.6; // Model appears closer
+const MIN_CAMERA_Z = 1.2; // Model appears closer (previously 1.6)
 const MAX_CAMERA_Z = 2.8; // Model appears further
-const MIN_MODEL_Y_OFFSET = -0.1; // Model slightly lower when close
+const MIN_MODEL_Y_OFFSET = -0.2; // Model slightly lower when close (previously -0.1)
 const MAX_MODEL_Y_OFFSET = 0;    // Model at its centered Y when far
 const LERP_SPEED_ROTATION = 0.08;
 const LERP_SPEED_CAMERA_Z = 0.05;
@@ -170,7 +170,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       lightsRef.current.forEach(light => sceneRef.current?.remove(light));
       lightsRef.current = [];
 
-      const ambientLight = new THREE.AmbientLight(0xffffff, 1.0); // Slightly reduced ambient
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.8); // Slightly reduced ambient
       sceneRef.current.add(ambientLight);
       
       const mainDirectionalLight = new THREE.DirectionalLight(0xffffff, 1.2); // Main white light
@@ -181,8 +181,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       purpleDirectionalLight.position.set(-2, 1, 1); // Position it to the left, slightly up and front
       sceneRef.current.add(purpleDirectionalLight);
 
-      // Existing purple point light, maybe adjust intensity or remove if too much purple
-      const purplePointLight = new THREE.PointLight(0x9575CD, 0.8, 10); 
+      const purplePointLight = new THREE.PointLight(0x9575CD, 0.6, 10); 
       purplePointLight.position.set(0, 1, 2);
       sceneRef.current.add(purplePointLight);
 
