@@ -24,17 +24,14 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameIdRef = useRef<number | null>(null);
   
-  // Refs for props/state to be used in stable callbacks
   const isDrawingActiveRef = useRef(isDrawingActive);
   useEffect(() => {
     isDrawingActiveRef.current = isDrawingActive;
   }, [isDrawingActive]);
 
-  // Store points in a ref to avoid re-triggering useCallback for animatePoints
   const drawnPointsListRef = useRef<Point[]>([]);
-  
-  // State for points to trigger re-renders when points are added/removed, used by animation loop condition
   const [pointsCount, setPointsCount] = useState(0);
+  const lastMousePositionRef = useRef<Point | null>(null); // Moved to top level
 
 
   const animatePoints = useCallback(() => {
@@ -52,12 +49,11 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
     const currentDisplayPoints = drawnPointsListRef.current;
     const stillRelevantPoints = currentDisplayPoints.filter(point => (now - point.timestamp) < TOTAL_FADE_TIME_MS);
     
-    drawnPointsListRef.current = stillRelevantPoints; // Update ref with filtered points
-    
+    drawnPointsListRef.current = stillRelevantPoints;
+        
     if (stillRelevantPoints.length !== pointsCount) {
-        setPointsCount(stillRelevantPoints.length); // Trigger re-evaluation of animation loop if count changes
+        setPointsCount(stillRelevantPoints.length); 
     }
-
 
     if (stillRelevantPoints.length > 0) {
         ctx.lineWidth = LINE_WIDTH;
@@ -73,7 +69,7 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
             return opacity;
         };
 
-        if (stillRelevantPoints.length < 2) { // Single point
+        if (stillRelevantPoints.length < 2) { 
             const p = stillRelevantPoints[0];
             const opacity = getOpacity(p);
             if (opacity > 0) {
@@ -83,7 +79,6 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
                 ctx.fill();
             }
         } else {
-            // Draw first segment: line from P0 to Mid(P0, P1) or P0 to P1 if only 2 points
             const p0 = stillRelevantPoints[0];
             const p1 = stillRelevantPoints[1];
             let op0 = getOpacity(p0);
@@ -99,8 +94,6 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
                 ctx.stroke();
             }
 
-            // Draw quadratic curve segments for intermediate points
-            // Curve uses P_i as control, from Mid(P_{i-1},P_i) to Mid(P_i,P_{i+1})
             for (let i = 1; i < stillRelevantPoints.length - 1; i++) {
                 const prevP = stillRelevantPoints[i-1];
                 const currP = stillRelevantPoints[i];
@@ -119,13 +112,11 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
                 ctx.stroke();
             }
 
-            // Draw last segment: line from Mid(P_{n-1}, P_n) to P_n
-            if (stillRelevantPoints.length > 2) { // Ensured a curve was drawn
+            if (stillRelevantPoints.length > 2) { 
                 const pN_1 = stillRelevantPoints[stillRelevantPoints.length - 2];
                 const pN = stillRelevantPoints[stillRelevantPoints.length - 1];
-                let opN = getOpacity(pN); // Opacity of the end point
-                // More accurately, opacity of the segment could be from pN_1 or average. Using pN's for simplicity.
-                if (opN > 0) { // Check if the segment itself should be visible
+                let opN = getOpacity(pN); 
+                if (opN > 0) { 
                     ctx.strokeStyle = `rgba(${PENCIL_COLOR_RGB}, ${opN})`;
                     ctx.beginPath();
                     ctx.moveTo((pN_1.x + pN.x) / 2, (pN_1.y + pN.y) / 2);
@@ -140,28 +131,46 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
       animationFrameIdRef.current = requestAnimationFrame(animatePoints);
     } else {
       animationFrameIdRef.current = null;
-      // Clear canvas one last time if nothing to draw and not active
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
-  }, [pointsCount]); // Re-evaluate if pointsCount changes
+  }, [pointsCount]); // Re-run if pointsCount (derived from drawnPointsListRef.current.length) changes
 
-  // Effect for managing the animation loop
   useEffect(() => {
-    const needsAnimation = isDrawingActiveRef.current || drawnPointsListRef.current.length > 0;
+    const needsAnimation = isDrawingActiveRef.current || pointsCount > 0;
     if (needsAnimation && !animationFrameIdRef.current) {
       animationFrameIdRef.current = requestAnimationFrame(animatePoints);
     }
-    // Cleanup on unmount
     return () => {
-      if (animationFrameIdRef.current) {
-        cancelAnimationFrame(animationFrameIdRef.current);
-        animationFrameIdRef.current = null;
+      if (animationFrameIdRef.current && !(isDrawingActiveRef.current || pointsCount > 0)) {
+        // Intentionally left blank, cleanup is in main unmount and inside animatePoints
       }
     };
-  }, [isDrawingActive, pointsCount, animatePoints]); // pointsCount is used instead of drawnPointsListRef.current.length
+  }, [isDrawingActive, pointsCount, animatePoints]);
 
 
-  // Effect for setting up and tearing down global event listeners
+  const localHandleMouseMove = useCallback((event: MouseEvent) => {
+    if (!isDrawingActiveRef.current) {
+      lastMousePositionRef.current = null; 
+      return;
+    }
+
+    const currentPosition = { x: event.clientX, y: event.clientY, timestamp: Date.now() };
+
+    if (lastMousePositionRef.current) {
+      const dx = currentPosition.x - lastMousePositionRef.current.x;
+      const dy = currentPosition.y - lastMousePositionRef.current.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance < MIN_DISTANCE_BETWEEN_POINTS) {
+        return; 
+      }
+    }
+    
+    drawnPointsListRef.current = [...drawnPointsListRef.current, currentPosition];
+    setPointsCount(prevCount => prevCount + 1); // Increment count to trigger animation check
+    lastMousePositionRef.current = currentPosition;
+  }, []); // isDrawingActiveRef, lastMousePositionRef, drawnPointsListRef, setPointsCount are stable or refs
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -173,32 +182,7 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
       }
     };
     
-    const lastMousePositionRef = useRef<Point | null>(null);
-
-    const localHandleMouseMove = (event: MouseEvent) => {
-      if (!isDrawingActiveRef.current) {
-        lastMousePositionRef.current = null; // Reset if drawing becomes inactive
-        return;
-      }
-
-      const currentPosition = { x: event.clientX, y: event.clientY, timestamp: Date.now() };
-
-      if (lastMousePositionRef.current) {
-        const dx = currentPosition.x - lastMousePositionRef.current.x;
-        const dy = currentPosition.y - lastMousePositionRef.current.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        if (distance < MIN_DISTANCE_BETWEEN_POINTS) {
-          return; // Don't add point if too close to the last one
-        }
-      }
-      
-      drawnPointsListRef.current = [...drawnPointsListRef.current, currentPosition];
-      setPointsCount(drawnPointsListRef.current.length); // Update count to trigger animation check
-      lastMousePositionRef.current = currentPosition;
-    };
-
-    fitToContainer(); // Initial resize
+    fitToContainer();
     window.addEventListener('resize', fitToContainer);
     document.addEventListener('mousemove', localHandleMouseMove);
 
@@ -210,7 +194,7 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
         animationFrameIdRef.current = null;
       }
     };
-  }, []); // Empty dependency: setup/teardown global listeners once
+  }, [localHandleMouseMove]); 
 
   const shouldRenderCanvas = isDrawingActive || pointsCount > 0;
 
@@ -228,7 +212,7 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none',
-        zIndex: 1, // Ensure it's above background lines, below main content
+        zIndex: 1, 
         opacity: shouldRenderCanvas ? 1 : 0,
         transition: 'opacity 0.3s ease-in-out',
       }}
