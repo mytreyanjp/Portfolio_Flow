@@ -5,8 +5,8 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 
 const PENCIL_COLOR_RGB = '50, 50, 50'; // Dark gray for pencil
 const LINE_WIDTH = 1.5;
-const FADE_START_DELAY_MS = 2000; // Start fading after 2 seconds (reduced from 3)
-const FADE_DURATION_MS = 1500;   // Fade over 1.5 seconds (increased from 1)
+const FADE_START_DELAY_MS = 2000; // Start fading after 2 seconds
+const FADE_DURATION_MS = 1500;   // Fade over 1.5 seconds
 const TOTAL_FADE_TIME_MS = FADE_START_DELAY_MS + FADE_DURATION_MS;
 const MIN_DISTANCE_BETWEEN_POINTS = 2; // To avoid adding too many points if mouse barely moves
 
@@ -24,33 +24,7 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameIdRef = useRef<number | null>(null);
   const [drawnPoints, setDrawnPoints] = useState<Point[]>([]);
-  const lastMousePositionRef = useRef<Point | null>(null); // Used to track last position for segment drawing
-
-  const handleMouseMove = useCallback((event: MouseEvent) => {
-    if (!isDrawingActive) {
-      lastMousePositionRef.current = null; // Reset last position when drawing is inactive
-      return;
-    }
-
-    const currentPosition = { x: event.clientX, y: event.clientY, timestamp: Date.now() };
-
-    if (lastMousePositionRef.current) {
-      const dx = currentPosition.x - lastMousePositionRef.current.x;
-      const dy = currentPosition.y - lastMousePositionRef.current.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      
-      if (distance < MIN_DISTANCE_BETWEEN_POINTS) {
-        return; // Don't add point if mouse moved too little
-      }
-    }
-    
-    setDrawnPoints(prevPoints => [...prevPoints, currentPosition]);
-    lastMousePositionRef.current = currentPosition;
-
-    if (!animationFrameIdRef.current) {
-      animationFrameIdRef.current = requestAnimationFrame(animate);
-    }
-  }, [isDrawingActive]);
+  const lastMousePositionRef = useRef<Point | null>(null);
 
   const animate = useCallback(() => {
     const canvas = canvasRef.current;
@@ -75,14 +49,7 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
         const p1 = updatedPoints[i-1];
         const p2 = updatedPoints[i];
 
-        // Check if p1 and p2 are "connected" (i.e., p2 was drawn immediately after p1)
-        // This prevents lines from being drawn across large time gaps if drawing was paused.
-        // For a continuous tail, this check might not be strictly necessary if lastMousePositionRef handles breaks.
-        // However, for safety with fading, it's good to check.
-        // If p2.timestamp - p1.timestamp is large (e.g., > 100ms), consider it a new stroke part.
-        // For now, let's assume continuous drawing when active.
-
-        const age = now - p1.timestamp; // Age of the start of the segment
+        const age = now - p1.timestamp; 
         let opacity = 1;
 
         if (age > FADE_START_DELAY_MS) {
@@ -101,27 +68,52 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
     
     setDrawnPoints(updatedPoints);
 
-    if (updatedPoints.length > 0) {
+    if (updatedPoints.length > 0 || isDrawingActive) { // Keep animating if drawing active or points exist
       animationFrameIdRef.current = requestAnimationFrame(animate);
     } else {
       animationFrameIdRef.current = null;
     }
-  }, [drawnPoints]);
+  }, [drawnPoints, isDrawingActive]); // Added isDrawingActive dependency to keep animating if needed
+
+  const handleMouseMove = useCallback((event: MouseEvent) => {
+    if (!isDrawingActive) {
+      lastMousePositionRef.current = null; 
+      return;
+    }
+
+    const currentPosition = { x: event.clientX, y: event.clientY, timestamp: Date.now() };
+
+    if (lastMousePositionRef.current) {
+      const dx = currentPosition.x - lastMousePositionRef.current.x;
+      const dy = currentPosition.y - lastMousePositionRef.current.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      if (distance < MIN_DISTANCE_BETWEEN_POINTS) {
+        return; 
+      }
+    }
+    
+    setDrawnPoints(prevPoints => [...prevPoints, currentPosition]);
+    lastMousePositionRef.current = currentPosition;
+
+    if (!animationFrameIdRef.current) {
+      animationFrameIdRef.current = requestAnimationFrame(animate);
+    }
+  }, [isDrawingActive, animate]);
+
 
   useEffect(() => {
-    if (!isDrawingActive) { // If drawing becomes inactive, ensure animation stops if no points left
-        if (drawnPoints.length === 0 && animationFrameIdRef.current) {
-            cancelAnimationFrame(animationFrameIdRef.current);
-            animationFrameIdRef.current = null;
-        }
-        // Also clear lastMousePositionRef so the next stroke starts fresh
-        lastMousePositionRef.current = null; 
-    } else { // If drawing becomes active, and animation is not running, start it
-        if (drawnPoints.length > 0 && !animationFrameIdRef.current) {
-            animationFrameIdRef.current = requestAnimationFrame(animate);
-        }
+    if (!isDrawingActive) {
+      lastMousePositionRef.current = null; 
+      // Animation will stop naturally via `animate` if drawnPoints becomes empty
+    } else {
+      // If drawing becomes active and animation isn't running, start it.
+      // This handles cases where it might have stopped if all points faded while active.
+      if (!animationFrameIdRef.current) {
+        animationFrameIdRef.current = requestAnimationFrame(animate);
+      }
     }
-  }, [isDrawingActive, drawnPoints.length, animate]);
+  }, [isDrawingActive, animate]);
 
 
   useEffect(() => {
@@ -131,7 +123,8 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
     const fitToContainer = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      if (isDrawingActive && drawnPoints.length > 0 && !animationFrameIdRef.current) {
+      // Re-trigger animation if it stopped, to ensure continuous drawing or fading
+      if ((isDrawingActive || drawnPoints.length > 0) && !animationFrameIdRef.current) {
         animationFrameIdRef.current = requestAnimationFrame(animate);
       }
     };
@@ -139,6 +132,11 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
     fitToContainer();
     window.addEventListener('resize', fitToContainer);
     document.addEventListener('mousemove', handleMouseMove);
+
+    // Initial animation kick-off if needed (e.g. if active on load)
+    if ((isDrawingActive || drawnPoints.length > 0) && !animationFrameIdRef.current) {
+        animationFrameIdRef.current = requestAnimationFrame(animate);
+    }
 
     return () => {
       window.removeEventListener('resize', fitToContainer);
@@ -148,9 +146,10 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
         animationFrameIdRef.current = null;
       }
     };
-  }, [handleMouseMove, animate, isDrawingActive, drawnPoints.length]); // Added isDrawingActive and drawnPoints.length
+  }, [handleMouseMove, animate, isDrawingActive, drawnPoints.length]);
 
-  if (!isDrawingActive && drawnPoints.length === 0) { // Only render canvas if active or if points are still fading
+  // Render canvas if drawing is active or if there are points still fading
+  if (!isDrawingActive && drawnPoints.length === 0) { 
     return null;
   }
 
@@ -165,7 +164,7 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
         height: '100vh',
         pointerEvents: 'none',
         zIndex: 0, 
-        opacity: (isDrawingActive || drawnPoints.length > 0) ? 1 : 0, // Only visible if drawing or points fading
+        opacity: (isDrawingActive || drawnPoints.length > 0) ? 1 : 0,
         transition: 'opacity 0.3s ease-in-out',
       }}
       aria-hidden="true"
