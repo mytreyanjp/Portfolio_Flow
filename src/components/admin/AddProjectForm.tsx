@@ -22,6 +22,8 @@ import { categories as projectCategories, allTechnologies, Project } from '@/dat
 import React, { useState } from 'react';
 import { Loader2, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase/firebase';
 
 // Ensure projectCategories is correctly typed for z.enum
 const categoryEnumValues = projectCategories as [string, ...string[]];
@@ -70,40 +72,47 @@ export default function AddProjectForm() {
 
   async function onSubmit(data: AddProjectFormValues) {
     setIsSubmitting(true);
-    console.log('Simulating project save with data:', data);
-
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    // Transform form data to Project structure for logging (if needed)
-    const projectToLog: Partial<Project> = {
+    try {
+      const projectData: Omit<Project, 'id'> & { createdAt: any } = {
         title: data.title,
         description: data.description,
-        longDescription: data.longDescription,
-        model: data.modelPath,
-        dataAiHint: data.dataAiHint || 'project image', // fallback
+        longDescription: data.longDescription || '',
+        model: data.modelPath || undefined, // Store as undefined if empty
+        dataAiHint: data.dataAiHint || (data.modelPath ? '3d model' : 'project image'),
         category: data.category,
-        technologies: data.technologies.split(',').map(tech => tech.trim()).filter(tech => tech),
-        liveLink: data.liveLink,
-        sourceLink: data.sourceLink,
-        imageUrl: data.imageUrl
-    };
-    console.log('Formatted project object for simulated save:', projectToLog);
+        technologies: data.technologies.split(',').map(tech => tech.trim()).filter(Boolean),
+        liveLink: data.liveLink || undefined,
+        sourceLink: data.sourceLink || undefined,
+        imageUrl: data.imageUrl || undefined, // Store as undefined if empty
+        createdAt: serverTimestamp(),
+      };
 
-
-    toast({
-      title: 'Project Submitted (Simulated)',
-      description: (
-        <div>
-          <p>Your project "{data.title}" has been logged to the console.</p>
-          {data.modelPath && <p className="text-xs mt-1">Ensure your model <strong>{data.modelPath}</strong> is placed in the <code>public/models</code> directory.</p>}
-          <p className="text-xs mt-1">For actual saving, Firebase database integration is required.</p>
-        </div>
-      ),
-      duration: 7000, // Longer duration for more info
-    });
-    form.reset(); // Reset form after submission
-    setIsSubmitting(false);
+      const docRef = await addDoc(collection(db, 'projects'), projectData);
+      
+      toast({
+        title: 'Project Added!',
+        description: `Project "${data.title}" has been successfully saved to the database with ID: ${docRef.id}.`,
+        duration: 7000,
+      });
+      if (data.modelPath) {
+        toast({
+            title: '3D Model Reminder',
+            description: `Ensure your model ${data.modelPath} is placed in the public/models directory.`,
+            duration: 7000,
+        });
+      }
+      form.reset();
+    } catch (error) {
+      console.error("Error adding project to Firestore: ", error);
+      toast({
+        title: 'Error Saving Project',
+        description: `Failed to save project to the database. ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: 'destructive',
+        duration: 7000,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -283,12 +292,12 @@ export default function AddProjectForm() {
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              Submitting...
+              Adding Project...
             </>
           ) : (
             <>
               <Save className="mr-2 h-5 w-5" />
-              Add Project (Simulated Save)
+              Add Project
             </>
           )}
         </Button>
