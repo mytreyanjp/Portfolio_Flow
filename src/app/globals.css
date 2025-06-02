@@ -5,7 +5,7 @@
 
 @layer base {
   :root {
-    /* Light Purple Theme */
+    /* Light Theme - Sun is now more Yellow */
     --background: 275 80% 97%; /* Very light lavender */
     --foreground: 270 40% 25%; /* Darker purple for text */
     --card: 275 75% 99% / 0.95; /* Almost white lavender, 95% opacity */
@@ -18,7 +18,7 @@
     --secondary-foreground: 270 40% 20%;
     --muted: 275 50% 92%;
     --muted-foreground: 270 30% 50%; /* Slightly darker muted text */
-    --accent: 35 95% 60%; /* Orange for light theme accent */
+    --accent: 45 95% 60%; /* Brighter Yellow for light theme accent */
     --accent-foreground: 0 0% 10%; /* Dark text on accent */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
@@ -37,7 +37,7 @@
     --sidebar-foreground: 270 40% 25%;
     --sidebar-primary: 280 65% 70%;
     --sidebar-primary-foreground: 280 60% 15%;
-    --sidebar-accent: 35 70% 80%; /* Orange for light theme sidebar accent */
+    --sidebar-accent: 45 80% 70%; /* Yellow for light theme sidebar accent */
     --sidebar-accent-foreground: 0 0% 10%;
     --sidebar-border: 275 50% 80%;
     --sidebar-ring: 280 65% 70%;
@@ -125,7 +125,7 @@
   }
 }
 
-/* Sun ray effect for light theme */
+/* Sun ray effect for light theme - more yellow and smaller radius */
 .sun-ray-effect {
   position: fixed;
   top: 0;
@@ -134,9 +134,9 @@
   height: 100vh;
   background-image: radial-gradient(
     circle 120vmax at 50% 0%, /* Origin at top-center of this gradient image */
-    hsla(var(--accent) / 0.35) 0%,
-    hsla(var(--accent) / 0.2) 20%,
-    transparent 50%
+    hsla(var(--accent) / 0.4) 0%,       /* Brighter, slightly more intense yellow core */
+    hsla(var(--accent) / 0.25) 15%,     /* Mid yellow glow, fades a bit quicker */
+    transparent 40%                     /* Fade out completely by 40% of radius (smaller apparent radius) */
   );
   background-size: 200vw 100vh; /* Make background image twice the viewport width */
   background-repeat: no-repeat;
