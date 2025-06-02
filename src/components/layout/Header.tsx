@@ -7,7 +7,7 @@ import ThemeSwitcher from './ThemeSwitcher';
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Briefcase, MessageSquare, FileText, Brain, LockKeyhole } from 'lucide-react';
+import { Briefcase, MessageSquare, FileText, Brain, LockKeyhole, Eye, EyeOff } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   AlertDialog,
@@ -43,6 +43,7 @@ export default function Header() {
   const [lastClickTime, setLastClickTime] = useState(0);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [passwordAttempt, setPasswordAttempt] = useState('');
+  const [showPasswordAttempt, setShowPasswordAttempt] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -53,10 +54,8 @@ export default function Header() {
     let newClickCount;
 
     if (currentTime - lastClickTime > MAX_CLICK_DELAY_MS) {
-      // If the delay is too long, reset to 1
       newClickCount = 1;
     } else {
-      // Otherwise, increment
       newClickCount = logoClickCount + 1;
     }
 
@@ -65,8 +64,10 @@ export default function Header() {
 
     if (newClickCount >= CLICKS_TO_ACTIVATE) {
       setShowPasswordDialog(true);
-      setLogoClickCount(0); // Reset after triggering
-      setLastClickTime(0); // Reset time as well
+      setLogoClickCount(0); 
+      setLastClickTime(0); 
+      setPasswordAttempt('');
+      setShowPasswordAttempt(false);
     }
   };
 
@@ -75,7 +76,8 @@ export default function Header() {
     if (passwordAttempt === SECRET_PASSWORD) {
       setShowPasswordDialog(false);
       setPasswordAttempt('');
-      setLogoClickCount(0); // Reset click count on successful entry
+      setShowPasswordAttempt(false);
+      setLogoClickCount(0); 
       setLastClickTime(0);
       router.push('/secret-lair');
     } else {
@@ -85,9 +87,20 @@ export default function Header() {
         variant: "destructive",
       });
       setPasswordAttempt('');
-      // Optionally, keep the dialog open or close it. Here, it stays open.
     }
   };
+
+  const toggleShowPasswordAttempt = () => {
+    setShowPasswordAttempt(prev => !prev);
+  };
+
+  const handleDialogClose = () => {
+    setShowPasswordDialog(false);
+    setPasswordAttempt('');
+    setShowPasswordAttempt(false);
+    setLogoClickCount(0);
+    setLastClickTime(0);
+  }
 
   return (
     <>
@@ -158,11 +171,10 @@ export default function Header() {
       </header>
 
       <AlertDialog open={showPasswordDialog} onOpenChange={(isOpen) => {
-        setShowPasswordDialog(isOpen);
-        if (!isOpen) { // Reset states if dialog is closed manually
-          setPasswordAttempt('');
-          setLogoClickCount(0);
-          setLastClickTime(0);
+        if (!isOpen) {
+          handleDialogClose();
+        } else {
+          setShowPasswordDialog(true);
         }
       }}>
         <AlertDialogContent>
@@ -176,21 +188,28 @@ export default function Header() {
                 You've discovered a hidden path. Enter the password to proceed.
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <div className="py-4">
+            <div className="py-4 relative">
               <Input
-                type="password"
+                type={showPasswordAttempt ? "text" : "password"}
                 placeholder="Password"
                 value={passwordAttempt}
                 onChange={(e) => setPasswordAttempt(e.target.value)}
                 autoFocus
+                className="pr-10" 
               />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-foreground"
+                onClick={toggleShowPasswordAttempt}
+                aria-label={showPasswordAttempt ? "Hide password" : "Show password"}
+              >
+                {showPasswordAttempt ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </Button>
             </div>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => {
-                setPasswordAttempt(''); 
-                setLogoClickCount(0); 
-                setLastClickTime(0);
-              }}>Cancel</AlertDialogCancel>
+              <AlertDialogCancel onClick={handleDialogClose}>Cancel</AlertDialogCancel>
               <AlertDialogAction type="submit">Unlock</AlertDialogAction>
             </AlertDialogFooter>
           </form>
