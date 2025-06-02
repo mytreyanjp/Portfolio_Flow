@@ -121,12 +121,12 @@ export default function ResumePage() {
             </CardContent>
           </Card>
            <div className="mt-4 text-center">
-            <p className="text-sm text-black dark:text-white font-subtext">
+            <div className="text-sm text-black dark:text-white font-subtext">
               {isLoadingResume ? <Skeleton className="h-4 w-3/4 mx-auto mb-1" /> : resumeContent.education[0]?.degree || DEFAULT_RESUME_DATA.education[0].degree} <br />
               <a href={isLoadingResume ? "#" : (resumeContent.education[0]?.institution ? "https://www.annauniv.edu/#gsc.tab=0" : "#")} target="_blank" rel="noopener noreferrer" className="text-black dark:text-white hover:underline">
                 {isLoadingResume ? <Skeleton className="h-4 w-1/2 mx-auto" /> : resumeContent.education[0]?.institution || DEFAULT_RESUME_DATA.education[0].institution}
               </a>
-            </p>
+            </div>
             <div className="flex justify-center space-x-3 mt-4">
               {[
                 { href: resumeContent.instagramUrl, label: 'Instagram', Icon: Instagram },
@@ -248,3 +248,4 @@ export default function ResumePage() {
     </div>
   );
 }
+
