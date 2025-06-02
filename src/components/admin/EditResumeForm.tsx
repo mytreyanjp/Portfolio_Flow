@@ -72,14 +72,18 @@ export default function EditResumeForm() {
   const form = useForm<EditResumeFormValues>({
     resolver: zodResolver(editResumeSchema),
     defaultValues: {
-      summary: DEFAULT_RESUME_DATA.summaryItems.join('\n'),
-      skills: DEFAULT_RESUME_DATA.skills.map(s => ({ ...s, id: s.id || generateId('skill') })),
-      education: DEFAULT_RESUME_DATA.education.map(e => ({ ...e, id: e.id || generateId('edu') })),
-      experience: DEFAULT_RESUME_DATA.experience.map(e => ({ ...e, id: e.id || generateId('exp'), responsibilities: e.responsibilities.join('\n') })),
-      awards: DEFAULT_RESUME_DATA.awards.map(a => ({ ...a, id: a.id || generateId('award') })),
-      instagramUrl: DEFAULT_RESUME_DATA.instagramUrl,
-      githubUrl: DEFAULT_RESUME_DATA.githubUrl,
-      linkedinUrl: DEFAULT_RESUME_DATA.linkedinUrl,
+      summary: (DEFAULT_RESUME_DATA.summaryItems || []).join('\n'),
+      skills: (DEFAULT_RESUME_DATA.skills || []).map(s => ({ ...s, id: s.id || generateId('skill') })),
+      education: (DEFAULT_RESUME_DATA.education || []).map(e => ({ ...e, id: e.id || generateId('edu') })),
+      experience: (DEFAULT_RESUME_DATA.experience || []).map(e => ({
+        ...e,
+        id: e.id || generateId('exp'),
+        responsibilities: (e.responsibilities || []).join('\n')
+      })),
+      awards: (DEFAULT_RESUME_DATA.awards || []).map(a => ({ ...a, id: a.id || generateId('award') })),
+      instagramUrl: DEFAULT_RESUME_DATA.instagramUrl || '',
+      githubUrl: DEFAULT_RESUME_DATA.githubUrl || '',
+      linkedinUrl: DEFAULT_RESUME_DATA.linkedinUrl || '',
     },
   });
 
@@ -93,11 +97,15 @@ export default function EditResumeForm() {
     try {
       const data = await getResumeData();
       form.reset({
-        summary: data.summaryItems.join('\n'),
-        skills: data.skills.map(s => ({ ...s, id: s.id || generateId('skill') })),
-        education: data.education.map(e => ({ ...e, id: e.id || generateId('edu') })),
-        experience: data.experience.map(e => ({ ...e, id: e.id || generateId('exp'), responsibilities: e.responsibilities.join('\n') })),
-        awards: data.awards.map(a => ({ ...a, id: a.id || generateId('award') })),
+        summary: (data.summaryItems || []).join('\n'),
+        skills: (data.skills || []).map(s => ({ ...s, id: s.id || generateId('skill') })),
+        education: (data.education || []).map(e => ({ ...e, id: e.id || generateId('edu') })),
+        experience: (data.experience || []).map(e => ({
+          ...e,
+          id: e.id || generateId('exp'),
+          responsibilities: (e.responsibilities || []).join('\n')
+        })),
+        awards: (data.awards || []).map(a => ({ ...a, id: a.id || generateId('award') })),
         instagramUrl: data.instagramUrl || '',
         githubUrl: data.githubUrl || '',
         linkedinUrl: data.linkedinUrl || '',
@@ -122,15 +130,15 @@ export default function EditResumeForm() {
     try {
       const resumeDataToSave: ResumeData = {
         summaryItems: data.summary.split('\n').map(line => line.trim()).filter(line => line.length > 0),
-        skills: data.skills.map(skill => ({ name: skill.name, level: skill.level })),
-        education: data.education?.map(edu => ({ degree: edu.degree, institution: edu.institution, dates: edu.dates, description: edu.description })) || [],
-        experience: data.experience?.map(exp => ({
+        skills: (data.skills || []).map(skill => ({ name: skill.name, level: skill.level })),
+        education: (data.education || []).map(edu => ({ degree: edu.degree, institution: edu.institution, dates: edu.dates, description: edu.description })),
+        experience: (data.experience || []).map(exp => ({
           jobTitle: exp.jobTitle,
           company: exp.company,
           dates: exp.dates,
           responsibilities: exp.responsibilities.split('\n').map(line => line.trim()).filter(line => line.length > 0),
-        })) || [],
-        awards: data.awards?.map(award => ({ title: award.title, issuer: award.issuer, date: award.date, url: award.url })) || [],
+        })),
+        awards: (data.awards || []).map(award => ({ title: award.title, issuer: award.issuer, date: award.date, url: award.url })),
         instagramUrl: data.instagramUrl,
         githubUrl: data.githubUrl,
         linkedinUrl: data.linkedinUrl,
@@ -140,7 +148,7 @@ export default function EditResumeForm() {
         title: 'Resume Updated!',
         description: 'Your resume has been successfully updated.',
       });
-      fetchResume();
+      fetchResume(); // Refetch to ensure form and data are in sync, including any server-side transformations
     } catch (error) {
       toast({
         title: 'Error Updating Resume',
