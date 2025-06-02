@@ -194,8 +194,8 @@ export default function PortfolioPage() {
       }
       // Adjust the offset: projectsHeadingElement.offsetTop is the top of the heading.
       // Subtract headerHeight to account for the sticky header.
-      // Subtract an additional 70px to provide more space above the title.
-      const offsetTop = projectsHeadingElement.offsetTop - headerHeight - 70; 
+      // Subtract an additional 20px to provide more space above the title.
+      const offsetTop = projectsHeadingElement.offsetTop - headerHeight - 20; 
 
       window.scrollTo({
         top: offsetTop,
