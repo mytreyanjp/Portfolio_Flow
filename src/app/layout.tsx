@@ -41,6 +41,7 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   const { theme, resolvedTheme } = useTheme();
   const mobileStatus = useIsMobile();
   const [showMobileMessage, setShowMobileMessage] = useState(false);
+  const [isSoundEnabled, setIsSoundEnabled] = useState(true);
 
   const lightThemeSoundRef = useRef<HTMLAudioElement | null>(null);
   const darkThemeSoundRef = useRef<HTMLAudioElement | null>(null);
@@ -48,16 +49,16 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setIsClient(true);
     // Initialize Audio objects on client-side
-    // IMPORTANT: Replace these paths with your actual sound file paths in /public/sounds/
     lightThemeSoundRef.current = new Audio('/sounds/light-theme-sound.mp3'); 
     darkThemeSoundRef.current = new Audio('/sounds/dark-theme-sound.mp3');
 
-    // Optional: Set loop if you want continuous sound
-    // if (lightThemeSoundRef.current) lightThemeSoundRef.current.loop = true;
-    // if (darkThemeSoundRef.current) darkThemeSoundRef.current.loop = true;
+    // Load sound preference from localStorage
+    const storedSoundPreference = localStorage.getItem('portfolioSoundEnabled');
+    if (storedSoundPreference !== null) {
+      setIsSoundEnabled(storedSoundPreference === 'true');
+    }
 
     return () => {
-      // Cleanup audio elements on unmount
       lightThemeSoundRef.current?.pause();
       darkThemeSoundRef.current?.pause();
       lightThemeSoundRef.current = null;
@@ -65,19 +66,38 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  const toggleSoundEnabled = () => {
+    setIsSoundEnabled(prev => {
+      const newState = !prev;
+      localStorage.setItem('portfolioSoundEnabled', String(newState));
+      if (!newState) { // If sound is being disabled, pause sounds
+        lightThemeSoundRef.current?.pause();
+        if (lightThemeSoundRef.current) lightThemeSoundRef.current.currentTime = 0;
+        darkThemeSoundRef.current?.pause();
+        if (darkThemeSoundRef.current) darkThemeSoundRef.current.currentTime = 0;
+      }
+      return newState;
+    });
+  };
+
   useEffect(() => {
-    if (isClient && resolvedTheme) {
+    if (isClient && resolvedTheme && isSoundEnabled) {
       if (resolvedTheme === 'dark') {
         lightThemeSoundRef.current?.pause();
         if (lightThemeSoundRef.current) lightThemeSoundRef.current.currentTime = 0;
-        darkThemeSoundRef.current?.play().catch(e => console.warn("Dark theme sound playback failed. Browser autoplay policies might be active.", e));
+        darkThemeSoundRef.current?.play().catch(e => console.warn("Dark theme sound playback failed.", e));
       } else if (resolvedTheme === 'light') {
         darkThemeSoundRef.current?.pause();
         if (darkThemeSoundRef.current) darkThemeSoundRef.current.currentTime = 0;
-        lightThemeSoundRef.current?.play().catch(e => console.warn("Light theme sound playback failed. Browser autoplay policies might be active.", e));
+        lightThemeSoundRef.current?.play().catch(e => console.warn("Light theme sound playback failed.", e));
       }
+    } else if (!isSoundEnabled) { // Ensure sounds are paused if sound is globally disabled
+        lightThemeSoundRef.current?.pause();
+        if (lightThemeSoundRef.current) lightThemeSoundRef.current.currentTime = 0;
+        darkThemeSoundRef.current?.pause();
+        if (darkThemeSoundRef.current) darkThemeSoundRef.current.currentTime = 0;
     }
-  }, [resolvedTheme, isClient]);
+  }, [resolvedTheme, isClient, isSoundEnabled]);
 
 
   useEffect(() => {
@@ -101,7 +121,7 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
     if (showMobileMessage) {
       timerId = setTimeout(() => {
         handleDismissMobileMessage();
-      }, 5000); // 5 seconds
+      }, 5000); 
     }
     return () => {
       if (timerId) {
@@ -112,8 +132,6 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
 
   const currentIsDarkTheme = resolvedTheme === 'dark';
   const showDarkThemeEffects = isClient && currentIsDarkTheme;
-  const isLightNotebookTheme = isClient && !currentIsDarkTheme;
-
 
   return (
     <>
@@ -121,10 +139,10 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
       {showDarkThemeEffects && <FirefliesEffect isDarkTheme={currentIsDarkTheme} />}
       
       <div className="relative z-10 flex flex-col min-h-screen">
-        <Header />
+        <Header isSoundEnabled={isSoundEnabled} toggleSoundEnabled={toggleSoundEnabled} />
         <main className={cn(
             "flex-grow container mx-auto py-8",
-            "px-4 pb-20 md:pb-8" // Default paddings for all themes
+            "px-4 pb-20 md:pb-8" 
           )}
         >
           {children}
@@ -166,7 +184,7 @@ export default function RootLayout({
         <link rel="icon" href="/favicon22.png" type="image/png" sizes="any" />
       </head>
       <body className={cn(
-          "antialiased flex flex-col min-h-screen bg-background", // bg-background is applied here
+          "antialiased flex flex-col min-h-screen bg-background", 
           greaterTheory.variable, 
           wastedVindey.variable 
         )}

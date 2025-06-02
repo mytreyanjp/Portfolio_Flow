@@ -7,7 +7,7 @@ import ThemeSwitcher from './ThemeSwitcher';
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Briefcase, MessageSquare, FileText, Brain, LockKeyhole, Eye, EyeOff } from 'lucide-react';
+import { Briefcase, MessageSquare, FileText, Brain, LockKeyhole, Eye, EyeOff, Volume2, VolumeX } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   AlertDialog,
@@ -33,7 +33,12 @@ const SECRET_PASSWORD = "tinku@197";
 const CLICKS_TO_ACTIVATE = 5;
 const MAX_CLICK_DELAY_MS = 1000; // 1 second
 
-export default function Header() {
+interface HeaderProps {
+  isSoundEnabled: boolean;
+  toggleSoundEnabled: () => void;
+}
+
+export default function Header({ isSoundEnabled, toggleSoundEnabled }: HeaderProps) {
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
@@ -169,7 +174,21 @@ export default function Header() {
             </nav>
           )}
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1">
+            {mounted && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleSoundEnabled}
+                aria-label={isSoundEnabled ? "Mute sounds" : "Unmute sounds"}
+              >
+                {isSoundEnabled ? (
+                  <Volume2 className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out" />
+                ) : (
+                  <VolumeX className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out" />
+                )}
+              </Button>
+            )}
             {mounted && <ThemeSwitcher />}
           </div>
         </div>
