@@ -170,15 +170,23 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       lightsRef.current.forEach(light => sceneRef.current?.remove(light));
       lightsRef.current = [];
 
-      const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+      const ambientLight = new THREE.AmbientLight(0xffffff, 1.0); // Slightly reduced ambient
       sceneRef.current.add(ambientLight);
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
-      directionalLight.position.set(2, 2, 3);
-      sceneRef.current.add(directionalLight);
-      const purplePointLight = new THREE.PointLight(0x9b59b6, 1.5, 10); 
+      
+      const mainDirectionalLight = new THREE.DirectionalLight(0xffffff, 1.2); // Main white light
+      mainDirectionalLight.position.set(2, 2, 3);
+      sceneRef.current.add(mainDirectionalLight);
+      
+      const purpleDirectionalLight = new THREE.DirectionalLight(0x9B59B6, 1.0); // Purple light from the left
+      purpleDirectionalLight.position.set(-2, 1, 1); // Position it to the left, slightly up and front
+      sceneRef.current.add(purpleDirectionalLight);
+
+      // Existing purple point light, maybe adjust intensity or remove if too much purple
+      const purplePointLight = new THREE.PointLight(0x9575CD, 0.8, 10); 
       purplePointLight.position.set(0, 1, 2);
       sceneRef.current.add(purplePointLight);
-      lightsRef.current = [ambientLight, directionalLight, purplePointLight];
+
+      lightsRef.current = [ambientLight, mainDirectionalLight, purpleDirectionalLight, purplePointLight];
 
       if (modelGroupRef.current && sceneRef.current) {
         sceneRef.current.remove(modelGroupRef.current);
