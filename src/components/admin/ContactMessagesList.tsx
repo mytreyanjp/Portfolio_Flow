@@ -44,7 +44,6 @@ export default function ContactMessagesList() {
     setError(null);
     try {
       const messagesCollection = collection(db, 'contactMessages');
-      // Initial fetch ordered by creation date
       const q = query(messagesCollection, orderBy('createdAt', 'desc'));
       const querySnapshot = await getDocs(q);
       const fetchedMessages: ContactMessage[] = [];
@@ -60,12 +59,11 @@ export default function ContactMessagesList() {
         });
       });
 
-      // Sort messages: unread first, then read, both groups sorted by newest first.
       fetchedMessages.sort((a, b) => {
         if (a.isRead === b.isRead) {
-          return b.createdAt.getTime() - a.createdAt.getTime(); // Newest first within same read status
+          return b.createdAt.getTime() - a.createdAt.getTime(); 
         }
-        return a.isRead ? 1 : -1; // Unread (false) comes before read (true)
+        return a.isRead ? 1 : -1; 
       });
 
       setMessages(fetchedMessages);
@@ -87,7 +85,6 @@ export default function ContactMessagesList() {
     try {
       const messageRef = doc(db, 'contactMessages', messageId);
       await updateDoc(messageRef, { isRead: !currentStatus });
-      // Instead of just mapping, we re-fetch and re-sort to maintain the new order
       fetchMessages(); 
       toast({
         title: `Message marked as ${!currentStatus ? 'read' : 'unread'}.`,
@@ -113,7 +110,7 @@ export default function ContactMessagesList() {
         title: "Message Deleted",
         description: `Message from ${messageToDelete.name} has been deleted.`,
       });
-      fetchMessages(); // Refresh the list
+      fetchMessages(); 
       setShowDeleteDialog(false);
     } catch (err) {
       console.error("Error deleting message:", err);
@@ -160,14 +157,14 @@ export default function ContactMessagesList() {
       {messages.map((msg) => (
         <Card key={msg.id} className={cn("transition-all", msg.isRead ? "bg-muted/20 border-border/50 opacity-80 hover:opacity-100" : "bg-card border-primary/30")}>
           <CardHeader>
-            <div className="flex justify-between items-start">
-              <div>
-                <CardTitle className={cn("text-lg", !msg.isRead && "text-primary")}>{msg.name}</CardTitle>
-                <CardDescription>
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+              <div className="flex-1 min-w-0"> {/* Allow name/email to shrink and wrap */}
+                <CardTitle className={cn("text-lg break-words", !msg.isRead && "text-primary")}>{msg.name}</CardTitle>
+                <CardDescription className="break-words">
                   <a href={`mailto:${msg.email}`} className="hover:underline text-primary/80">{msg.email}</a>
                 </CardDescription>
               </div>
-              <span className="text-xs text-muted-foreground pt-1">
+              <span className="text-xs text-muted-foreground pt-1 sm:ml-4 shrink-0"> {/* Ensure timestamp doesn't push content */}
                 {formatDistanceToNow(msg.createdAt, { addSuffix: true })}
               </span>
             </div>
@@ -175,12 +172,12 @@ export default function ContactMessagesList() {
           <CardContent>
             <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
           </CardContent>
-          <CardFooter className="flex justify-end space-x-2">
+          <CardFooter className="flex flex-col space-y-2 sm:flex-row sm:justify-end sm:space-y-0 sm:space-x-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => toggleReadStatus(msg.id, msg.isRead)}
-              className="hover:bg-accent/80"
+              className="hover:bg-accent/80 w-full sm:w-auto"
             >
               {msg.isRead ? <EyeOff className="mr-1 h-4 w-4" /> : <Eye className="mr-1 h-4 w-4" />}
               {msg.isRead ? 'Mark Unread' : 'Mark Read'}
@@ -191,6 +188,7 @@ export default function ContactMessagesList() {
               onClick={() => openDeleteDialog(msg)}
               disabled={isDeleting}
               title="Delete message"
+              className="w-full sm:w-auto"
             >
               <Trash2 className="mr-1 h-4 w-4" /> Delete
             </Button>
