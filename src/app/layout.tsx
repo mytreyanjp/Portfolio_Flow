@@ -51,6 +51,7 @@ const wastedVindey = localFont({
 
 const CursorTail = dynamic(() => import('@/components/effects/CursorTail'), { ssr: false });
 const FirefliesEffect = dynamic(() => import('@/components/effects/FirefliesEffect'), { ssr: false });
+const LightModeDrawingCanvas = dynamic(() => import('@/components/effects/LightModeDrawingCanvas'), { ssr: false });
 
 
 function MainContentWithTheme({ children }: { children: React.ReactNode }) {
@@ -135,12 +136,16 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   }, [showMobileMessage]);
 
   const currentIsDarkTheme = resolvedTheme === 'dark';
+  const currentIsLightTheme = resolvedTheme === 'light';
   const showDarkThemeEffects = isClient && currentIsDarkTheme;
+  const showLightThemeEffects = isClient && currentIsLightTheme;
+
 
   return (
     <>
       {showDarkThemeEffects && <CursorTail isDarkTheme={currentIsDarkTheme} />}
       {showDarkThemeEffects && <FirefliesEffect isDarkTheme={currentIsDarkTheme} />}
+      {showLightThemeEffects && <LightModeDrawingCanvas />}
       
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header isSoundEnabled={isSoundEnabled} toggleSoundEnabled={toggleSoundEnabled} />
