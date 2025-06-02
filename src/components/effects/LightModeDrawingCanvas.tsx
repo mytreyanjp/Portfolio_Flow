@@ -163,7 +163,7 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none',
-        zIndex: 0, 
+        zIndex: 1, // Changed from 0 to 1
         opacity: (isDrawingActive || drawnPoints.length > 0) ? 1 : 0,
         transition: 'opacity 0.3s ease-in-out',
       }}
@@ -173,3 +173,4 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
 };
 
 export default LightModeDrawingCanvas;
+
