@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -33,11 +32,11 @@ const addProjectSchema = z.object({
   longDescription: z.string().optional(),
   modelPath: z.string()
     .refine(val => {
-      if (val === '') return true; 
+      if (val === '') return true;
       if (val.startsWith('/models/') && val.endsWith('.glb')) return true;
       if ((val.startsWith('http://') || val.startsWith('https://')) && val.endsWith('.glb')) {
         try {
-          new URL(val); 
+          new URL(val);
           return true;
         } catch (e) {
           return false;
@@ -81,7 +80,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
       longDescription: '',
       modelPath: '',
       dataAiHint: '',
-      category: projectCategories[0], 
+      category: projectCategories[0],
       technologies: '',
       liveLink: '',
       sourceLink: '',
@@ -104,7 +103,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
         imageUrl: editingProject.imageUrl || '',
       });
     } else {
-      form.reset({ // Reset to default for add mode if editingProject becomes null
+      form.reset({ 
         title: '',
         description: '',
         longDescription: '',
@@ -121,11 +120,11 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
 
 
   async function onSubmit(data: AddProjectFormValues) {
+    console.log('[AddProjectForm] onSubmit called. Data:', data);
     setIsSubmitting(true);
     try {
       const techArray = data.technologies.split(',').map(tech => tech.trim()).filter(Boolean);
 
-      // Base payload, common to add and update
       const projectData: any = {
         title: data.title,
         description: data.description,
@@ -134,20 +133,22 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
         dataAiHint: data.dataAiHint || (data.modelPath && data.modelPath.trim() !== '' ? '3d model' : 'project image'),
       };
 
-      // Conditionally add optional fields to avoid sending `undefined`
       if (data.longDescription && data.longDescription.trim() !== '') projectData.longDescription = data.longDescription;
       if (data.imageUrl && data.imageUrl.trim() !== '') projectData.imageUrl = data.imageUrl;
       if (data.modelPath && data.modelPath.trim() !== '') projectData.model = data.modelPath;
       if (data.liveLink && data.liveLink.trim() !== '') projectData.liveLink = data.liveLink;
       if (data.sourceLink && data.sourceLink.trim() !== '') projectData.sourceLink = data.sourceLink;
       
+      console.log('[AddProjectForm] Project data to be saved:', projectData);
+
       if (isEditMode && editingProject) {
-        // Update existing project
+        console.log(`[AddProjectForm] Attempting to update project ID: ${editingProject.id}`);
         const projectRef = doc(db, 'projects', editingProject.id);
         await updateDoc(projectRef, {
           ...projectData,
-          updatedAt: serverTimestamp(), // Add/update timestamp
+          updatedAt: serverTimestamp(),
         });
+        console.log(`[AddProjectForm] Project ID: ${editingProject.id} updated successfully.`);
         
         toast({
           title: 'Project Updated!',
@@ -159,9 +160,10 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
         }
 
       } else {
-        // Add new project
         projectData.createdAt = serverTimestamp();
+        console.log('[AddProjectForm] Attempting to add new project.');
         const docRef = await addDoc(collection(db, 'projects'), projectData);
+        console.log('[AddProjectForm] New project added successfully with ID:', docRef.id);
         
         toast({
           title: 'Project Added!',
@@ -192,17 +194,18 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
           };
           onProjectAdded(newProject); 
         }
-        form.reset(); // Reset form only in add mode
+        form.reset();
       }
 
     } catch (error) {
-      console.error(`Error ${isEditMode ? 'updating' : 'adding'} project: `, error);
+      console.error(`[AddProjectForm] Error ${isEditMode ? 'updating' : 'adding'} project: `, error);
       toast({
         title: `Error ${isEditMode ? 'Updating' : 'Saving'} Project`,
         description: `Failed to ${isEditMode ? 'update' : 'save'} project. ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: 'destructive',
       });
     } finally {
+      console.log('[AddProjectForm] Executing finally block.');
       setIsSubmitting(false);
     }
   }
@@ -396,4 +399,3 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
     </Form>
   );
 }
-
