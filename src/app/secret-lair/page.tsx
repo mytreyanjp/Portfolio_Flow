@@ -106,7 +106,7 @@ export default function SecretLairPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] py-12 px-4 sm:px-6 lg:px-8">
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] py-12 px-2 sm:px-6 lg:px-8">
       <Card className="w-full max-w-3xl shadow-2xl animate-fadeInUpScale">
         <CardHeader className="text-center">
           <Zap className="h-16 w-16 text-primary mx-auto mb-4 animate-pulse" />
@@ -117,15 +117,15 @@ export default function SecretLairPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <Tabs defaultValue="projects" className="w-full">
-            <TabsList className="grid w-full grid-cols-1 gap-2 md:grid-cols-3 md:gap-1 mb-6">
-              <TabsTrigger value="projects">
-                <PlusCircle className="mr-2 h-4 w-4" /> Manage Projects
+            <TabsList className="flex w-full items-center justify-around mb-6">
+              <TabsTrigger value="projects" aria-label="Manage Projects">
+                <PlusCircle className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Manage Projects</span>
               </TabsTrigger>
-              <TabsTrigger value="resume">
-                <Edit3 className="mr-2 h-4 w-4" /> Manage Resume
+              <TabsTrigger value="resume" aria-label="Manage Resume">
+                <Edit3 className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Manage Resume</span>
               </TabsTrigger>
-              <TabsTrigger value="messages">
-                <MessageSquareText className="mr-2 h-4 w-4" /> View Messages
+              <TabsTrigger value="messages" aria-label="View Messages">
+                <MessageSquareText className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">View Messages</span>
               </TabsTrigger>
             </TabsList>
             
