@@ -88,7 +88,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
       )}
       style={{ animationDelay: `${index * 100}ms` }}
     >
-      <div className="relative w-full h-48 mb-4 rounded-t-md overflow-hidden group bg-white/50 dark:bg-muted">
+      <div className="relative w-full h-48 mb-4 rounded-t-md overflow-hidden group bg-muted/70 dark:bg-muted">
         {displayModelViewer ? (
           <ProjectModelViewer
             modelPath={project.model}
