@@ -77,12 +77,14 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   }, [showMobileMessage]);
 
   const currentIsDarkTheme = resolvedTheme === 'dark';
-  const showEffects = isClient && currentIsDarkTheme;
+  const showDarkThemeEffects = isClient && currentIsDarkTheme;
+  const showLightThemeEffects = isClient && !currentIsDarkTheme;
 
   return (
     <>
-      {showEffects && <CursorTail isDarkTheme={currentIsDarkTheme} />}
-      {showEffects && <FirefliesEffect isDarkTheme={currentIsDarkTheme} />}
+      {showDarkThemeEffects && <CursorTail isDarkTheme={currentIsDarkTheme} />}
+      {showDarkThemeEffects && <FirefliesEffect isDarkTheme={currentIsDarkTheme} />}
+      {showLightThemeEffects && <div className="sun-ray-effect" />}
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
         <main className="flex-grow container mx-auto px-4 py-8 pb-20 md:pb-8">
