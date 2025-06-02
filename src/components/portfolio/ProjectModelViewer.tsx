@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import * as _THREE from 'three'; // Use wildcard import
 import { GLTFLoader as _GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader as _DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
@@ -27,6 +27,11 @@ dracoLoaderInstance.setDecoderConfig({ type: 'wasm' });
 const gltfLoaderInstance = new GLTFLoader();
 gltfLoaderInstance.setDRACOLoader(dracoLoaderInstance);
 
+const MIN_CAMERA_Z = 1.6; // Model appears closer
+const MAX_CAMERA_Z = 2.8; // Model appears further
+const LERP_SPEED_ROTATION = 0.08;
+const LERP_SPEED_CAMERA_Z = 0.05;
+
 const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, containerRef }) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -34,18 +39,43 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
 
   const modelGroupRef = useRef<THREE.Group | null>(null);
   const targetRotationRef = useRef({ x: 0, y: 0 });
+  const targetCameraZRef = useRef<number>(MAX_CAMERA_Z);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const animationFrameIdRef = useRef<number | null>(null);
   const lightsRef = useRef<THREE.Light[]>([]);
+  const isIntersectingRef = useRef(false);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
+
+  const handleScroll = useCallback(() => {
+    if (!isIntersectingRef.current || !containerRef.current || typeof window === 'undefined') {
+      // If not intersecting, target the furthest zoom to avoid abrupt jumps when it re-enters
+      targetCameraZRef.current = MAX_CAMERA_Z;
+      return;
+    }
+
+    const cardRect = containerRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const cardCenterY = cardRect.top + cardRect.height / 2;
+    const distanceFromViewportCenter = cardCenterY - viewportHeight / 2;
+
+    // normalizedDistance: 0 when card center is at viewport center, 1 when at top/bottom edge
+    const normalizedDistance = Math.min(1, Math.abs(distanceFromViewportCenter) / (viewportHeight / 2));
+    
+    let newTargetZ = MIN_CAMERA_Z + normalizedDistance * (MAX_CAMERA_Z - MIN_CAMERA_Z);
+    newTargetZ = Math.max(MIN_CAMERA_Z, Math.min(MAX_CAMERA_Z, newTargetZ)); // Clamp
+    
+    targetCameraZRef.current = newTargetZ;
+  }, [containerRef]);
+
 
   useEffect(() => {
     const effectModelPath = modelPath; 
     let isMounted = true;
     let timeoutId: NodeJS.Timeout;
-    // const currentCardContainer = containerRef.current; // No longer needed for global mousemove
-
+    
     if (!effectModelPath || typeof effectModelPath !== 'string' || effectModelPath.trim() === '') {
       setError(`Invalid model path provided.`);
       setIsLoading(false);
@@ -55,24 +85,39 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
     
     setError(null);
     setIsLoading(true);
+    targetCameraZRef.current = MAX_CAMERA_Z; // Initialize target Z
 
-    // Define event handlers here so they can be added and removed correctly
     const handleGlobalMouseMove = (event: MouseEvent) => {
       if (!isMounted || !modelGroupRef.current || typeof window === 'undefined') return;
-
-      const x = (event.clientX / window.innerWidth - 0.5) * 2; // Normalized -1 to 1
-      const y = -(event.clientY / window.innerHeight - 0.5) * 2; // Normalized -1 to 1 (inverted Y)
-      
+      const x = (event.clientX / window.innerWidth - 0.5) * 2;
+      const y = -(event.clientY / window.innerHeight - 0.5) * 2;
       const sensitivity = 0.3; 
       targetRotationRef.current.x = y * sensitivity;
       targetRotationRef.current.y = x * sensitivity;
     };
     
     window.addEventListener('mousemove', handleGlobalMouseMove);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    if (containerRef.current) {
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          isIntersectingRef.current = entry.isIntersecting;
+          if(entry.isIntersecting) {
+            handleScroll(); // Initial calculation when it becomes visible
+          } else {
+            targetCameraZRef.current = MAX_CAMERA_Z; // Reset to far zoom when not visible
+          }
+        },
+        { threshold: 0.01 } // Trigger even if 1% is visible
+      );
+      observer.observe(containerRef.current);
+      observerRef.current = observer;
+    }
 
 
     timeoutId = setTimeout(() => {
-      if (!isMounted || !mountRef.current) { // Removed currentCardContainer check here
+      if (!isMounted || !mountRef.current) {
         setError("Initialization failed: Mounting point not ready.");
         setIsLoading(false);
         return;
@@ -83,7 +128,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       if (!sceneRef.current) sceneRef.current = new THREE.Scene();
       if (!cameraRef.current) {
         cameraRef.current = new THREE.PerspectiveCamera(50, currentMount.clientWidth > 0 ? currentMount.clientWidth / currentMount.clientHeight : 1, 0.1, 100);
-        cameraRef.current.position.z = 2.5;
+        cameraRef.current.position.z = MAX_CAMERA_Z; // Start at max Z
       } else {
         if (currentMount.clientWidth > 0 && currentMount.clientHeight > 0) {
           cameraRef.current.aspect = currentMount.clientWidth / currentMount.clientHeight;
@@ -154,8 +199,9 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
           const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
           modelGroupRef.current.position.sub(scaledCenter);
           
-          cameraRef.current!.lookAt(0, 0, 0);
+          if (cameraRef.current) cameraRef.current.lookAt(0, 0, 0);
           setIsLoading(false);
+          handleScroll(); // Perform initial scroll check after model loads
         },
         undefined,
         (loadError) => {
@@ -169,9 +215,13 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
         if (!isMounted) return;
         animationFrameIdRef.current = requestAnimationFrame(animate);
         if (modelGroupRef.current && rendererRef.current && sceneRef.current && cameraRef.current) {
-          // LERP factor for smooth rotation
-          modelGroupRef.current.rotation.x += (targetRotationRef.current.x - modelGroupRef.current.rotation.x) * 0.08;
-          modelGroupRef.current.rotation.y += (targetRotationRef.current.y - modelGroupRef.current.rotation.y) * 0.08;
+          // Rotation LERP
+          modelGroupRef.current.rotation.x += (targetRotationRef.current.x - modelGroupRef.current.rotation.x) * LERP_SPEED_ROTATION;
+          modelGroupRef.current.rotation.y += (targetRotationRef.current.y - modelGroupRef.current.rotation.y) * LERP_SPEED_ROTATION;
+          
+          // Camera Z LERP
+          cameraRef.current.position.z += (targetCameraZRef.current - cameraRef.current.position.z) * LERP_SPEED_CAMERA_Z;
+          
           rendererRef.current.render(sceneRef.current, cameraRef.current);
         }
       };
@@ -185,6 +235,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
         cameraRef.current.aspect = currentMount.clientWidth / currentMount.clientHeight;
         cameraRef.current.updateProjectionMatrix();
         rendererRef.current.setSize(currentMount.clientWidth, currentMount.clientHeight);
+        handleScroll(); // Recalculate zoom on resize
       };
       window.addEventListener('resize', handleResize);
       
@@ -194,16 +245,13 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
         }
       }, 100);
       
-      // Cleanup for listeners added inside setTimeout
       return () => {
         clearTimeout(initialResizeTimeoutId);
         window.removeEventListener('resize', handleResize);
-        // Card-specific listeners are no longer here
       };
 
-    }, 0); // setTimeout ensures DOM is ready for measurements
+    }, 0);
 
-    // Main useEffect cleanup
     return () => {
       isMounted = false;
       clearTimeout(timeoutId);
@@ -213,7 +261,12 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       }
       
       window.removeEventListener('mousemove', handleGlobalMouseMove);
-      // Card-specific listeners cleanup is removed as they are no longer added.
+      window.removeEventListener('scroll', handleScroll);
+      
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
 
       if (modelGroupRef.current && sceneRef.current) {
         sceneRef.current.remove(modelGroupRef.current);
@@ -245,8 +298,11 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       }
       rendererRef.current?.dispose();
       rendererRef.current = null;
+      // sceneRef and cameraRef are not nulled here, as they might be reused if modelPath changes
+      // but the component itself isn't unmounted.
+      // However, if the entire component unmounts, they will be naturally garbage collected.
     };
-  }, [modelPath, containerRef]); // containerRef is still a dependency for sizing, but not for mouse events
+  }, [modelPath, containerRef, handleScroll]); 
 
   return (
     <div ref={mountRef} className="w-full h-full overflow-hidden relative">
