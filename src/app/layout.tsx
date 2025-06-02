@@ -50,7 +50,14 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
     setIsClient(true);
     // Initialize Audio objects on client-side
     lightThemeSoundRef.current = new Audio('/sounds/light-theme-sound.mp3'); 
+    if (lightThemeSoundRef.current) {
+      lightThemeSoundRef.current.volume = 0.5;
+    }
     darkThemeSoundRef.current = new Audio('/sounds/dark-theme-sound.mp3');
+    if (darkThemeSoundRef.current) {
+      darkThemeSoundRef.current.volume = 0.5;
+    }
+
 
     // Load sound preference from localStorage
     const storedSoundPreference = localStorage.getItem('portfolioSoundEnabled');
