@@ -33,6 +33,7 @@ const wastedVindey = localFont({
 });
 
 const CursorTail = dynamic(() => import('@/components/effects/CursorTail'), { ssr: false });
+const FirefliesEffect = dynamic(() => import('@/components/effects/FirefliesEffect'), { ssr: false });
 
 
 function MainContentWithTheme({ children }: { children: React.ReactNode }) {
@@ -76,11 +77,12 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   }, [showMobileMessage]);
 
   const currentIsDarkTheme = resolvedTheme === 'dark';
-  const showCursorTail = isClient && currentIsDarkTheme;
+  const showEffects = isClient && currentIsDarkTheme;
 
   return (
     <>
-      {showCursorTail && <CursorTail isDarkTheme={currentIsDarkTheme} />}
+      {showEffects && <CursorTail isDarkTheme={currentIsDarkTheme} />}
+      {showEffects && <FirefliesEffect isDarkTheme={currentIsDarkTheme} />}
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
         <main className="flex-grow container mx-auto px-4 py-8 pb-20 md:pb-8">
@@ -135,3 +137,4 @@ export default function RootLayout({
     </html>
   );
 }
+
