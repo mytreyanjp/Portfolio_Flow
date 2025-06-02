@@ -54,7 +54,7 @@ const addProjectSchema = z.object({
       message: "AI hint should be one or two keywords, or empty.",
     }).optional(),
   categories: z.array(z.string()).min(1, 'Please add at least one category.'),
-  technologies: z.string().min(1, 'Please list at least one technology (comma-separated).'), // Keep as string for now
+  technologies: z.string().min(1, 'Please list at least one technology (comma-separated).'),
   liveLink: z.string().url({ message: "Please enter a valid URL." }).or(z.literal('')).optional(),
   sourceLink: z.string().url({ message: "Please enter a valid URL." }).or(z.literal('')).optional(),
   imageUrl: z.string().url({ message: "Please enter a valid URL for the image." }).or(z.literal('')).optional(),
@@ -66,7 +66,7 @@ interface AddProjectFormProps {
   onProjectAdded: (newProjectData: Omit<Project, 'id'> & { id?: string }) => void;
   editingProject?: Project | null;
   onProjectUpdated?: (updatedProjectData: Project) => void;
-  availableCategories: string[]; // For suggestions
+  availableCategories: string[];
 }
 
 export default function AddProjectForm({ onProjectAdded, editingProject, onProjectUpdated, availableCategories }: AddProjectFormProps) {
@@ -127,10 +127,9 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
     }
   }, [editingProject, form, isEditMode]);
 
-  // Sync currentProjectCategories with form state for validation
   useEffect(() => {
     form.setValue('categories', currentProjectCategories, { shouldValidate: true, shouldDirty: true });
-  }, [currentProjectCategories, form]);
+  }, [currentProjectCategories, form.setValue]);
 
 
   const handleAddCategory = useCallback((category: string) => {
@@ -139,7 +138,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
       setCurrentProjectCategories(prev => [...prev, newCategory]);
     }
     setCategoryInputValue('');
-    setIsCategoryPopoverOpen(false);
+    // setIsCategoryPopoverOpen(false); // Popover will close via its onOpenChange or Enter key
     categoryInputRef.current?.focus();
   }, [currentProjectCategories]);
 
@@ -159,7 +158,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
       const projectDataToSave: any = {
         title: data.title,
         description: data.description,
-        categories: data.categories, // This is now an array from the form state
+        categories: data.categories, 
         technologies: techArray,
         dataAiHint: data.dataAiHint || (data.modelPath && data.modelPath.trim() !== '' ? '3d model' : 'project image'),
       };
@@ -211,7 +210,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
           onProjectAdded(newProjectForCallback); 
         }
         form.reset(); 
-        setCurrentProjectCategories([]); // Reset local category state
+        setCurrentProjectCategories([]); 
       }
 
     } catch (error) {
@@ -323,8 +322,8 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
 
         <FormField
           control={form.control}
-          name="categories" // This field is for Zod validation, UI is handled separately
-          render={({ field }) => ( // field is not directly used for input, but for messages
+          name="categories"
+          render={({ field }) => (
             <FormItem>
               <FormLabel>Categories</FormLabel>
               <div className="flex flex-wrap gap-2 mb-2">
@@ -346,26 +345,43 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
               </div>
               <Popover open={isCategoryPopoverOpen} onOpenChange={setIsCategoryPopoverOpen}>
                 <PopoverTrigger asChild>
-                  <div className="relative">
+                   <div className="relative">
                      <Input
                         ref={categoryInputRef}
                         type="text"
                         placeholder="Type or select a category"
                         value={categoryInputValue}
                         onChange={(e) => {
-                           setCategoryInputValue(e.target.value);
-                           if (!isCategoryPopoverOpen && e.target.value.trim()) {
-                            setIsCategoryPopoverOpen(true);
-                           } else if (isCategoryPopoverOpen && !e.target.value.trim() && filteredCategorySuggestions.length === 0) {
-                            setIsCategoryPopoverOpen(false);
+                           const newTypedValue = e.target.value;
+                           setCategoryInputValue(newTypedValue);
+                           if (newTypedValue.trim()) {
+                             if(!isCategoryPopoverOpen) setIsCategoryPopoverOpen(true);
+                           } else {
+                             // if (isCategoryPopoverOpen) setIsCategoryPopoverOpen(false); // User might clear to type something else
                            }
+                        }}
+                        onFocus={() => {
+                          if (categoryInputValue.trim() || filteredCategorySuggestions.length > 0) {
+                            if(!isCategoryPopoverOpen) setIsCategoryPopoverOpen(true);
+                          }
                         }}
                         onKeyDownCapture={(e) => {
                           if (e.key === 'Enter' && categoryInputValue.trim()) {
                             e.preventDefault();
-                            handleAddCategory(categoryInputValue.trim());
+                            const exactMatchSuggestion = filteredCategorySuggestions.find(
+                              (s) => s.toLowerCase() === categoryInputValue.trim().toLowerCase()
+                            );
+                            if (exactMatchSuggestion) {
+                              handleAddCategory(exactMatchSuggestion);
+                            } else {
+                              handleAddCategory(categoryInputValue.trim());
+                            }
+                            setIsCategoryPopoverOpen(false); 
                           } else if (e.key === 'Backspace' && !categoryInputValue && currentProjectCategories.length > 0) {
+                            e.preventDefault();
                             handleRemoveCategory(currentProjectCategories[currentProjectCategories.length - 1]);
+                          } else if (e.key === 'Escape') {
+                            setIsCategoryPopoverOpen(false);
                           }
                         }}
                         className="pr-8"
@@ -376,7 +392,10 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
                         size="icon"
                         className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
                         onClick={() => {
-                            if (categoryInputValue.trim()) handleAddCategory(categoryInputValue.trim());
+                            if (categoryInputValue.trim()) {
+                                handleAddCategory(categoryInputValue.trim());
+                                setIsCategoryPopoverOpen(false);
+                            }
                         }}
                         disabled={!categoryInputValue.trim()}
                         title="Add category"
@@ -388,31 +407,25 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
                 <PopoverContent 
                     className="w-[--radix-popover-trigger-width] p-0" 
                     align="start"
-                    onOpenAutoFocus={(e) => e.preventDefault()} // Prevent focus trap, inputRef handles focus
+                    onOpenAutoFocus={(e) => e.preventDefault()}
                 >
                   <Command>
-                    {/* CommandInput is not used directly here to avoid double input field effect */}
                     <CommandList>
-                      <CommandEmpty>
-                        {categoryInputValue.trim() ? (
-                          <CommandItem
-                            onSelect={() => handleAddCategory(categoryInputValue.trim())}
-                            value={`add-${categoryInputValue.trim()}`} // ensure unique value for selection
-                            className="italic"
-                          >
-                            Add new: "{categoryInputValue.trim()}"
-                          </CommandItem>
-                        ) : (
-                          "No category found."
-                        )}
-                      </CommandEmpty>
+                       <CommandEmpty>
+                         {categoryInputValue.trim() 
+                           ? `No suggestions found for "${categoryInputValue.trim()}". Press Enter or click + to add.` 
+                           : "Type to search or add new."}
+                       </CommandEmpty>
                       {filteredCategorySuggestions.length > 0 && (
                         <CommandGroup heading="Suggestions">
                           {filteredCategorySuggestions.map(cat => (
                             <CommandItem
                               key={cat}
                               value={cat}
-                              onSelect={() => handleAddCategory(cat)}
+                              onSelect={() => {
+                                handleAddCategory(cat);
+                                setIsCategoryPopoverOpen(false);
+                              }}
                             >
                               {cat}
                             </CommandItem>
@@ -426,7 +439,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
               <FormDescription>
                 Add relevant categories for your project. Type to search or add new ones.
               </FormDescription>
-              <FormMessage /> {/* This will show Zod error for 'categories' field */}
+              <FormMessage />
             </FormItem>
           )}
         />
