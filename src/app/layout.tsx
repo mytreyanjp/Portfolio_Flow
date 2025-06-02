@@ -41,7 +41,7 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   const { theme, resolvedTheme } = useTheme();
   const mobileStatus = useIsMobile();
   const [showMobileMessage, setShowMobileMessage] = useState(false);
-  const [isSoundEnabled, setIsSoundEnabled] = useState(true);
+  const [isSoundEnabled, setIsSoundEnabled] = useState(false); // Changed default to false
 
   const lightThemeSoundRef = useRef<HTMLAudioElement | null>(null);
   const darkThemeSoundRef = useRef<HTMLAudioElement | null>(null);
