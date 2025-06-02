@@ -11,7 +11,7 @@ import Link from 'next/link';
 import React, { useState, useEffect, useCallback } from 'react';
 import AddProjectForm from '@/components/admin/AddProjectForm';
 import type { Project } from '@/data/projects';
-import { getProjects, getUniqueCategoriesFromProjects } from '@/services/projectsService'; // Keep this for fetching categories
+import { getProjects, getUniqueCategoriesFromProjects } from '@/services/projectsService';
 import { db } from '@/lib/firebase/firebase';
 import { doc, deleteDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -30,7 +30,6 @@ export default function SecretLairPage() {
   const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
 
-  // availableCategories is kept for potential future use or consistency, but not passed to AddProjectForm
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
 
@@ -41,16 +40,14 @@ export default function SecretLairPage() {
     try {
       const fetchedProjects = await getProjects();
        if (fetchedProjects.length > 1) {
-        // Filter out default project if other projects exist, then sort
         setProjects(fetchedProjects.filter(p => p.id !== 'default-project-1').sort((a, b) => a.title.localeCompare(b.title)));
       } else {
-        // Handle case where only default project or no projects exist
          setProjects(fetchedProjects.filter(p => p.id !== 'default-project-1' || (fetchedProjects[0]?.title === 'Sample Project: Interactive Model' && fetchedProjects.length === 1)).sort((a, b) => a.title.localeCompare(b.title)));
       }
       setIsLoadingProjects(false);
 
       const categories = await getUniqueCategoriesFromProjects();
-      setAvailableCategories(categories); // Still fetch and set for consistency / other potential uses
+      setAvailableCategories(categories); 
       setIsLoadingCategories(false);
 
     } catch (err) {
@@ -97,7 +94,7 @@ export default function SecretLairPage() {
   };
 
   const handleProjectAddedOrUpdated = () => {
-    fetchProjectData(); 
+    fetchProjectData(); // This will re-fetch projects AND categories
   };
 
   const handleOpenEditDialog = (project: Project) => {
@@ -132,13 +129,13 @@ export default function SecretLairPage() {
                 <CardHeader>
                   <CardTitle>Add New Project</CardTitle>
                   <CardDescription>
-                    Fill in the details for your new project. Enter categories as a comma-separated list.
+                    Fill in the details for your new project. 
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                    <AddProjectForm 
                       onProjectAdded={handleProjectAddedOrUpdated} 
-                      // availableCategories prop removed
+                      availableCategories={availableCategories}
                     />
                 </CardContent>
               </Card>
@@ -273,7 +270,7 @@ export default function SecretLairPage() {
                     setShowEditDialog(false); 
                     setProjectToEdit(null);
                   }}
-                  // availableCategories prop removed
+                  availableCategories={availableCategories} // Pass availableCategories for suggestions
                   onProjectAdded={() => { /* This won't be called in edit mode */ }}
                 />
             </div>
@@ -283,3 +280,4 @@ export default function SecretLairPage() {
     </div>
   );
 }
+

@@ -18,12 +18,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { allTechnologies, Project } from '@/data/projects';
-import React, { useState, useEffect } from 'react';
-import { Loader2, Save, Edit } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Loader2, Save, Edit, X as XIcon, PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { addDoc, collection, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/firebase';
-// Combobox is no longer used here for categories
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Badge } from '@/components/ui/badge';
 
 const addProjectSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters.'),
@@ -51,8 +53,8 @@ const addProjectSchema = z.object({
     .refine(val => val === '' || val.split(' ').length <= 2, {
       message: "AI hint should be one or two keywords, or empty.",
     }).optional(),
-  categories: z.string().min(1, 'Please list at least one category (comma-separated).'), // Changed from category
-  technologies: z.string().min(1, 'Please list at least one technology (comma-separated).'),
+  categories: z.array(z.string()).min(1, 'Please add at least one category.'),
+  technologies: z.string().min(1, 'Please list at least one technology (comma-separated).'), // Keep as string for now
   liveLink: z.string().url({ message: "Please enter a valid URL." }).or(z.literal('')).optional(),
   sourceLink: z.string().url({ message: "Please enter a valid URL." }).or(z.literal('')).optional(),
   imageUrl: z.string().url({ message: "Please enter a valid URL for the image." }).or(z.literal('')).optional(),
@@ -61,16 +63,21 @@ const addProjectSchema = z.object({
 export type AddProjectFormValues = z.infer<typeof addProjectSchema>;
 
 interface AddProjectFormProps {
-  onProjectAdded: (newProjectData: Omit<Project, 'id'> & { id?: string }) => void; // Allow id to be optional for new projects
+  onProjectAdded: (newProjectData: Omit<Project, 'id'> & { id?: string }) => void;
   editingProject?: Project | null;
   onProjectUpdated?: (updatedProjectData: Project) => void;
-  // availableCategories prop is removed as we use a text input now
+  availableCategories: string[]; // For suggestions
 }
 
-export default function AddProjectForm({ onProjectAdded, editingProject, onProjectUpdated }: AddProjectFormProps) {
+export default function AddProjectForm({ onProjectAdded, editingProject, onProjectUpdated, availableCategories }: AddProjectFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditMode = !!editingProject;
+
+  const [currentProjectCategories, setCurrentProjectCategories] = useState<string[]>([]);
+  const [categoryInputValue, setCategoryInputValue] = useState('');
+  const [isCategoryPopoverOpen, setIsCategoryPopoverOpen] = useState(false);
+  const categoryInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<AddProjectFormValues>({
     resolver: zodResolver(addProjectSchema),
@@ -80,7 +87,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
       longDescription: '',
       modelPath: '',
       dataAiHint: '',
-      categories: '', // Changed from category
+      categories: [],
       technologies: '',
       liveLink: '',
       sourceLink: '',
@@ -96,12 +103,13 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
         longDescription: editingProject.longDescription || '',
         modelPath: editingProject.model || '',
         dataAiHint: editingProject.dataAiHint || '',
-        categories: editingProject.categories ? editingProject.categories.join(', ') : '', // Join array for input
+        categories: editingProject.categories || [],
         technologies: editingProject.technologies ? editingProject.technologies.join(', ') : '',
         liveLink: editingProject.liveLink || '',
         sourceLink: editingProject.sourceLink || '',
         imageUrl: editingProject.imageUrl || '',
       });
+      setCurrentProjectCategories(editingProject.categories || []);
     } else {
       form.reset({
         title: '',
@@ -109,26 +117,49 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
         longDescription: '',
         modelPath: '',
         dataAiHint: '',
-        categories: '',
+        categories: [],
         technologies: '',
         liveLink: '',
         sourceLink: '',
         imageUrl: '',
       });
+      setCurrentProjectCategories([]);
     }
   }, [editingProject, form, isEditMode]);
 
+  // Sync currentProjectCategories with form state for validation
+  useEffect(() => {
+    form.setValue('categories', currentProjectCategories, { shouldValidate: true, shouldDirty: true });
+  }, [currentProjectCategories, form]);
+
+
+  const handleAddCategory = useCallback((category: string) => {
+    const newCategory = category.trim();
+    if (newCategory && !currentProjectCategories.includes(newCategory)) {
+      setCurrentProjectCategories(prev => [...prev, newCategory]);
+    }
+    setCategoryInputValue('');
+    setIsCategoryPopoverOpen(false);
+    categoryInputRef.current?.focus();
+  }, [currentProjectCategories]);
+
+  const handleRemoveCategory = (categoryToRemove: string) => {
+    setCurrentProjectCategories(prev => prev.filter(cat => cat !== categoryToRemove));
+  };
+
+  const filteredCategorySuggestions = availableCategories.filter(
+    cat => cat.toLowerCase().includes(categoryInputValue.toLowerCase()) && !currentProjectCategories.includes(cat)
+  );
 
   async function onSubmit(data: AddProjectFormValues) {
     setIsSubmitting(true);
     try {
       const techArray = data.technologies.split(',').map(tech => tech.trim()).filter(Boolean);
-      const catArray = data.categories.split(',').map(cat => cat.trim()).filter(Boolean);
-
+      
       const projectDataToSave: any = {
         title: data.title,
         description: data.description,
-        categories: catArray, // Save as array
+        categories: data.categories, // This is now an array from the form state
         technologies: techArray,
         dataAiHint: data.dataAiHint || (data.modelPath && data.modelPath.trim() !== '' ? '3d model' : 'project image'),
       };
@@ -174,12 +205,13 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
 
         if (onProjectAdded) {
           const newProjectForCallback: Omit<Project, 'id'> & { id: string } = {
-              id: docRef.id, // Firestore generates the ID
-              ...projectDataToSave, // Spread the rest of the data
+              id: docRef.id,
+              ...projectDataToSave,
           };
           onProjectAdded(newProjectForCallback); 
         }
         form.reset(); 
+        setCurrentProjectCategories([]); // Reset local category state
       }
 
     } catch (error) {
@@ -291,20 +323,114 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
 
         <FormField
           control={form.control}
-          name="categories"
-          render={({ field }) => (
+          name="categories" // This field is for Zod validation, UI is handled separately
+          render={({ field }) => ( // field is not directly used for input, but for messages
             <FormItem>
               <FormLabel>Categories</FormLabel>
-              <FormControl>
-                <Input placeholder="Web Development, AI, 3D Art" {...field} />
-              </FormControl>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {currentProjectCategories.map(cat => (
+                  <Badge key={cat} variant="secondary" className="flex items-center gap-1">
+                    {cat}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-4 w-4 p-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => handleRemoveCategory(cat)}
+                    >
+                      <XIcon className="h-3 w-3" />
+                      <span className="sr-only">Remove {cat}</span>
+                    </Button>
+                  </Badge>
+                ))}
+              </div>
+              <Popover open={isCategoryPopoverOpen} onOpenChange={setIsCategoryPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <div className="relative">
+                     <Input
+                        ref={categoryInputRef}
+                        type="text"
+                        placeholder="Type or select a category"
+                        value={categoryInputValue}
+                        onChange={(e) => {
+                           setCategoryInputValue(e.target.value);
+                           if (!isCategoryPopoverOpen && e.target.value.trim()) {
+                            setIsCategoryPopoverOpen(true);
+                           } else if (isCategoryPopoverOpen && !e.target.value.trim() && filteredCategorySuggestions.length === 0) {
+                            setIsCategoryPopoverOpen(false);
+                           }
+                        }}
+                        onKeyDownCapture={(e) => {
+                          if (e.key === 'Enter' && categoryInputValue.trim()) {
+                            e.preventDefault();
+                            handleAddCategory(categoryInputValue.trim());
+                          } else if (e.key === 'Backspace' && !categoryInputValue && currentProjectCategories.length > 0) {
+                            handleRemoveCategory(currentProjectCategories[currentProjectCategories.length - 1]);
+                          }
+                        }}
+                        className="pr-8"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                        onClick={() => {
+                            if (categoryInputValue.trim()) handleAddCategory(categoryInputValue.trim());
+                        }}
+                        disabled={!categoryInputValue.trim()}
+                        title="Add category"
+                       >
+                         <PlusCircle className="h-4 w-4" />
+                       </Button>
+                   </div>
+                </PopoverTrigger>
+                <PopoverContent 
+                    className="w-[--radix-popover-trigger-width] p-0" 
+                    align="start"
+                    onOpenAutoFocus={(e) => e.preventDefault()} // Prevent focus trap, inputRef handles focus
+                >
+                  <Command>
+                    {/* CommandInput is not used directly here to avoid double input field effect */}
+                    <CommandList>
+                      <CommandEmpty>
+                        {categoryInputValue.trim() ? (
+                          <CommandItem
+                            onSelect={() => handleAddCategory(categoryInputValue.trim())}
+                            value={`add-${categoryInputValue.trim()}`} // ensure unique value for selection
+                            className="italic"
+                          >
+                            Add new: "{categoryInputValue.trim()}"
+                          </CommandItem>
+                        ) : (
+                          "No category found."
+                        )}
+                      </CommandEmpty>
+                      {filteredCategorySuggestions.length > 0 && (
+                        <CommandGroup heading="Suggestions">
+                          {filteredCategorySuggestions.map(cat => (
+                            <CommandItem
+                              key={cat}
+                              value={cat}
+                              onSelect={() => handleAddCategory(cat)}
+                            >
+                              {cat}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      )}
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
               <FormDescription>
-                Comma-separated list of categories.
+                Add relevant categories for your project. Type to search or add new ones.
               </FormDescription>
-              <FormMessage />
+              <FormMessage /> {/* This will show Zod error for 'categories' field */}
             </FormItem>
           )}
         />
+
 
         <FormField
           control={form.control}
@@ -376,3 +502,4 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
     </Form>
   );
 }
+
