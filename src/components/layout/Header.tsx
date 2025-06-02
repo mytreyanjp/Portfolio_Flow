@@ -43,7 +43,7 @@ export default function Header() {
   const [lastClickTime, setLastClickTime] = useState(0);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [passwordAttempt, setPasswordAttempt] = useState('');
-  const [showPasswordAttemptVisual, setShowPasswordAttemptVisual] = useState(false); // Renamed for clarity
+  const [showPasswordAttemptVisual, setShowPasswordAttemptVisual] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -66,26 +66,24 @@ export default function Header() {
       setShowPasswordDialog(true);
       setLogoClickCount(0);
       setLastClickTime(0);
-      setPasswordAttempt(''); // Clear previous attempt when dialog opens
-      setShowPasswordAttemptVisual(false); // Reset visibility toggle
+      setPasswordAttempt(''); 
+      setShowPasswordAttemptVisual(false); 
     }
   };
 
-  const handlePasswordSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    const currentAttempt = passwordAttempt; // Capture the state at the moment of submission
-
-    console.log(`[Header] Attempting password: '${currentAttempt}' (length: ${currentAttempt.length})`);
+  const handlePasswordCheck = () => {
+    // Uses the current 'passwordAttempt' state directly
+    console.log(`[Header] Attempting password: '${passwordAttempt}' (length: ${passwordAttempt.length})`);
     console.log(`[Header] Expected password: '${SECRET_PASSWORD}' (length: ${SECRET_PASSWORD.length})`);
 
-    if (currentAttempt === SECRET_PASSWORD) {
+    if (passwordAttempt === SECRET_PASSWORD) {
       console.log('[Header] Password MATCHED!');
       toast({
         title: "Access Granted!",
         description: "Welcome to the Secret Lair.",
       });
       router.push('/secret-lair');
-      setShowPasswordDialog(false); // This will trigger onOpenChange, then handleDialogClose
+      setShowPasswordDialog(false); // Close dialog ON SUCCESS
     } else {
       console.log('[Header] Password MISMATCH.');
       toast({
@@ -93,20 +91,27 @@ export default function Header() {
         description: "Please try again.",
         variant: "destructive",
       });
-      setPasswordAttempt(''); // Clear input for another try
-      // Keep dialog open
+      setPasswordAttempt(''); // Clear input for another try, dialog remains open
     }
   };
+  
+  const handlePasswordSubmitFormEvent = (event: React.FormEvent) => {
+    event.preventDefault(); // Prevent default form submission which might close dialog prematurely
+    handlePasswordCheck();
+  };
+
 
   const toggleShowPasswordAttemptVisual = () => {
     setShowPasswordAttemptVisual(prev => !prev);
   };
 
   const handleDialogClose = () => {
-    setShowPasswordDialog(false);
+    // This function is called when the dialog's open state changes to false
+    // (e.g., by clicking Cancel, pressing Esc, or explicitly calling setShowPasswordDialog(false))
+    // We reset everything here.
     setPasswordAttempt('');
     setShowPasswordAttemptVisual(false);
-    setLogoClickCount(0); // Reset click count to avoid immediate reopen
+    setLogoClickCount(0); 
     setLastClickTime(0);
   }
 
@@ -179,13 +184,13 @@ export default function Header() {
       </header>
 
       <AlertDialog open={showPasswordDialog} onOpenChange={(isOpen) => {
+        setShowPasswordDialog(isOpen); // Keep state in sync
         if (!isOpen) {
-          handleDialogClose(); // Centralize closing logic
+          handleDialogClose(); 
         }
-        // No need to setShowPasswordDialog(true) here, `open` prop controls it
       }}>
         <AlertDialogContent>
-          <form onSubmit={handlePasswordSubmit}>
+          <form onSubmit={handlePasswordSubmitFormEvent}> {/* form's onSubmit */}
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center">
                 <LockKeyhole className="mr-2 h-5 w-5 text-primary" />
@@ -208,7 +213,7 @@ export default function Header() {
                 className="pr-10"
               />
               <Button
-                type="button"
+                type="button" // Important: keep this as type="button" to not interfere with form submission
                 variant="ghost"
                 size="icon"
                 className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-foreground"
@@ -219,8 +224,8 @@ export default function Header() {
               </Button>
             </div>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setShowPasswordDialog(false)}>Cancel</AlertDialogCancel>
-              <AlertDialogAction type="submit">Unlock</AlertDialogAction>
+              <AlertDialogCancel>Cancel</AlertDialogCancel> {/* Default behavior is fine: sets open=false, triggers onOpenChange -> handleDialogClose */}
+              <AlertDialogAction type="submit">Unlock</AlertDialogAction> {/* type="submit" to trigger form's onSubmit */}
             </AlertDialogFooter>
           </form>
         </AlertDialogContent>
@@ -228,3 +233,4 @@ export default function Header() {
     </>
   );
 }
+
