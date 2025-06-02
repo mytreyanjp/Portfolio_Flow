@@ -44,7 +44,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
     const effectModelPath = modelPath; 
     let isMounted = true;
     let timeoutId: NodeJS.Timeout;
-    const currentCardContainer = containerRef.current; // Capture card container ref for use in listeners & cleanup
+    // const currentCardContainer = containerRef.current; // No longer needed for global mousemove
 
     if (!effectModelPath || typeof effectModelPath !== 'string' || effectModelPath.trim() === '') {
       setError(`Invalid model path provided.`);
@@ -57,28 +57,23 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
     setIsLoading(true);
 
     // Define event handlers here so they can be added and removed correctly
-    const handleMouseMove = (event: MouseEvent) => {
-      if (!isMounted || !modelGroupRef.current || !currentCardContainer) return;
+    const handleGlobalMouseMove = (event: MouseEvent) => {
+      if (!isMounted || !modelGroupRef.current || typeof window === 'undefined') return;
 
-      const rect = currentCardContainer.getBoundingClientRect();
-      const x = ((event.clientX - rect.left) / rect.width) * 2 - 1; // Normalized -1 to 1 across card width
-      const y = -(((event.clientY - rect.top) / rect.height) * 2 - 1); // Normalized -1 to 1 across card height (inverted)
+      const x = (event.clientX / window.innerWidth - 0.5) * 2; // Normalized -1 to 1
+      const y = -(event.clientY / window.innerHeight - 0.5) * 2; // Normalized -1 to 1 (inverted Y)
       
-      const sensitivity = 0.4; // Increased sensitivity
+      const sensitivity = 0.3; 
       targetRotationRef.current.x = y * sensitivity;
       targetRotationRef.current.y = x * sensitivity;
     };
-
-    const handleMouseLeave = () => {
-      if (!isMounted) return;
-      targetRotationRef.current.x = 0;
-      targetRotationRef.current.y = 0;
-    };
+    
+    window.addEventListener('mousemove', handleGlobalMouseMove);
 
 
     timeoutId = setTimeout(() => {
-      if (!isMounted || !mountRef.current || !currentCardContainer) {
-        setError("Initialization failed: Mounting point or card container not ready.");
+      if (!isMounted || !mountRef.current) { // Removed currentCardContainer check here
+        setError("Initialization failed: Mounting point not ready.");
         setIsLoading(false);
         return;
       }
@@ -170,19 +165,13 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
         }
       );
 
-      // Add event listeners to the card container
-      if (currentCardContainer) {
-        currentCardContainer.addEventListener('mousemove', handleMouseMove);
-        currentCardContainer.addEventListener('mouseleave', handleMouseLeave);
-      }
-
       const animate = () => {
         if (!isMounted) return;
         animationFrameIdRef.current = requestAnimationFrame(animate);
         if (modelGroupRef.current && rendererRef.current && sceneRef.current && cameraRef.current) {
-          // Faster LERP factor for quicker response
-          modelGroupRef.current.rotation.x += (targetRotationRef.current.x - modelGroupRef.current.rotation.x) * 0.1;
-          modelGroupRef.current.rotation.y += (targetRotationRef.current.y - modelGroupRef.current.rotation.y) * 0.1;
+          // LERP factor for smooth rotation
+          modelGroupRef.current.rotation.x += (targetRotationRef.current.x - modelGroupRef.current.rotation.x) * 0.08;
+          modelGroupRef.current.rotation.y += (targetRotationRef.current.y - modelGroupRef.current.rotation.y) * 0.08;
           rendererRef.current.render(sceneRef.current, cameraRef.current);
         }
       };
@@ -209,10 +198,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       return () => {
         clearTimeout(initialResizeTimeoutId);
         window.removeEventListener('resize', handleResize);
-        if (currentCardContainer) {
-          currentCardContainer.removeEventListener('mousemove', handleMouseMove);
-          currentCardContainer.removeEventListener('mouseleave', handleMouseLeave);
-        }
+        // Card-specific listeners are no longer here
       };
 
     }, 0); // setTimeout ensures DOM is ready for measurements
@@ -226,11 +212,8 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
         animationFrameIdRef.current = null;
       }
       
-      // Remove event listeners specifically from currentCardContainer if they were added
-      if (currentCardContainer) {
-         currentCardContainer.removeEventListener('mousemove', handleMouseMove);
-         currentCardContainer.removeEventListener('mouseleave', handleMouseLeave);
-      }
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
+      // Card-specific listeners cleanup is removed as they are no longer added.
 
       if (modelGroupRef.current && sceneRef.current) {
         sceneRef.current.remove(modelGroupRef.current);
@@ -263,7 +246,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       rendererRef.current?.dispose();
       rendererRef.current = null;
     };
-  }, [modelPath, containerRef]); // containerRef is a dependency
+  }, [modelPath, containerRef]); // containerRef is still a dependency for sizing, but not for mouse events
 
   return (
     <div ref={mountRef} className="w-full h-full overflow-hidden relative">
@@ -284,3 +267,4 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
 };
 
 export default ProjectModelViewer;
+
