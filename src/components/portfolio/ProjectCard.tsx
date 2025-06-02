@@ -4,10 +4,13 @@ import type { Project } from '@/data/projects';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowUpRight, Github } from 'lucide-react';
-import React, { useRef, useEffect } from 'react';
+import { ArrowUpRight, Github, Image as ImageIcon, Loader2 } from 'lucide-react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
+import { generateProjectImage } from '@/ai/flows/generate-project-image-flow';
+import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const ProjectModelViewer = dynamic(() => import('./ProjectModelViewer'), {
   ssr: false,
@@ -19,43 +22,95 @@ interface ProjectCardProps {
   index: number;
 }
 
+const FALLBACK_IMAGE_URL = 'https://placehold.co/600x400.png?text=Preview+Unavailable';
+
 export default function ProjectCard({ project, index }: ProjectCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+
+  const [effectiveImageUrl, setEffectiveImageUrl] = useState<string | null>(project.imageUrl || null);
+  const [isGeneratingAiImage, setIsGeneratingAiImage] = useState(false);
+  const [modelLoadFailedOrMissing, setModelLoadFailedOrMissing] = useState(!project.model);
+  const [aiImageGenerated, setAiImageGenerated] = useState(false);
+
+  const triggerAiImageGeneration = useCallback(async () => {
+    if (!project.description || aiImageGenerated) return;
+
+    setIsGeneratingAiImage(true);
+    try {
+      const result = await generateProjectImage({ description: project.description });
+      setEffectiveImageUrl(result.imageUrl);
+      setAiImageGenerated(true);
+    } catch (error) {
+      console.error("AI Image Generation Error:", error);
+      toast({
+        title: "AI Image Error",
+        description: `Could not generate image for "${project.title}". Using placeholder.`,
+        variant: "destructive",
+      });
+      setEffectiveImageUrl(FALLBACK_IMAGE_URL); // Fallback on error
+    } finally {
+      setIsGeneratingAiImage(false);
+    }
+  }, [project.description, project.title, toast, aiImageGenerated]);
 
   useEffect(() => {
-    // console.log(`ProjectCard: Rendering project "${project.title}" with model: ${project.model}`);
-    // if (typeof project.model === 'string' && project.model.trim() !== '') {
-      // console.log(`ProjectCard: Attempting to render ProjectModelViewer for "${project.title}"`);
-    // } else if (project.imageUrl) {
-      // console.log(`ProjectCard: Rendering fallback image for "${project.title}"`);
-    // } else {
-      // console.log(`ProjectCard: No model or image URL for "${project.title}", showing 'No preview'.`);
-    // }
+    setModelLoadFailedOrMissing(!project.model);
+    setEffectiveImageUrl(project.imageUrl || null);
+    setAiImageGenerated(false); // Reset AI image generation status when project changes
   }, [project]);
 
+  useEffect(() => {
+    if (modelLoadFailedOrMissing && !project.imageUrl && project.description && !aiImageGenerated && !isGeneratingAiImage) {
+      triggerAiImageGeneration();
+    } else if (modelLoadFailedOrMissing && !project.imageUrl && !project.description) {
+      setEffectiveImageUrl(FALLBACK_IMAGE_URL);
+    } else if (modelLoadFailedOrMissing && project.imageUrl) {
+      setEffectiveImageUrl(project.imageUrl);
+    }
+
+  }, [modelLoadFailedOrMissing, project.imageUrl, project.description, triggerAiImageGeneration, aiImageGenerated, isGeneratingAiImage]);
+
+
+  const handleModelErrorOrMissing = useCallback(() => {
+    setModelLoadFailedOrMissing(true);
+  }, []);
+
   const projectCategories = project.categories || [];
+  const displayModelViewer = project.model && !modelLoadFailedOrMissing;
 
   return (
     <Card
       ref={cardRef}
       className={cn(
         "flex flex-col h-full overflow-hidden transform transition-all duration-300 hover:scale-[1.02] animate-fadeInUpScale",
-        "w-full max-w-[363px] mx-auto"
+        "w-full max-w-[363px] mx-auto" 
       )}
       style={{ animationDelay: `${index * 100}ms` }}
     >
       <div className="relative w-full h-48 mb-4 rounded-t-md overflow-hidden group bg-muted">
-        {typeof project.model === 'string' && project.model.trim() !== '' ? (
-          <ProjectModelViewer modelPath={project.model} containerRef={cardRef} />
-        ) : project.imageUrl ? (
+        {displayModelViewer ? (
+          <ProjectModelViewer
+            modelPath={project.model}
+            containerRef={cardRef}
+            onModelErrorOrMissing={handleModelErrorOrMissing}
+          />
+        ) : isGeneratingAiImage ? (
+          <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground text-sm bg-muted/50">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+            Generating Preview...
+          </div>
+        ) : effectiveImageUrl ? (
           <img
-            src={project.imageUrl}
+            src={effectiveImageUrl}
             alt={project.title}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            data-ai-hint={project.dataAiHint}
+            data-ai-hint={project.dataAiHint || project.categories.join(' ') || 'project image'}
+            onError={() => setEffectiveImageUrl(FALLBACK_IMAGE_URL)} // Fallback if image URL itself is broken
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+           <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground text-sm">
+            <ImageIcon className="h-10 w-10 mb-2 text-gray-400" />
             No preview available
           </div>
         )}
