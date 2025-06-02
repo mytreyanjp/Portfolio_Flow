@@ -23,22 +23,24 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    console.log(`ProjectCard: Rendering project "${project.title}" with model: ${project.model}`);
-    if (typeof project.model === 'string' && project.model.trim() !== '') {
-      console.log(`ProjectCard: Attempting to render ProjectModelViewer for "${project.title}"`);
-    } else if (project.imageUrl) {
-      console.log(`ProjectCard: Rendering fallback image for "${project.title}"`);
-    } else {
-      console.log(`ProjectCard: No model or image URL for "${project.title}", showing 'No preview'.`);
-    }
+    // console.log(`ProjectCard: Rendering project "${project.title}" with model: ${project.model}`);
+    // if (typeof project.model === 'string' && project.model.trim() !== '') {
+      // console.log(`ProjectCard: Attempting to render ProjectModelViewer for "${project.title}"`);
+    // } else if (project.imageUrl) {
+      // console.log(`ProjectCard: Rendering fallback image for "${project.title}"`);
+    // } else {
+      // console.log(`ProjectCard: No model or image URL for "${project.title}", showing 'No preview'.`);
+    // }
   }, [project]);
+
+  const projectCategories = project.categories || [];
 
   return (
     <Card
       ref={cardRef}
       className={cn(
         "flex flex-col h-full overflow-hidden transform transition-all duration-300 hover:scale-[1.02] animate-fadeInUpScale",
-        "w-full max-w-[363px] mx-auto" // Added max width and auto margin for centering
+        "w-full max-w-[363px] mx-auto"
       )}
       style={{ animationDelay: `${index * 100}ms` }}
     >
@@ -64,8 +66,17 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
       </CardHeader>
       <CardContent className="flex-grow">
         <div className="mb-3">
-          <h4 className="text-xs font-medium text-muted-foreground mb-1">Category</h4>
-          <Badge variant="secondary">{project.category}</Badge>
+          <h4 className="text-xs font-medium text-muted-foreground mb-1">Categories</h4>
+          <div className="flex flex-wrap gap-1">
+            {projectCategories.length > 0 ? (
+              projectCategories.slice(0, 3).map((cat) => (
+                <Badge key={cat} variant="secondary" className="text-xs">{cat}</Badge>
+              ))
+            ) : (
+              <Badge variant="secondary" className="text-xs">Uncategorized</Badge>
+            )}
+            {projectCategories.length > 3 && <Badge variant="secondary" className="text-xs">...</Badge>}
+          </div>
         </div>
         <div>
           <h4 className="text-xs font-medium text-muted-foreground mb-1">Technologies</h4>

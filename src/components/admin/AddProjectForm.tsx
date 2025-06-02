@@ -23,7 +23,7 @@ import { Loader2, Save, Edit } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { addDoc, collection, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/firebase';
-import { Combobox } from '@/components/ui/combobox';
+// Combobox is no longer used here for categories
 
 const addProjectSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters.'),
@@ -51,7 +51,7 @@ const addProjectSchema = z.object({
     .refine(val => val === '' || val.split(' ').length <= 2, {
       message: "AI hint should be one or two keywords, or empty.",
     }).optional(),
-  category: z.string().min(1, 'Category is required.').max(100, 'Category name too long.'),
+  categories: z.string().min(1, 'Please list at least one category (comma-separated).'), // Changed from category
   technologies: z.string().min(1, 'Please list at least one technology (comma-separated).'),
   liveLink: z.string().url({ message: "Please enter a valid URL." }).or(z.literal('')).optional(),
   sourceLink: z.string().url({ message: "Please enter a valid URL." }).or(z.literal('')).optional(),
@@ -61,13 +61,13 @@ const addProjectSchema = z.object({
 export type AddProjectFormValues = z.infer<typeof addProjectSchema>;
 
 interface AddProjectFormProps {
-  onProjectAdded: (newProject: Project) => void;
+  onProjectAdded: (newProjectData: Omit<Project, 'id'> & { id?: string }) => void; // Allow id to be optional for new projects
   editingProject?: Project | null;
-  onProjectUpdated?: (updatedProject: Project) => void;
-  availableCategories: string[];
+  onProjectUpdated?: (updatedProjectData: Project) => void;
+  // availableCategories prop is removed as we use a text input now
 }
 
-export default function AddProjectForm({ onProjectAdded, editingProject, onProjectUpdated, availableCategories }: AddProjectFormProps) {
+export default function AddProjectForm({ onProjectAdded, editingProject, onProjectUpdated }: AddProjectFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditMode = !!editingProject;
@@ -80,7 +80,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
       longDescription: '',
       modelPath: '',
       dataAiHint: '',
-      category: '', // Initial category can be empty or first available
+      categories: '', // Changed from category
       technologies: '',
       liveLink: '',
       sourceLink: '',
@@ -96,20 +96,20 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
         longDescription: editingProject.longDescription || '',
         modelPath: editingProject.model || '',
         dataAiHint: editingProject.dataAiHint || '',
-        category: editingProject.category || '',
+        categories: editingProject.categories ? editingProject.categories.join(', ') : '', // Join array for input
         technologies: editingProject.technologies ? editingProject.technologies.join(', ') : '',
         liveLink: editingProject.liveLink || '',
         sourceLink: editingProject.sourceLink || '',
         imageUrl: editingProject.imageUrl || '',
       });
     } else {
-      form.reset({ 
+      form.reset({
         title: '',
         description: '',
         longDescription: '',
         modelPath: '',
         dataAiHint: '',
-        category: '', // Default category to empty for new projects, user must select/type
+        categories: '',
         technologies: '',
         liveLink: '',
         sourceLink: '',
@@ -123,25 +123,26 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
     setIsSubmitting(true);
     try {
       const techArray = data.technologies.split(',').map(tech => tech.trim()).filter(Boolean);
+      const catArray = data.categories.split(',').map(cat => cat.trim()).filter(Boolean);
 
-      const projectData: any = {
+      const projectDataToSave: any = {
         title: data.title,
         description: data.description,
-        category: data.category.trim(),
+        categories: catArray, // Save as array
         technologies: techArray,
         dataAiHint: data.dataAiHint || (data.modelPath && data.modelPath.trim() !== '' ? '3d model' : 'project image'),
       };
 
-      if (data.longDescription && data.longDescription.trim() !== '') projectData.longDescription = data.longDescription;
-      if (data.imageUrl && data.imageUrl.trim() !== '') projectData.imageUrl = data.imageUrl;
-      if (data.modelPath && data.modelPath.trim() !== '') projectData.model = data.modelPath;
-      if (data.liveLink && data.liveLink.trim() !== '') projectData.liveLink = data.liveLink;
-      if (data.sourceLink && data.sourceLink.trim() !== '') projectData.sourceLink = data.sourceLink;
+      if (data.longDescription && data.longDescription.trim() !== '') projectDataToSave.longDescription = data.longDescription;
+      if (data.imageUrl && data.imageUrl.trim() !== '') projectDataToSave.imageUrl = data.imageUrl;
+      if (data.modelPath && data.modelPath.trim() !== '') projectDataToSave.model = data.modelPath;
+      if (data.liveLink && data.liveLink.trim() !== '') projectDataToSave.liveLink = data.liveLink;
+      if (data.sourceLink && data.sourceLink.trim() !== '') projectDataToSave.sourceLink = data.sourceLink;
       
       if (isEditMode && editingProject) {
         const projectRef = doc(db, 'projects', editingProject.id);
         await updateDoc(projectRef, {
-          ...projectData,
+          ...projectDataToSave,
           updatedAt: serverTimestamp(),
         });
         
@@ -151,12 +152,12 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
         });
 
         if (onProjectUpdated) {
-          onProjectUpdated({ ...editingProject, ...projectData, id: editingProject.id });
+          onProjectUpdated({ ...editingProject, ...projectDataToSave, id: editingProject.id });
         }
 
       } else {
-        projectData.createdAt = serverTimestamp();
-        const docRef = await addDoc(collection(db, 'projects'), projectData);
+        projectDataToSave.createdAt = serverTimestamp();
+        const docRef = await addDoc(collection(db, 'projects'), projectDataToSave);
         
         toast({
           title: 'Project Added!',
@@ -172,20 +173,11 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
         }
 
         if (onProjectAdded) {
-          const newProject: Project = {
-              id: docRef.id,
-              title: projectData.title,
-              description: projectData.description,
-              category: projectData.category,
-              technologies: projectData.technologies,
-              dataAiHint: projectData.dataAiHint,
-              longDescription: projectData.longDescription,
-              imageUrl: projectData.imageUrl,
-              model: projectData.model,
-              liveLink: projectData.liveLink,
-              sourceLink: projectData.sourceLink,
+          const newProjectForCallback: Omit<Project, 'id'> & { id: string } = {
+              id: docRef.id, // Firestore generates the ID
+              ...projectDataToSave, // Spread the rest of the data
           };
-          onProjectAdded(newProject); 
+          onProjectAdded(newProjectForCallback); 
         }
         form.reset(); 
       }
@@ -200,8 +192,6 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
       setIsSubmitting(false);
     }
   }
-
-  const categoryOptions = availableCategories.map(cat => ({ label: cat, value: cat }));
 
   return (
     <Form {...form}>
@@ -301,20 +291,16 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
 
         <FormField
           control={form.control}
-          name="category"
+          name="categories"
           render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Category</FormLabel>
-              <Combobox
-                options={categoryOptions}
-                value={field.value}
-                onChange={(value) => {
-                  form.setValue('category', value, { shouldValidate: true });
-                }}
-                placeholder="Select or type new category"
-                searchPlaceholder="Search or add category..."
-                emptyStateMessage="No matching category. Type to add."
-              />
+            <FormItem>
+              <FormLabel>Categories</FormLabel>
+              <FormControl>
+                <Input placeholder="Web Development, AI, 3D Art" {...field} />
+              </FormControl>
+              <FormDescription>
+                Comma-separated list of categories.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

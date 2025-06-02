@@ -11,7 +11,7 @@ import Link from 'next/link';
 import React, { useState, useEffect, useCallback } from 'react';
 import AddProjectForm from '@/components/admin/AddProjectForm';
 import type { Project } from '@/data/projects';
-import { getProjects, getUniqueCategoriesFromProjects } from '@/services/projectsService';
+import { getProjects, getUniqueCategoriesFromProjects } from '@/services/projectsService'; // Keep this for fetching categories
 import { db } from '@/lib/firebase/firebase';
 import { doc, deleteDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -30,25 +30,28 @@ export default function SecretLairPage() {
   const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
 
+  // availableCategories is kept for potential future use or consistency, but not passed to AddProjectForm
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
 
   const fetchProjectData = useCallback(async () => {
     setIsLoadingProjects(true);
-    setIsLoadingCategories(true); // Set categories loading true
+    setIsLoadingCategories(true);
     setErrorLoadingProjects(null);
     try {
       const fetchedProjects = await getProjects();
        if (fetchedProjects.length > 1) {
+        // Filter out default project if other projects exist, then sort
         setProjects(fetchedProjects.filter(p => p.id !== 'default-project-1').sort((a, b) => a.title.localeCompare(b.title)));
       } else {
-        setProjects(fetchedProjects.filter(p => p.id !== 'default-project-1' || fetchedProjects[0]?.title === 'Sample Project: Interactive Model').sort((a, b) => a.title.localeCompare(b.title)));
+        // Handle case where only default project or no projects exist
+         setProjects(fetchedProjects.filter(p => p.id !== 'default-project-1' || (fetchedProjects[0]?.title === 'Sample Project: Interactive Model' && fetchedProjects.length === 1)).sort((a, b) => a.title.localeCompare(b.title)));
       }
-      setIsLoadingProjects(false); // Projects loaded
+      setIsLoadingProjects(false);
 
       const categories = await getUniqueCategoriesFromProjects();
-      setAvailableCategories(categories);
-      setIsLoadingCategories(false); // Categories loaded
+      setAvailableCategories(categories); // Still fetch and set for consistency / other potential uses
+      setIsLoadingCategories(false);
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load project data.';
@@ -78,7 +81,7 @@ export default function SecretLairPage() {
         title: 'Project Removed',
         description: `"${projectToDelete.title}" has been successfully deleted.`,
       });
-      fetchProjectData(); // Re-fetch both projects and categories
+      fetchProjectData(); 
       setShowDeleteDialog(false);
       setProjectToDelete(null);
     } catch (error) {
@@ -94,7 +97,7 @@ export default function SecretLairPage() {
   };
 
   const handleProjectAddedOrUpdated = () => {
-    fetchProjectData(); // Re-fetch both projects and categories
+    fetchProjectData(); 
   };
 
   const handleOpenEditDialog = (project: Project) => {
@@ -129,21 +132,14 @@ export default function SecretLairPage() {
                 <CardHeader>
                   <CardTitle>Add New Project</CardTitle>
                   <CardDescription>
-                    Fill in the details for your new project. New categories will be saved.
+                    Fill in the details for your new project. Enter categories as a comma-separated list.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {isLoadingCategories ? (
-                     <div className="flex items-center justify-center py-4">
-                       <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                       <p className="ml-2">Loading categories...</p>
-                     </div>
-                  ) : (
-                    <AddProjectForm 
+                   <AddProjectForm 
                       onProjectAdded={handleProjectAddedOrUpdated} 
-                      availableCategories={availableCategories}
+                      // availableCategories prop removed
                     />
-                  )}
                 </CardContent>
               </Card>
 
@@ -181,7 +177,6 @@ export default function SecretLairPage() {
                               size="sm"
                               onClick={() => handleOpenEditDialog(project)}
                               className="hover:bg-accent/80"
-                              disabled={isLoadingCategories}
                             >
                               <Pencil className="mr-1 h-4 w-4" /> Edit
                             </Button>
@@ -271,23 +266,16 @@ export default function SecretLairPage() {
               </DialogDescription>
             </DialogHeader>
             <div className="py-4 max-h-[70vh] overflow-y-auto pr-2">
-              {isLoadingCategories ? (
-                 <div className="flex items-center justify-center py-4">
-                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                    <p className="ml-2">Loading form data...</p>
-                  </div>
-              ) : (
-                <AddProjectForm 
+              <AddProjectForm 
                   editingProject={projectToEdit} 
                   onProjectUpdated={(updatedProject) => {
                     handleProjectAddedOrUpdated();
                     setShowEditDialog(false); 
                     setProjectToEdit(null);
                   }}
-                  availableCategories={availableCategories}
+                  // availableCategories prop removed
                   onProjectAdded={() => { /* This won't be called in edit mode */ }}
                 />
-              )}
             </div>
           </DialogContent>
         </Dialog>

@@ -165,10 +165,11 @@ export default function PortfolioPage() {
   const filteredProjects = useMemo(() => {
     if (isLoading || error) return [];
     const results = projects.filter(project => {
-      const categoryMatch = filters.category ? project.category === filters.category : true;
+      const categoryMatch = filters.category
+        ? project.categories && project.categories.some(cat => cat.toLowerCase() === filters.category.toLowerCase())
+        : true;
       return categoryMatch;
     });
-    // Only set noProjectsMessageVisible if filters are active and result is empty
     setNoProjectsMessageVisible(results.length === 0 && !isLoading && filters.category !== '');
     return results;
   }, [filters, projects, isLoading, error]);
@@ -197,7 +198,11 @@ export default function PortfolioPage() {
         <Skeleton className="h-4 w-5/6" />
         <div className="pt-2">
           <Skeleton className="h-5 w-1/4 mb-2" />
-          <Skeleton className="h-5 w-1/3" />
+          <div className="flex flex-wrap gap-1">
+            <Skeleton className="h-5 w-10" />
+            <Skeleton className="h-5 w-12" />
+            <Skeleton className="h-5 w-8" />
+          </div>
         </div>
         <div className="pt-2">
           <Skeleton className="h-5 w-1/4 mb-2" />
