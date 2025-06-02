@@ -2,8 +2,9 @@
 'use server';
 
 import { db } from '@/lib/firebase/firebase';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore'; // Removed doc, getDoc as they are not used here.
 import type { Project } from '@/data/projects';
+import { initialCategories } from '@/data/projects';
 
 const defaultProject: Project = {
   id: 'default-project-1',
@@ -32,11 +33,11 @@ export async function getProjects(): Promise<Project[]> {
         id: doc.id,
         title: data.title || 'Untitled Project',
         description: data.description || '',
-        longDescription: data.longDescription || data.description || '', // Use short description if long is missing
-        imageUrl: data.imageUrl, // Can be undefined
+        longDescription: data.longDescription || data.description || '',
+        imageUrl: data.imageUrl,
         model: data.model, 
         dataAiHint: data.dataAiHint || 'project image',
-        category: data.category || 'Web Development',
+        category: data.category || 'Web Development', // Ensure category is a string
         technologies: data.technologies || [],
         liveLink: data.liveLink,
         sourceLink: data.sourceLink,
@@ -48,7 +49,6 @@ export async function getProjects(): Promise<Project[]> {
       projects.push(defaultProject);
     }
 
-    // Ensure every project has at least an imageUrl or a model for display, provide fallback if both are missing
     return projects.map(p => ({
       ...p,
       imageUrl: p.imageUrl || (!p.model ? 'https://placehold.co/600x400.png' : undefined),
@@ -57,6 +57,53 @@ export async function getProjects(): Promise<Project[]> {
   } catch (error) {
     console.error("Error fetching projects: ", error);
     console.warn("Falling back to default project due to fetch error.");
-    return [defaultProject];
+    return [{
+      ...defaultProject,
+      imageUrl: defaultProject.imageUrl || (!defaultProject.model ? 'https://placehold.co/600x400.png' : undefined),
+    }];
+  }
+}
+
+export async function getUniqueCategoriesFromProjects(): Promise<string[]> {
+  try {
+    // Fetch projects without the default if other projects exist
+    const projectsCollection = collection(db, 'projects');
+    const q = query(projectsCollection);
+    const querySnapshot = await getDocs(q);
+    const fetchedProjects: Project[] = [];
+    querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        fetchedProjects.push({
+            id: doc.id,
+            title: data.title || 'Untitled Project',
+            description: data.description || '',
+            category: data.category || 'Web Development',
+            technologies: data.technologies || [],
+            dataAiHint: data.dataAiHint || 'project image',
+        });
+    });
+
+
+    const categoriesFromProjects = new Set<string>();
+    const projectsToConsider = fetchedProjects.length > 0 ? fetchedProjects : [defaultProject];
+
+    projectsToConsider.forEach(project => {
+      if (project.category && project.category.trim() !== '' && project.id !== 'default-project-1') { // Exclude default project category unless it's the only one
+        categoriesFromProjects.add(project.category.trim());
+      }
+    });
+     if (fetchedProjects.length === 0 && defaultProject.category) { // Add default category if no projects from DB
+        categoriesFromProjects.add(defaultProject.category.trim());
+    }
+
+
+    // Merge with initial/default categories to ensure they are always available
+    const allUniqueCategories = new Set([...initialCategories, ...Array.from(categoriesFromProjects)]);
+    
+    return Array.from(allUniqueCategories).sort((a, b) => a.localeCompare(b));
+  } catch (error) {
+    console.error("Error fetching unique categories: ", error);
+    // Fallback to initial categories in case of error
+    return [...initialCategories].sort((a, b) => a.localeCompare(b));
   }
 }

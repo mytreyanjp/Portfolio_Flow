@@ -4,7 +4,6 @@
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { categories } from '@/data/projects';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '../ui/button';
 import { FilterX } from 'lucide-react';
@@ -12,16 +11,16 @@ import { cn } from '@/lib/utils';
 
 export interface Filters {
   category: string;
-  technologies: string[];
 }
 
 interface ProjectFilterProps {
   filters: Filters;
   onFilterChange: (newFilters: Filters) => void;
   onResetFilters: () => void;
+  availableCategories: string[]; 
 }
 
-export default function ProjectFilter({ filters, onFilterChange, onResetFilters }: ProjectFilterProps) {
+export default function ProjectFilter({ filters, onFilterChange, onResetFilters, availableCategories }: ProjectFilterProps) {
   
   const handleCategoryChange = (value: string) => {
     onFilterChange({ ...filters, category: value === 'all' ? '' : value });
@@ -42,7 +41,7 @@ export default function ProjectFilter({ filters, onFilterChange, onResetFilters 
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {categories.map((cat) => (
+                {availableCategories.map((cat) => (
                   <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                 ))}
               </SelectContent>

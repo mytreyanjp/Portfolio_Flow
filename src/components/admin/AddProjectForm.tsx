@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,16 +16,14 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { categories as projectCategories, allTechnologies, Project } from '@/data/projects';
+import { allTechnologies, Project } from '@/data/projects';
 import React, { useState, useEffect } from 'react';
 import { Loader2, Save, Edit } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { addDoc, collection, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/firebase';
-
-const categoryEnumValues = projectCategories as [string, ...string[]];
+import { Combobox } from '@/components/ui/combobox';
 
 const addProjectSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters.'),
@@ -52,7 +51,7 @@ const addProjectSchema = z.object({
     .refine(val => val === '' || val.split(' ').length <= 2, {
       message: "AI hint should be one or two keywords, or empty.",
     }).optional(),
-  category: z.enum(categoryEnumValues),
+  category: z.string().min(1, 'Category is required.').max(100, 'Category name too long.'),
   technologies: z.string().min(1, 'Please list at least one technology (comma-separated).'),
   liveLink: z.string().url({ message: "Please enter a valid URL." }).or(z.literal('')).optional(),
   sourceLink: z.string().url({ message: "Please enter a valid URL." }).or(z.literal('')).optional(),
@@ -65,9 +64,10 @@ interface AddProjectFormProps {
   onProjectAdded: (newProject: Project) => void;
   editingProject?: Project | null;
   onProjectUpdated?: (updatedProject: Project) => void;
+  availableCategories: string[];
 }
 
-export default function AddProjectForm({ onProjectAdded, editingProject, onProjectUpdated }: AddProjectFormProps) {
+export default function AddProjectForm({ onProjectAdded, editingProject, onProjectUpdated, availableCategories }: AddProjectFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditMode = !!editingProject;
@@ -80,7 +80,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
       longDescription: '',
       modelPath: '',
       dataAiHint: '',
-      category: projectCategories[0],
+      category: '', // Initial category can be empty or first available
       technologies: '',
       liveLink: '',
       sourceLink: '',
@@ -96,7 +96,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
         longDescription: editingProject.longDescription || '',
         modelPath: editingProject.model || '',
         dataAiHint: editingProject.dataAiHint || '',
-        category: editingProject.category || projectCategories[0],
+        category: editingProject.category || '',
         technologies: editingProject.technologies ? editingProject.technologies.join(', ') : '',
         liveLink: editingProject.liveLink || '',
         sourceLink: editingProject.sourceLink || '',
@@ -109,7 +109,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
         longDescription: '',
         modelPath: '',
         dataAiHint: '',
-        category: projectCategories[0],
+        category: '', // Default category to empty for new projects, user must select/type
         technologies: '',
         liveLink: '',
         sourceLink: '',
@@ -120,7 +120,6 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
 
 
   async function onSubmit(data: AddProjectFormValues) {
-    console.log('[AddProjectForm] onSubmit called. Data:', data);
     setIsSubmitting(true);
     try {
       const techArray = data.technologies.split(',').map(tech => tech.trim()).filter(Boolean);
@@ -128,7 +127,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
       const projectData: any = {
         title: data.title,
         description: data.description,
-        category: data.category,
+        category: data.category.trim(),
         technologies: techArray,
         dataAiHint: data.dataAiHint || (data.modelPath && data.modelPath.trim() !== '' ? '3d model' : 'project image'),
       };
@@ -139,16 +138,12 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
       if (data.liveLink && data.liveLink.trim() !== '') projectData.liveLink = data.liveLink;
       if (data.sourceLink && data.sourceLink.trim() !== '') projectData.sourceLink = data.sourceLink;
       
-      console.log('[AddProjectForm] Project data to be saved:', projectData);
-
       if (isEditMode && editingProject) {
-        console.log(`[AddProjectForm] Attempting to update project ID: ${editingProject.id}`);
         const projectRef = doc(db, 'projects', editingProject.id);
         await updateDoc(projectRef, {
           ...projectData,
           updatedAt: serverTimestamp(),
         });
-        console.log(`[AddProjectForm] Project ID: ${editingProject.id} updated successfully.`);
         
         toast({
           title: 'Project Updated!',
@@ -161,9 +156,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
 
       } else {
         projectData.createdAt = serverTimestamp();
-        console.log('[AddProjectForm] Attempting to add new project.');
         const docRef = await addDoc(collection(db, 'projects'), projectData);
-        console.log('[AddProjectForm] New project added successfully with ID:', docRef.id);
         
         toast({
           title: 'Project Added!',
@@ -194,21 +187,21 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
           };
           onProjectAdded(newProject); 
         }
-        form.reset();
+        form.reset(); 
       }
 
     } catch (error) {
-      console.error(`[AddProjectForm] Error ${isEditMode ? 'updating' : 'adding'} project: `, error);
       toast({
         title: `Error ${isEditMode ? 'Updating' : 'Saving'} Project`,
         description: `Failed to ${isEditMode ? 'update' : 'save'} project. ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: 'destructive',
       });
     } finally {
-      console.log('[AddProjectForm] Executing finally block.');
       setIsSubmitting(false);
     }
   }
+
+  const categoryOptions = availableCategories.map(cat => ({ label: cat, value: cat }));
 
   return (
     <Form {...form}>
@@ -310,20 +303,18 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
           control={form.control}
           name="category"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="flex flex-col">
               <FormLabel>Category</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {projectCategories.map(cat => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox
+                options={categoryOptions}
+                value={field.value}
+                onChange={(value) => {
+                  form.setValue('category', value, { shouldValidate: true });
+                }}
+                placeholder="Select or type new category"
+                searchPlaceholder="Search or add category..."
+                emptyStateMessage="No matching category. Type to add."
+              />
               <FormMessage />
             </FormItem>
           )}

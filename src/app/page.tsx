@@ -5,9 +5,9 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import ProjectCard from '@/components/portfolio/ProjectCard';
 import ProjectFilter from '@/components/portfolio/ProjectFilter';
 import type { Project } from '@/data/projects';
-import { getProjects } from '@/services/projectsService';
+import { getProjects, getUniqueCategoriesFromProjects } from '@/services/projectsService';
 import { Button } from '@/components/ui/button';
-import { ArrowDown, Mail, FileText, AlertTriangle, X as XIcon, Menu } from 'lucide-react';
+import { ArrowDown, Mail, FileText, AlertTriangle, X as XIcon, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -21,7 +21,9 @@ interface Filters {
 export default function PortfolioPage() {
   const [filters, setFilters] = useState<Filters>({ category: '' });
   const [projects, setProjects] = useState<Project[]>([]);
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [noProjectsMessageVisible, setNoProjectsMessageVisible] = useState(false);
 
@@ -107,20 +109,28 @@ export default function PortfolioPage() {
   }, [hasScrolled]);
 
   useEffect(() => {
-    const fetchProjects = async () => {
+    const fetchInitialData = async () => {
+      setIsLoading(true);
+      setIsLoadingCategories(true);
+      setError(null);
       try {
-        setIsLoading(true);
-        setError(null);
-        const fetchedProjects = await getProjects();
+        const [fetchedProjects, fetchedCategories] = await Promise.all([
+          getProjects(),
+          getUniqueCategoriesFromProjects()
+        ]);
+        
         setProjects(fetchedProjects);
+        setAvailableCategories(fetchedCategories);
+
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred while fetching projects.');
+        setError(err instanceof Error ? err.message : 'An unknown error occurred while fetching data.');
         console.error(err);
       } finally {
         setIsLoading(false);
+        setIsLoadingCategories(false);
       }
     };
-    fetchProjects();
+    fetchInitialData();
   }, []);
 
   useEffect(() => {
@@ -158,15 +168,13 @@ export default function PortfolioPage() {
       const categoryMatch = filters.category ? project.category === filters.category : true;
       return categoryMatch;
     });
-    setNoProjectsMessageVisible(results.length === 0 && !isLoading && (filters.category !== ''));
+    // Only set noProjectsMessageVisible if filters are active and result is empty
+    setNoProjectsMessageVisible(results.length === 0 && !isLoading && filters.category !== '');
     return results;
   }, [filters, projects, isLoading, error]);
 
   const handleFilterChange = (newFilters: Filters) => {
     setFilters(newFilters);
-    if (newFilters.category === '') {
-      setNoProjectsMessageVisible(false);
-    }
   };
 
   const handleResetFilters = () => {
@@ -206,9 +214,6 @@ export default function PortfolioPage() {
       </div>
     </div>
   );
-
-  const showViewProjectsButton = resolvedTheme === 'light' || hasButtonClicked;
-
 
   return (
     <div className="py-6 px-12 mt-8">
@@ -325,11 +330,19 @@ export default function PortfolioPage() {
         >
           My Projects
         </h2>
-        <ProjectFilter
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          onResetFilters={handleResetFilters}
-        />
+        {isLoadingCategories ? (
+           <div className="flex items-center justify-center py-4 mb-8">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <p className="ml-2">Loading filters...</p>
+          </div>
+        ) : (
+          <ProjectFilter
+            filters={filters}
+            onFilterChange={handleFilterChange}
+            onResetFilters={handleResetFilters}
+            availableCategories={availableCategories}
+          />
+        )}
         {error && (
           <div className="text-center py-8 text-destructive flex flex-col items-center animate-fadeInUpScale">
             <AlertTriangle className="h-12 w-12 mb-4" />
