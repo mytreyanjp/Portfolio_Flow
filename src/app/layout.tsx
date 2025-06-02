@@ -52,10 +52,12 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
     lightThemeSoundRef.current = new Audio('/sounds/light-theme-sound.mp3'); 
     if (lightThemeSoundRef.current) {
       lightThemeSoundRef.current.volume = 0.5;
+      lightThemeSoundRef.current.loop = true; 
     }
     darkThemeSoundRef.current = new Audio('/sounds/dark-theme-sound.mp3');
     if (darkThemeSoundRef.current) {
       darkThemeSoundRef.current.volume = 0.5;
+      darkThemeSoundRef.current.loop = true;
     }
 
 
@@ -79,9 +81,15 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
       localStorage.setItem('portfolioSoundEnabled', String(newState));
       if (!newState) { // If sound is being disabled, pause sounds
         lightThemeSoundRef.current?.pause();
-        if (lightThemeSoundRef.current) lightThemeSoundRef.current.currentTime = 0;
+        // No need to reset currentTime if loop is true, it will restart from beginning on next play
         darkThemeSoundRef.current?.pause();
-        if (darkThemeSoundRef.current) darkThemeSoundRef.current.currentTime = 0;
+      } else {
+        // If sound is being re-enabled, play the current theme's sound
+        if (resolvedTheme === 'dark') {
+          darkThemeSoundRef.current?.play().catch(e => console.warn("Dark theme sound playback failed.", e));
+        } else if (resolvedTheme === 'light') {
+          lightThemeSoundRef.current?.play().catch(e => console.warn("Light theme sound playback failed.", e));
+        }
       }
       return newState;
     });
@@ -91,18 +99,16 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
     if (isClient && resolvedTheme && isSoundEnabled) {
       if (resolvedTheme === 'dark') {
         lightThemeSoundRef.current?.pause();
-        if (lightThemeSoundRef.current) lightThemeSoundRef.current.currentTime = 0;
+        // if (lightThemeSoundRef.current) lightThemeSoundRef.current.currentTime = 0; // Not needed for looping
         darkThemeSoundRef.current?.play().catch(e => console.warn("Dark theme sound playback failed.", e));
       } else if (resolvedTheme === 'light') {
         darkThemeSoundRef.current?.pause();
-        if (darkThemeSoundRef.current) darkThemeSoundRef.current.currentTime = 0;
+        // if (darkThemeSoundRef.current) darkThemeSoundRef.current.currentTime = 0; // Not needed for looping
         lightThemeSoundRef.current?.play().catch(e => console.warn("Light theme sound playback failed.", e));
       }
     } else if (!isSoundEnabled) { // Ensure sounds are paused if sound is globally disabled
         lightThemeSoundRef.current?.pause();
-        if (lightThemeSoundRef.current) lightThemeSoundRef.current.currentTime = 0;
         darkThemeSoundRef.current?.pause();
-        if (darkThemeSoundRef.current) darkThemeSoundRef.current.currentTime = 0;
     }
   }, [resolvedTheme, isClient, isSoundEnabled]);
 
