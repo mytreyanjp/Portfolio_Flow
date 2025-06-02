@@ -69,7 +69,11 @@ const addProjectSchema = z.object({
 
 export type AddProjectFormValues = z.infer<typeof addProjectSchema>;
 
-export default function AddProjectForm() {
+interface AddProjectFormProps {
+  onProjectAdded?: () => void; // Optional callback
+}
+
+export default function AddProjectForm({ onProjectAdded }: AddProjectFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -121,6 +125,9 @@ export default function AddProjectForm() {
         });
       }
       form.reset();
+      if (onProjectAdded) {
+        onProjectAdded(); // Call the callback
+      }
     } catch (error) {
       console.error("Error adding project to Firestore: ", error);
       toast({
