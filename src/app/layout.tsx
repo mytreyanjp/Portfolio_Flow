@@ -60,6 +60,7 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   const mobileStatus = useIsMobile();
   const [showMobileMessage, setShowMobileMessage] = useState(false);
   const [isSoundEnabled, setIsSoundEnabled] = useState(false); 
+  const [isPencilDrawingEnabled, setIsPencilDrawingEnabled] = useState(false);
 
   const backgroundAudioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -81,6 +82,13 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
       localStorage.setItem('portfolioSoundEnabled', String(false));
       setIsSoundEnabled(false); 
     }
+    
+    // Load pencil drawing preference (optional, defaults to off)
+    const storedPencilPreference = localStorage.getItem('portfolioPencilDrawingEnabled');
+    if (storedPencilPreference !== null) {
+      setIsPencilDrawingEnabled(storedPencilPreference === 'true');
+    }
+
 
     return () => {
       backgroundAudioRef.current?.pause();
@@ -92,6 +100,12 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
     const newSoundState = !isSoundEnabled;
     setIsSoundEnabled(newSoundState);
     localStorage.setItem('portfolioSoundEnabled', String(newSoundState));
+  };
+
+  const togglePencilDrawing = () => {
+    const newPencilState = !isPencilDrawingEnabled;
+    setIsPencilDrawingEnabled(newPencilState);
+    localStorage.setItem('portfolioPencilDrawingEnabled', String(newPencilState));
   };
 
   useEffect(() => {
@@ -145,10 +159,16 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
     <>
       {showDarkThemeEffects && <CursorTail isDarkTheme={currentIsDarkTheme} />}
       {showDarkThemeEffects && <FirefliesEffect isDarkTheme={currentIsDarkTheme} />}
-      {showLightThemeEffects && <LightModeDrawingCanvas />}
+      {showLightThemeEffects && <LightModeDrawingCanvas isDrawingActive={isPencilDrawingEnabled && currentIsLightTheme} />}
       
       <div className="relative z-10 flex flex-col min-h-screen">
-        <Header isSoundEnabled={isSoundEnabled} toggleSoundEnabled={toggleSoundEnabled} />
+        <Header 
+          isSoundEnabled={isSoundEnabled} 
+          toggleSoundEnabled={toggleSoundEnabled}
+          isPencilDrawingEnabled={isPencilDrawingEnabled}
+          togglePencilDrawing={togglePencilDrawing}
+          isLightTheme={currentIsLightTheme}
+        />
         <main className={cn(
             "flex-grow container mx-auto py-8",
             "px-4 pb-20 md:pb-8" 

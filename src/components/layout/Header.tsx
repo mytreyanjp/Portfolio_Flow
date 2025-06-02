@@ -7,7 +7,7 @@ import ThemeSwitcher from './ThemeSwitcher';
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Briefcase, MessageSquare, FileText, Brain, LockKeyhole, Eye, EyeOff, Volume2, VolumeX } from 'lucide-react';
+import { Briefcase, MessageSquare, FileText, Brain, LockKeyhole, Eye, EyeOff, Volume2, VolumeX, Pencil } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   AlertDialog,
@@ -36,14 +36,23 @@ const MAX_CLICK_DELAY_MS = 1000; // 1 second
 interface HeaderProps {
   isSoundEnabled: boolean;
   toggleSoundEnabled: () => void;
+  isPencilDrawingEnabled: boolean;
+  togglePencilDrawing: () => void;
+  isLightTheme: boolean;
 }
 
-export default function Header({ isSoundEnabled, toggleSoundEnabled }: HeaderProps) {
+export default function Header({ 
+  isSoundEnabled, 
+  toggleSoundEnabled,
+  isPencilDrawingEnabled,
+  togglePencilDrawing,
+  isLightTheme
+}: HeaderProps) {
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { toast } = useToast();
-  const { resolvedTheme } = useTheme();
+  const { resolvedTheme } = useTheme(); // Keep this for general theme checks if needed elsewhere
 
   const [logoClickCount, setLogoClickCount] = useState(0);
   const [lastClickTime, setLastClickTime] = useState(0);
@@ -175,6 +184,17 @@ export default function Header({ isSoundEnabled, toggleSoundEnabled }: HeaderPro
           )}
 
           <div className="flex items-center space-x-1">
+             {mounted && isLightTheme && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={togglePencilDrawing}
+                aria-label={isPencilDrawingEnabled ? "Disable pencil drawing" : "Enable pencil drawing"}
+                className={cn(isPencilDrawingEnabled && "text-primary bg-accent")}
+              >
+                <Pencil className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out" />
+              </Button>
+            )}
             {mounted && (
               <Button
                 variant="ghost"
