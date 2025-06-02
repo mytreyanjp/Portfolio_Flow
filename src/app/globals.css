@@ -106,13 +106,22 @@
     opacity: 0;
     transform: translateY(15px) scale(0.9);
   }
-  60% { /* Using percentages directly here is also valid and common */
+  60% { 
     opacity: 1;
     transform: translateY(-2px) scale(1.05);
   }
   to {
     opacity: 1;
     transform: translateY(0px) scale(1);
+  }
+}
+
+@keyframes animateSunPosition {
+  0%, 100% {
+    background-position: 0% 0%; /* Sun at top-right */
+  }
+  50% {
+    background-position: 100% 0%; /* Sun at top-left */
   }
 }
 
@@ -123,13 +132,16 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: radial-gradient(
-    circle 120vmax at 100% 0%, /* Centered at top right (100% X, 0% Y) */
-    hsla(var(--accent) / 0.35) 0%, /* Brighter core at 0% */
-    hsla(var(--accent) / 0.2) 20%, /* Fades out a bit by 20% */
-    transparent 50% /* Fully transparent by 50% of the large circle */
+  background-image: radial-gradient(
+    circle 120vmax at 50% 0%, /* Origin at top-center of this gradient image */
+    hsla(var(--accent) / 0.35) 0%,
+    hsla(var(--accent) / 0.2) 20%,
+    transparent 50%
   );
+  background-size: 200vw 100vh; /* Make background image twice the viewport width */
+  background-repeat: no-repeat;
+  /* background-position-y is implicitly 0% from the keyframes */
+  animation: animateSunPosition 30s linear infinite;
   pointer-events: none;
-  z-index: -1; /* Behind main content, same layer as other effects */
+  z-index: -1; 
 }
-
