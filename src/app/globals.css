@@ -92,11 +92,11 @@
     background-image: repeating-linear-gradient(
       to bottom,
       transparent,
-      transparent calc(1.5rem - 1px), /* 1.5rem line height, 1px line */
+      transparent calc(2rem - 1px), /* 2rem line height, 1px line */
       hsl(var(--border) / 0.25),       /* Subtle line color */
-      hsl(var(--border) / 0.25) 1.5rem
+      hsl(var(--border) / 0.25) 2rem
     );
-    background-size: 100% 1.5rem;    /* Line spacing */
+    background-size: 100% 2rem;    /* Line spacing */
     background-attachment: local;     /* Lines scroll with content */
   }
 }

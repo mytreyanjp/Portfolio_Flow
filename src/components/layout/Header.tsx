@@ -104,15 +104,10 @@ export default function Header() {
     setLastClickTime(0);
   }
 
-  const headerBaseClasses = "sticky top-0 z-50 w-full";
-  const lightThemeHeaderClasses = "bg-transparent border-transparent backdrop-filter-none";
-  const darkThemeHeaderClasses = "border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60";
-
   return (
     <>
       <header className={cn(
-          headerBaseClasses,
-          mounted && resolvedTheme === 'light' ? lightThemeHeaderClasses : darkThemeHeaderClasses
+          "sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
         )}
       >
         <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
