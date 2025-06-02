@@ -93,8 +93,8 @@
       to bottom,
       transparent,
       transparent calc(2rem - 1.5px), /* Line thickness 1.5px */
-      hsl(0 0% 0% / 0.25),       /* Darker, semi-transparent black line color, opacity increased */
-      hsl(0 0% 0% / 0.25) 2rem
+      hsl(0 0% 40% / 0.25),       /* Lighter gray line color */
+      hsl(0 0% 40% / 0.25) 2rem
     );
     background-size: 100% 2rem;    /* Line spacing */
     background-attachment: local;     /* Lines scroll with content */
