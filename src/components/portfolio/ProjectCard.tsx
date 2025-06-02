@@ -38,6 +38,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
       ref={cardRef}
       className={cn(
         "flex flex-col h-full overflow-hidden transform transition-all duration-300 hover:scale-[1.02] animate-fadeInUpScale",
+        "w-full max-w-[363px] mx-auto" // Added max width and auto margin for centering
       )}
       style={{ animationDelay: `${index * 100}ms` }}
     >
