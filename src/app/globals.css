@@ -92,7 +92,7 @@
     background-image: repeating-linear-gradient(
       to bottom,
       transparent,
-      transparent calc(2rem - 2px), /* Line thickness 2px */
+      transparent calc(2rem - 1.5px), /* Line thickness 1.5px */
       hsl(0 0% 0% / 0.25),       /* Darker, semi-transparent black line color, opacity increased */
       hsl(0 0% 0% / 0.25) 2rem
     );
