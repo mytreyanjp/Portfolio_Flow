@@ -29,8 +29,11 @@ gltfLoaderInstance.setDRACOLoader(dracoLoaderInstance);
 
 const MIN_CAMERA_Z = 1.6; // Model appears closer
 const MAX_CAMERA_Z = 2.8; // Model appears further
+const MIN_MODEL_Y_OFFSET = -0.1; // Model slightly lower when close
+const MAX_MODEL_Y_OFFSET = 0;    // Model at its centered Y when far
 const LERP_SPEED_ROTATION = 0.08;
 const LERP_SPEED_CAMERA_Z = 0.05;
+const LERP_SPEED_MODEL_Y = 0.05;
 
 const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, containerRef }) => {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -40,6 +43,9 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
   const modelGroupRef = useRef<THREE.Group | null>(null);
   const targetRotationRef = useRef({ x: 0, y: 0 });
   const targetCameraZRef = useRef<number>(MAX_CAMERA_Z);
+  const targetModelYOffsetRef = useRef<number>(MAX_MODEL_Y_OFFSET);
+  const initialModelYAfterCenteringRef = useRef<number>(0);
+
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
@@ -51,8 +57,8 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
 
   const handleScroll = useCallback(() => {
     if (!isIntersectingRef.current || !containerRef.current || typeof window === 'undefined') {
-      // If not intersecting, target the furthest zoom to avoid abrupt jumps when it re-enters
       targetCameraZRef.current = MAX_CAMERA_Z;
+      targetModelYOffsetRef.current = MAX_MODEL_Y_OFFSET;
       return;
     }
 
@@ -60,14 +66,18 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
     const viewportHeight = window.innerHeight;
     const cardCenterY = cardRect.top + cardRect.height / 2;
     const distanceFromViewportCenter = cardCenterY - viewportHeight / 2;
-
-    // normalizedDistance: 0 when card center is at viewport center, 1 when at top/bottom edge
     const normalizedDistance = Math.min(1, Math.abs(distanceFromViewportCenter) / (viewportHeight / 2));
     
     let newTargetZ = MIN_CAMERA_Z + normalizedDistance * (MAX_CAMERA_Z - MIN_CAMERA_Z);
     newTargetZ = Math.max(MIN_CAMERA_Z, Math.min(MAX_CAMERA_Z, newTargetZ)); // Clamp
-    
     targetCameraZRef.current = newTargetZ;
+
+    // Calculate target Y offset. When normalizedDistance = 0 (closest), zoomFactor = 1 -> offset is MIN_MODEL_Y_OFFSET.
+    // When normalizedDistance = 1 (furthest), zoomFactor = 0 -> offset is MAX_MODEL_Y_OFFSET.
+    const zoomFactor = 1 - normalizedDistance; 
+    const newTargetYOffset = MAX_MODEL_Y_OFFSET + (MIN_MODEL_Y_OFFSET - MAX_MODEL_Y_OFFSET) * zoomFactor;
+    targetModelYOffsetRef.current = newTargetYOffset;
+
   }, [containerRef]);
 
 
@@ -85,7 +95,10 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
     
     setError(null);
     setIsLoading(true);
-    targetCameraZRef.current = MAX_CAMERA_Z; // Initialize target Z
+    targetCameraZRef.current = MAX_CAMERA_Z; 
+    targetModelYOffsetRef.current = MAX_MODEL_Y_OFFSET;
+    initialModelYAfterCenteringRef.current = 0;
+
 
     const handleGlobalMouseMove = (event: MouseEvent) => {
       if (!isMounted || !modelGroupRef.current || typeof window === 'undefined') return;
@@ -104,12 +117,13 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
         ([entry]) => {
           isIntersectingRef.current = entry.isIntersecting;
           if(entry.isIntersecting) {
-            handleScroll(); // Initial calculation when it becomes visible
+            handleScroll(); 
           } else {
-            targetCameraZRef.current = MAX_CAMERA_Z; // Reset to far zoom when not visible
+            targetCameraZRef.current = MAX_CAMERA_Z; 
+            targetModelYOffsetRef.current = MAX_MODEL_Y_OFFSET;
           }
         },
-        { threshold: 0.01 } // Trigger even if 1% is visible
+        { threshold: 0.01 } 
       );
       observer.observe(containerRef.current);
       observerRef.current = observer;
@@ -128,7 +142,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       if (!sceneRef.current) sceneRef.current = new THREE.Scene();
       if (!cameraRef.current) {
         cameraRef.current = new THREE.PerspectiveCamera(50, currentMount.clientWidth > 0 ? currentMount.clientWidth / currentMount.clientHeight : 1, 0.1, 100);
-        cameraRef.current.position.z = MAX_CAMERA_Z; // Start at max Z
+        cameraRef.current.position.z = MAX_CAMERA_Z; 
       } else {
         if (currentMount.clientWidth > 0 && currentMount.clientHeight > 0) {
           cameraRef.current.aspect = currentMount.clientWidth / currentMount.clientHeight;
@@ -197,11 +211,12 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
           modelGroupRef.current.scale.set(scaleFactor, scaleFactor, scaleFactor);
           const scaledBox = new THREE.Box3().setFromObject(modelGroupRef.current);
           const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
-          modelGroupRef.current.position.sub(scaledCenter);
+          modelGroupRef.current.position.sub(scaledCenter); // Center the model
+          initialModelYAfterCenteringRef.current = modelGroupRef.current.position.y; // Store base Y after centering
           
           if (cameraRef.current) cameraRef.current.lookAt(0, 0, 0);
           setIsLoading(false);
-          handleScroll(); // Perform initial scroll check after model loads
+          handleScroll(); 
         },
         undefined,
         (loadError) => {
@@ -221,6 +236,10 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
           
           // Camera Z LERP
           cameraRef.current.position.z += (targetCameraZRef.current - cameraRef.current.position.z) * LERP_SPEED_CAMERA_Z;
+
+          // Model Y position LERP (based on initial centered Y + scroll offset)
+          const finalTargetY = initialModelYAfterCenteringRef.current + targetModelYOffsetRef.current;
+          modelGroupRef.current.position.y += (finalTargetY - modelGroupRef.current.position.y) * LERP_SPEED_MODEL_Y;
           
           rendererRef.current.render(sceneRef.current, cameraRef.current);
         }
@@ -235,7 +254,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
         cameraRef.current.aspect = currentMount.clientWidth / currentMount.clientHeight;
         cameraRef.current.updateProjectionMatrix();
         rendererRef.current.setSize(currentMount.clientWidth, currentMount.clientHeight);
-        handleScroll(); // Recalculate zoom on resize
+        handleScroll(); 
       };
       window.addEventListener('resize', handleResize);
       
@@ -298,9 +317,6 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       }
       rendererRef.current?.dispose();
       rendererRef.current = null;
-      // sceneRef and cameraRef are not nulled here, as they might be reused if modelPath changes
-      // but the component itself isn't unmounted.
-      // However, if the entire component unmounts, they will be naturally garbage collected.
     };
   }, [modelPath, containerRef, handleScroll]); 
 
