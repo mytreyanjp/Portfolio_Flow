@@ -18,12 +18,13 @@ export default function ContactPage() {
     const handleMouseMove = (event: MouseEvent) => {
       if (headingRef.current) {
         const { clientX, clientY } = event;
-        const x = (clientX / window.innerWidth - 0.5) * 2; // Normalized -1 to 1
-        const y = (clientY / window.innerHeight - 0.5) * 2; // Normalized -1 to 1
-        const sensitivity = 10; // Keep parallax for other elements subtle
+        // Parallax for other elements - can be kept or removed if not used elsewhere
+        const x = (clientX / window.innerWidth - 0.5) * 2; 
+        const y = (clientY / window.innerHeight - 0.5) * 2; 
+        const sensitivity = 10; 
         setParallaxOffset({ x: x * sensitivity, y: y * sensitivity });
 
-        // For dynamic gradient on heading
+        // For dynamic gradient on main heading
         const gradientX = (event.clientX / window.innerWidth) * 100;
         const gradientY = (event.clientY / window.innerHeight) * 100;
         headingRef.current.style.setProperty('--gradient-center-x', `${gradientX}%`);
@@ -34,6 +35,7 @@ export default function ContactPage() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
+  // This parallaxStyle object remains defined but won't be applied to the Contact Info heading
   const parallaxStyle = {
     transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`,
     transition: 'transform 0.1s ease-out',
@@ -99,7 +101,7 @@ export default function ContactPage() {
            <h2
             id="contact-info-section-heading"
             className="text-2xl font-semibold mb-6 text-center md:text-left text-foreground font-title"
-            style={parallaxStyle} 
+            // parallaxStyle removed from here
            >
             Contact Information
            </h2>
