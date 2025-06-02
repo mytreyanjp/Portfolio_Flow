@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { useToast } from '@/hooks/use-toast';
+import { useTheme } from 'next-themes';
 
 const navItems = [
   { href: '/', label: 'Portfolio', icon: Briefcase },
@@ -37,6 +38,7 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { toast } = useToast();
+  const { resolvedTheme } = useTheme();
 
   const [logoClickCount, setLogoClickCount] = useState(0);
   const [lastClickTime, setLastClickTime] = useState(0);
@@ -63,39 +65,31 @@ export default function Header() {
 
     if (newClickCount >= CLICKS_TO_ACTIVATE) {
       setShowPasswordDialog(true);
-      // Reset attempts for the new dialog session
       setPasswordAttempt(''); 
       setShowPasswordAttemptVisual(false); 
-      // Do not reset logoClickCount here, let handleDialogClose do it
     }
   };
 
   const handlePasswordCheck = () => {
-    console.log(`[Header] Attempting password: '${passwordAttempt}' (length: ${passwordAttempt.length})`);
-    console.log(`[Header] Expected password: '${SECRET_PASSWORD}' (length: ${SECRET_PASSWORD.length})`);
-
     if (passwordAttempt === SECRET_PASSWORD) {
-      console.log('[Header] Password MATCHED!');
       toast({
         title: "Access Granted!",
         description: "Welcome to the Secret Lair.",
       });
       router.push('/secret-lair');
-      setShowPasswordDialog(false); // Explicitly close dialog on success
+      setShowPasswordDialog(false); 
     } else {
-      console.log('[Header] Password MISMATCH.');
       toast({
         title: "Incorrect Password",
         description: "Please try again.",
         variant: "destructive",
       });
-      setPasswordAttempt(''); // Clear input for another try, dialog remains open
+      setPasswordAttempt(''); 
     }
   };
   
   const handlePasswordSubmitFormEvent = (event: React.FormEvent) => {
     event.preventDefault(); 
-    console.log(`[Header] Form submit event. Password from state: '${passwordAttempt}'`);
     handlePasswordCheck();
   };
 
@@ -104,17 +98,23 @@ export default function Header() {
   };
 
   const handleDialogClose = () => {
-    // This function is called when the dialog's open state changes to false
-    console.log('[Header] handleDialogClose called. Resetting states.');
     setPasswordAttempt('');
     setShowPasswordAttemptVisual(false);
     setLogoClickCount(0); 
     setLastClickTime(0);
   }
 
+  const headerBaseClasses = "sticky top-0 z-50 w-full";
+  const lightThemeHeaderClasses = "bg-transparent border-transparent backdrop-filter-none";
+  const darkThemeHeaderClasses = "border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60";
+
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className={cn(
+          headerBaseClasses,
+          mounted && resolvedTheme === 'light' ? lightThemeHeaderClasses : darkThemeHeaderClasses
+        )}
+      >
         <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
           <Link href="/" className="flex items-center space-x-2 text-xl font-bold" passHref>
             <div
@@ -202,10 +202,7 @@ export default function Header() {
                 type={showPasswordAttemptVisual ? "text" : "password"}
                 placeholder="Password"
                 value={passwordAttempt}
-                onChange={(e) => {
-                  console.log(`[Header] Input onChange, new value: '${e.target.value}'`);
-                  setPasswordAttempt(e.target.value);
-                }}
+                onChange={(e) => setPasswordAttempt(e.target.value)}
                 autoFocus
                 className="pr-10"
               />
@@ -222,7 +219,6 @@ export default function Header() {
             </div>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel> 
-              {/* Use a standard Button for unlock to prevent AlertDialog's default close-on-action behavior */}
               <Button type="submit">Unlock</Button>
             </AlertDialogFooter>
           </form>
@@ -231,3 +227,4 @@ export default function Header() {
     </>
   );
 }
+
