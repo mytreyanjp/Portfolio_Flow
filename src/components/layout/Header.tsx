@@ -43,7 +43,7 @@ export default function Header() {
   const [lastClickTime, setLastClickTime] = useState(0);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [passwordAttempt, setPasswordAttempt] = useState('');
-  const [showPasswordAttempt, setShowPasswordAttempt] = useState(false);
+  const [showPasswordAttemptVisual, setShowPasswordAttemptVisual] = useState(false); // Renamed for clarity
 
   useEffect(() => {
     setMounted(true);
@@ -53,7 +53,7 @@ export default function Header() {
     const currentTime = Date.now();
     let newClickCount;
 
-    if (currentTime - lastClickTime > MAX_CLICK_DELAY_MS) {
+    if (currentTime - lastClickTime > MAX_CLICK_DELAY_MS || logoClickCount === 0) {
       newClickCount = 1;
     } else {
       newClickCount = logoClickCount + 1;
@@ -64,26 +64,28 @@ export default function Header() {
 
     if (newClickCount >= CLICKS_TO_ACTIVATE) {
       setShowPasswordDialog(true);
-      setLogoClickCount(0); 
-      setLastClickTime(0); 
-      setPasswordAttempt('');
-      setShowPasswordAttempt(false);
+      setLogoClickCount(0);
+      setLastClickTime(0);
+      setPasswordAttempt(''); // Clear previous attempt when dialog opens
+      setShowPasswordAttemptVisual(false); // Reset visibility toggle
     }
   };
 
   const handlePasswordSubmit = (event: React.FormEvent) => {
-    event.preventDefault(); 
-    console.log(`[Header] Attempting password: '${passwordAttempt}' (length: ${passwordAttempt.length})`);
+    event.preventDefault();
+    const currentAttempt = passwordAttempt; // Capture the state at the moment of submission
+
+    console.log(`[Header] Attempting password: '${currentAttempt}' (length: ${currentAttempt.length})`);
     console.log(`[Header] Expected password: '${SECRET_PASSWORD}' (length: ${SECRET_PASSWORD.length})`);
 
-    if (passwordAttempt === SECRET_PASSWORD) {
+    if (currentAttempt === SECRET_PASSWORD) {
       console.log('[Header] Password MATCHED!');
-      setShowPasswordDialog(false);
-      setPasswordAttempt('');
-      setShowPasswordAttempt(false);
-      setLogoClickCount(0); 
-      setLastClickTime(0);
+      toast({
+        title: "Access Granted!",
+        description: "Welcome to the Secret Lair.",
+      });
       router.push('/secret-lair');
+      setShowPasswordDialog(false); // This will trigger onOpenChange, then handleDialogClose
     } else {
       console.log('[Header] Password MISMATCH.');
       toast({
@@ -91,19 +93,20 @@ export default function Header() {
         description: "Please try again.",
         variant: "destructive",
       });
-      setPasswordAttempt('');
+      setPasswordAttempt(''); // Clear input for another try
+      // Keep dialog open
     }
   };
 
-  const toggleShowPasswordAttempt = () => {
-    setShowPasswordAttempt(prev => !prev);
+  const toggleShowPasswordAttemptVisual = () => {
+    setShowPasswordAttemptVisual(prev => !prev);
   };
 
   const handleDialogClose = () => {
     setShowPasswordDialog(false);
     setPasswordAttempt('');
-    setShowPasswordAttempt(false);
-    setLogoClickCount(0);
+    setShowPasswordAttemptVisual(false);
+    setLogoClickCount(0); // Reset click count to avoid immediate reopen
     setLastClickTime(0);
   }
 
@@ -112,10 +115,10 @@ export default function Header() {
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
           <Link href="/" className="flex items-center space-x-2 text-xl font-bold" passHref>
-            <div 
-              onClick={handleLogoClick} 
-              aria-label="Site Logo - click multiple times rapidly for a surprise" 
-              role="button" 
+            <div
+              onClick={handleLogoClick}
+              aria-label="Site Logo - click multiple times rapidly for a surprise"
+              role="button"
               tabIndex={0}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleLogoClick(); }}}
               className="cursor-pointer"
@@ -177,10 +180,9 @@ export default function Header() {
 
       <AlertDialog open={showPasswordDialog} onOpenChange={(isOpen) => {
         if (!isOpen) {
-          handleDialogClose();
-        } else {
-          setShowPasswordDialog(true);
+          handleDialogClose(); // Centralize closing logic
         }
+        // No need to setShowPasswordDialog(true) here, `open` prop controls it
       }}>
         <AlertDialogContent>
           <form onSubmit={handlePasswordSubmit}>
@@ -195,26 +197,29 @@ export default function Header() {
             </AlertDialogHeader>
             <div className="py-4 relative">
               <Input
-                type={showPasswordAttempt ? "text" : "password"}
+                type={showPasswordAttemptVisual ? "text" : "password"}
                 placeholder="Password"
                 value={passwordAttempt}
-                onChange={(e) => setPasswordAttempt(e.target.value)}
+                onChange={(e) => {
+                  console.log(`[Header] Input onChange, new value: '${e.target.value}'`);
+                  setPasswordAttempt(e.target.value);
+                }}
                 autoFocus
-                className="pr-10" 
+                className="pr-10"
               />
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
                 className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-foreground"
-                onClick={toggleShowPasswordAttempt}
-                aria-label={showPasswordAttempt ? "Hide password" : "Show password"}
+                onClick={toggleShowPasswordAttemptVisual}
+                aria-label={showPasswordAttemptVisual ? "Hide password" : "Show password"}
               >
-                {showPasswordAttempt ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                {showPasswordAttemptVisual ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </Button>
             </div>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={handleDialogClose}>Cancel</AlertDialogCancel>
+              <AlertDialogCancel onClick={() => setShowPasswordDialog(false)}>Cancel</AlertDialogCancel>
               <AlertDialogAction type="submit">Unlock</AlertDialogAction>
             </AlertDialogFooter>
           </form>
