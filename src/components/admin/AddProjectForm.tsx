@@ -19,7 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { allTechnologies, Project } from '@/data/projects';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Loader2, Save, Edit, X as XIcon, PlusCircle } from 'lucide-react';
+import { Loader2, Save, Edit, X as XIcon, PlusCircle, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { addDoc, collection, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/firebase';
@@ -57,6 +57,7 @@ const addProjectSchema = z.object({
   technologies: z.string().min(1, 'Please list at least one technology (comma-separated).'),
   liveLink: z.string().url({ message: "Please enter a valid URL." }).or(z.literal('')).optional(),
   sourceLink: z.string().url({ message: "Please enter a valid URL." }).or(z.literal('')).optional(),
+  documentationLink: z.string().url({ message: "Please enter a valid URL." }).or(z.literal('')).optional(),
   imageUrl: z.string().url({ message: "Please enter a valid URL for the image." }).or(z.literal('')).optional(),
 });
 
@@ -79,10 +80,8 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
   const [isCategoryPopoverOpen, setIsCategoryPopoverOpen] = useState(false);
   const categoryInputRef = useRef<HTMLInputElement>(null);
   
-  // Local state for categories available for suggestion within this form instance
   const [internalAvailableCategories, setInternalAvailableCategories] = useState<string[]>(availableCategories);
 
-  // Sync internalAvailableCategories when the prop changes (e.g., on initial load or after a project save refreshes the list from parent)
   useEffect(() => {
     setInternalAvailableCategories(availableCategories.sort((a,b) => a.localeCompare(b)));
   }, [availableCategories]);
@@ -100,6 +99,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
       technologies: '',
       liveLink: '',
       sourceLink: '',
+      documentationLink: '',
       imageUrl: '',
     },
   });
@@ -116,6 +116,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
         technologies: editingProject.technologies ? editingProject.technologies.join(', ') : '',
         liveLink: editingProject.liveLink || '',
         sourceLink: editingProject.sourceLink || '',
+        documentationLink: editingProject.documentationLink || '',
         imageUrl: editingProject.imageUrl || '',
       });
       setCurrentProjectCategories(editingProject.categories || []);
@@ -130,6 +131,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
         technologies: '',
         liveLink: '',
         sourceLink: '',
+        documentationLink: '',
         imageUrl: '',
       });
       setCurrentProjectCategories([]);
@@ -146,7 +148,6 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
     if (newCategory && !currentProjectCategories.includes(newCategory)) {
       setCurrentProjectCategories(prev => [...prev, newCategory]);
     }
-    // If this category is not in our internal list, add it for future suggestions in this form instance.
     if (newCategory && !internalAvailableCategories.some(cat => cat.toLowerCase() === newCategory.toLowerCase())) {
       setInternalAvailableCategories(prev => [...prev, newCategory].sort((a,b) => a.localeCompare(b)));
     }
@@ -180,6 +181,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
       if (data.modelPath && data.modelPath.trim() !== '') projectDataToSave.model = data.modelPath;
       if (data.liveLink && data.liveLink.trim() !== '') projectDataToSave.liveLink = data.liveLink;
       if (data.sourceLink && data.sourceLink.trim() !== '') projectDataToSave.sourceLink = data.sourceLink;
+      if (data.documentationLink && data.documentationLink.trim() !== '') projectDataToSave.documentationLink = data.documentationLink;
       
       if (isEditMode && editingProject) {
         const projectRef = doc(db, 'projects', editingProject.id);
@@ -371,7 +373,6 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
                            }
                         }}
                         onFocus={() => {
-                           // Open popover on focus if there's input or suggestions
                            if (categoryInputValue.trim() || filteredCategorySuggestions.length > 0) {
                              if(!isCategoryPopoverOpen) setIsCategoryPopoverOpen(true);
                            }
@@ -387,8 +388,6 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
                             } else {
                               handleAddCategory(categoryInputValue.trim());
                             }
-                            // Keep popover open if user might want to add more from suggestions. 
-                            // To close on Enter, uncomment: setIsCategoryPopoverOpen(false); 
                           } else if (e.key === 'Backspace' && !categoryInputValue && currentProjectCategories.length > 0) {
                             e.preventDefault();
                             handleRemoveCategory(currentProjectCategories[currentProjectCategories.length - 1]);
@@ -406,7 +405,6 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
                         onClick={() => {
                             if (categoryInputValue.trim()) {
                                 handleAddCategory(categoryInputValue.trim());
-                                // setIsCategoryPopoverOpen(false); // Optional: close popover after adding with button
                             }
                         }}
                         disabled={!categoryInputValue.trim()}
@@ -419,10 +417,9 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
                 <PopoverContent 
                     className="w-[--radix-popover-trigger-width] p-0" 
                     align="start"
-                    onOpenAutoFocus={(e) => e.preventDefault()} // Prevents auto-focusing first item
+                    onOpenAutoFocus={(e) => e.preventDefault()}
                 >
                   <Command>
-                    {/* <CommandInput placeholder="Search or add new..." value={categoryInputValue} onValueChange={setCategoryInputValue} /> */}
                     <CommandList>
                        <CommandEmpty>
                          {categoryInputValue.trim() 
@@ -475,7 +472,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
           )}
         />
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="space-y-6">
           <FormField
             control={form.control}
             name="liveLink"
@@ -497,6 +494,19 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
                 <FormLabel>Source Code Link (Optional)</FormLabel>
                 <FormControl>
                   <Input type="url" placeholder="https://github.com/your/repo" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="documentationLink"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Documentation Link (Optional)</FormLabel>
+                <FormControl>
+                  <Input type="url" placeholder="https://yourproject.docs" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

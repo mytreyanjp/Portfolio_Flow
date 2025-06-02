@@ -4,7 +4,7 @@ import type { Project } from '@/data/projects';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowUpRight, Github, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { ArrowUpRight, Github, Image as ImageIcon, Loader2, FileText } from 'lucide-react'; // Added FileText
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
@@ -48,7 +48,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
         description: `Could not generate image for "${project.title}". Using placeholder.`,
         variant: "destructive",
       });
-      setEffectiveImageUrl(FALLBACK_IMAGE_URL); // Fallback on error
+      setEffectiveImageUrl(FALLBACK_IMAGE_URL); 
     } finally {
       setIsGeneratingAiImage(false);
     }
@@ -57,7 +57,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
   useEffect(() => {
     setModelLoadFailedOrMissing(!project.model);
     setEffectiveImageUrl(project.imageUrl || null);
-    setAiImageGenerated(false); // Reset AI image generation status when project changes
+    setAiImageGenerated(false); 
   }, [project]);
 
   useEffect(() => {
@@ -106,7 +106,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
             alt={project.title}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             data-ai-hint={project.dataAiHint || project.categories.join(' ') || 'project image'}
-            onError={() => setEffectiveImageUrl(FALLBACK_IMAGE_URL)} // Fallback if image URL itself is broken
+            onError={() => setEffectiveImageUrl(FALLBACK_IMAGE_URL)} 
           />
         ) : (
            <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground text-sm">
@@ -145,13 +145,13 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
           </div>
         </div>
       </CardContent>
-      <CardFooter className="flex flex-col sm:flex-row sm:justify-start gap-2 pt-4 border-t">
+      <CardFooter className="flex flex-wrap justify-start gap-2 pt-4 border-t">
         {project.liveLink && (
           <Button
             asChild
             variant="default"
             size="sm"
-            className="w-full sm:w-auto transition-transform duration-200 ease-out hover:scale-105 hover:bg-primary"
+            className="flex-grow sm:flex-grow-0 transition-transform duration-200 ease-out hover:scale-105 hover:bg-primary"
           >
             <Link href={project.liveLink} target="_blank" rel="noopener noreferrer">
               <span className="flex items-center">
@@ -165,7 +165,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
             asChild
             variant="outline"
             size="sm"
-            className="w-full sm:w-auto transition-transform duration-200 ease-out hover:scale-105 hover:bg-background"
+            className="flex-grow sm:flex-grow-0 transition-transform duration-200 ease-out hover:scale-105 hover:bg-background"
           >
             <Link href={project.sourceLink} target="_blank" rel="noopener noreferrer">
               <span className="flex items-center">
@@ -174,8 +174,22 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
             </Link>
           </Button>
         )}
-         {!project.liveLink && !project.sourceLink && (
-           <Button variant="ghost" size="sm" disabled>No links available</Button>
+        {project.documentationLink && (
+          <Button
+            asChild
+            variant="outline" // Consistent styling with source link
+            size="sm"
+            className="flex-grow sm:flex-grow-0 transition-transform duration-200 ease-out hover:scale-105 hover:bg-background"
+          >
+            <Link href={project.documentationLink} target="_blank" rel="noopener noreferrer">
+              <span className="flex items-center">
+                <FileText className="mr-1 h-4 w-4" /> Docs
+              </span>
+            </Link>
+          </Button>
+        )}
+         {!project.liveLink && !project.sourceLink && !project.documentationLink && (
+           <Button variant="ghost" size="sm" disabled className="w-full sm:w-auto">No links available</Button>
          )}
       </CardFooter>
     </Card>

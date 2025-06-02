@@ -14,10 +14,11 @@ const defaultProject: Project = {
   imageUrl: 'https://placehold.co/600x400.png',
   model: '/models/wooden_crate.glb',
   dataAiHint: '3d crate',
-  categories: ['3D Graphics', 'Sample'], // Updated to array
+  categories: ['3D Graphics', 'Sample'], 
   technologies: ['Three.js', 'React'],
   liveLink: '#',
   sourceLink: '#',
+  documentationLink: '#', // Added placeholder documentation link
 };
 
 export async function getProjects(): Promise<Project[]> {
@@ -33,7 +34,7 @@ export async function getProjects(): Promise<Project[]> {
       let projectCategories: string[] = [];
       if (Array.isArray(data.categories) && data.categories.length > 0) {
         projectCategories = data.categories.map((cat: any) => String(cat).trim()).filter(Boolean);
-      } else if (typeof data.category === 'string' && data.category.trim() !== '') { // Handle old 'category' field
+      } else if (typeof data.category === 'string' && data.category.trim() !== '') { 
         projectCategories = [data.category.trim()];
       }
       if (projectCategories.length === 0) {
@@ -48,10 +49,11 @@ export async function getProjects(): Promise<Project[]> {
         imageUrl: data.imageUrl,
         model: data.model,
         dataAiHint: data.dataAiHint || 'project image',
-        categories: projectCategories, // Use processed categories
+        categories: projectCategories, 
         technologies: data.technologies || [],
         liveLink: data.liveLink,
         sourceLink: data.sourceLink,
+        documentationLink: data.documentationLink, // Added documentation link
       });
     });
 
@@ -93,7 +95,7 @@ export async function getUniqueCategoriesFromProjects(): Promise<string[]> {
             categoriesFromProjects.add(cat.trim());
           }
         });
-      } else if (typeof data.category === 'string' && data.category.trim() !== '') { // Handle old 'category' field
+      } else if (typeof data.category === 'string' && data.category.trim() !== '') { 
          categoriesFromProjects.add(data.category.trim());
       }
     });
@@ -102,14 +104,11 @@ export async function getUniqueCategoriesFromProjects(): Promise<string[]> {
        defaultProject.categories.forEach(cat => categoriesFromProjects.add(cat.trim()));
     }
 
-
-    // Merge with initial/default categories to ensure they are always available
     const allUniqueCategories = new Set([...initialCategories, ...Array.from(categoriesFromProjects)]);
     
     return Array.from(allUniqueCategories).sort((a, b) => a.localeCompare(b));
   } catch (error) {
     console.error("Error fetching unique categories: ", error);
-    // Fallback to initial categories in case of error
     return [...initialCategories].sort((a, b) => a.localeCompare(b));
   }
 }

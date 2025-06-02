@@ -11,6 +11,7 @@ export type Project = {
   technologies: string[];
   liveLink?: string;
   sourceLink?: string;
+  documentationLink?: string; // Added documentation link
 };
 
 // This list can serve as initial/default categories or suggestions
