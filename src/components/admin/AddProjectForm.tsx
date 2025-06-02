@@ -35,22 +35,16 @@ const addProjectSchema = z.object({
   modelPath: z.string()
     .refine(val => {
       if (val === '') return true; // Allow empty string
-
-      // Check for local path
-      if (val.startsWith('/models/') && val.endsWith('.glb')) {
-        return true;
-      }
-
-      // Check for absolute URL
+      if (val.startsWith('/models/') && val.endsWith('.glb')) return true;
       if ((val.startsWith('http://') || val.startsWith('https://')) && val.endsWith('.glb')) {
         try {
-          new URL(val); // Validate if it's a structurally sound URL
+          new URL(val); 
           return true;
         } catch (e) {
-          return false; // Invalid URL structure
+          return false;
         }
       }
-      return false; // Doesn't match either pattern
+      return false;
     }, {
       message: "Model path must be a valid HTTP/HTTPS URL ending with .glb (e.g., https://cdn.example.com/model.glb), a local path (e.g., /models/my_model.glb), or empty."
     })
@@ -85,7 +79,7 @@ export default function AddProjectForm({ onProjectAdded }: AddProjectFormProps) 
       longDescription: '',
       modelPath: '',
       dataAiHint: '',
-      category: projectCategories[0], // Default to the first category
+      category: projectCategories[0], 
       technologies: '',
       liveLink: '',
       sourceLink: '',
@@ -96,25 +90,40 @@ export default function AddProjectForm({ onProjectAdded }: AddProjectFormProps) 
   async function onSubmit(data: AddProjectFormValues) {
     setIsSubmitting(true);
     try {
-      const projectData: Omit<Project, 'id'> & { createdAt: any } = {
+      const techArray = data.technologies.split(',').map(tech => tech.trim()).filter(Boolean);
+
+      // Base project data with required fields and those with defaults
+      const projectPayload: any = { // Using 'any' for easier conditional property assignment
         title: data.title,
         description: data.description,
-        longDescription: data.longDescription || '',
-        model: data.modelPath || undefined, // Store as undefined if empty
-        dataAiHint: data.dataAiHint || (data.modelPath ? '3d model' : 'project image'),
         category: data.category,
-        technologies: data.technologies.split(',').map(tech => tech.trim()).filter(Boolean),
-        liveLink: data.liveLink || undefined,
-        sourceLink: data.sourceLink || undefined,
-        imageUrl: data.imageUrl || undefined, // Store as undefined if empty
+        technologies: techArray,
+        dataAiHint: data.dataAiHint || (data.modelPath && data.modelPath.trim() !== '' ? '3d model' : 'project image'),
         createdAt: serverTimestamp(),
       };
 
-      const docRef = await addDoc(collection(db, 'projects'), projectData);
+      // Conditionally add optional fields if they have a non-empty value
+      if (data.longDescription && data.longDescription.trim() !== '') {
+        projectPayload.longDescription = data.longDescription;
+      }
+      if (data.imageUrl && data.imageUrl.trim() !== '') {
+        projectPayload.imageUrl = data.imageUrl;
+      }
+      if (data.modelPath && data.modelPath.trim() !== '') {
+        projectPayload.model = data.modelPath;
+      }
+      if (data.liveLink && data.liveLink.trim() !== '') {
+        projectPayload.liveLink = data.liveLink;
+      }
+      if (data.sourceLink && data.sourceLink.trim() !== '') {
+        projectPayload.sourceLink = data.sourceLink;
+      }
+      
+      const docRef = await addDoc(collection(db, 'projects'), projectPayload);
       
       toast({
         title: 'Project Added!',
-        description: `Project "${data.title}" has been successfully saved to the database with ID: ${docRef.id}.`,
+        description: `Project "${data.title}" has been successfully saved with ID: ${docRef.id}.`,
         duration: 7000,
       });
       if (data.modelPath && data.modelPath.startsWith('/models/')) {
@@ -126,13 +135,13 @@ export default function AddProjectForm({ onProjectAdded }: AddProjectFormProps) 
       }
       form.reset();
       if (onProjectAdded) {
-        onProjectAdded(); // Call the callback
+        onProjectAdded(); 
       }
     } catch (error) {
       console.error("Error adding project to Firestore: ", error);
       toast({
         title: 'Error Saving Project',
-        description: `Failed to save project to the database. ${error instanceof Error ? error.message : 'Unknown error'}`,
+        description: `Failed to save project. ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: 'destructive',
         duration: 7000,
       });
@@ -230,7 +239,7 @@ export default function AddProjectForm({ onProjectAdded }: AddProjectFormProps) 
                 <Input placeholder="e.g., futuristic city" {...field} />
               </FormControl>
               <FormDescription>
-                One or two keywords for AI image generation/search if a placeholder/fallback image is used.
+                One or two keywords for AI image generation/search if a placeholder/fallback image is used. Default is 'project image' or '3d model' based on model path.
               </FormDescription>
               <FormMessage />
             </FormItem>
