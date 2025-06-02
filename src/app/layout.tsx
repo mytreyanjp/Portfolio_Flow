@@ -49,7 +49,7 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setIsClient(true);
     // Initialize Audio objects on client-side
-    lightThemeSoundRef.current = new Audio('/sounds/light-theme-sound.mp3'); 
+    lightThemeSoundRef.current = new Audio('/sounds/dark-theme-sound.mp3'); 
     if (lightThemeSoundRef.current) {
       lightThemeSoundRef.current.volume = 0.5;
       lightThemeSoundRef.current.loop = true; 
