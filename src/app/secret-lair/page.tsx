@@ -6,18 +6,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ShieldCheck, Zap, Edit3, PlusCircle, Trash2, Loader2, AlertTriangle, Pencil, MessageSquareText } from 'lucide-react';
+import { ShieldCheck, Zap, Edit3, PlusCircle, Trash2, Loader2, AlertTriangle, Pencil, MessageSquareText, UserCheck, LogIn } from 'lucide-react';
 import Link from 'next/link';
 import React, { useState, useEffect, useCallback } from 'react';
 import AddProjectForm from '@/components/admin/AddProjectForm';
 import EditResumeForm from '@/components/admin/EditResumeForm';
-import ContactMessagesList from '@/components/admin/ContactMessagesList'; // Import the new component
+import ContactMessagesList from '@/components/admin/ContactMessagesList';
 import type { Project } from '@/data/projects';
 import { getProjects, getUniqueCategoriesFromProjects } from '@/services/projectsService';
 import { db } from '@/lib/firebase/firebase';
 import { doc, deleteDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { getAuth, onAuthStateChanged, type User } from 'firebase/auth';
+import { app } from '@/lib/firebase/firebase'; // Ensure app is imported for auth
 
 export default function SecretLairPage() {
   const { toast } = useToast();
@@ -35,7 +37,26 @@ export default function SecretLairPage() {
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
 
+  const [currentUser, setCurrentUser] = useState<User | null | undefined>(undefined); // undefined = loading, null = no user, User = user object
+  const [authInitialized, setAuthInitialized] = useState(false);
+
+
+  useEffect(() => {
+    const auth = getAuth(app);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      setAuthInitialized(true);
+    });
+    return () => unsubscribe();
+  }, []);
+
   const fetchProjectData = useCallback(async () => {
+    if (!currentUser) {
+      setIsLoadingProjects(false);
+      setIsLoadingCategories(false);
+      setErrorLoadingProjects("Authentication required to load project data.");
+      return;
+    }
     setIsLoadingProjects(true);
     setIsLoadingCategories(true);
     setErrorLoadingProjects(null);
@@ -60,11 +81,21 @@ export default function SecretLairPage() {
       setIsLoadingProjects(false);
       setIsLoadingCategories(false);
     }
-  }, [toast]);
+  }, [toast, currentUser]);
 
   useEffect(() => {
-    fetchProjectData();
-  }, [fetchProjectData]);
+    if (authInitialized && currentUser) {
+      fetchProjectData();
+    } else if (authInitialized && !currentUser) {
+      // If auth is initialized and there's no user, clear data and set loading states to false
+      setProjects([]);
+      setAvailableCategories([]);
+      setIsLoadingProjects(false);
+      setIsLoadingCategories(false);
+      setErrorLoadingProjects(null); // Clear previous errors
+    }
+  }, [fetchProjectData, authInitialized, currentUser]);
+
 
   const handleOpenDeleteDialog = (project: Project) => {
     setProjectToDelete(project);
@@ -72,7 +103,7 @@ export default function SecretLairPage() {
   };
 
   const handleConfirmDelete = async () => {
-    if (!projectToDelete) return;
+    if (!projectToDelete || !currentUser) return;
     setIsDeleting(true);
     try {
       await deleteDoc(doc(db, 'projects', projectToDelete.id));
@@ -96,7 +127,9 @@ export default function SecretLairPage() {
   };
 
   const handleProjectAddedOrUpdated = () => {
-    fetchProjectData(); 
+    if (currentUser) {
+      fetchProjectData(); 
+    }
   };
 
   const handleOpenEditDialog = (project: Project) => {
@@ -104,6 +137,32 @@ export default function SecretLairPage() {
     setShowEditDialog(true);
   };
 
+  if (!authInitialized) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] py-12">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <p className="text-muted-foreground">Checking authentication status...</p>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] py-12 text-center">
+        <Card className="w-full max-w-md shadow-xl p-8">
+            <LogIn className="h-16 w-16 text-primary mx-auto mb-6" />
+            <CardTitle className="text-2xl font-bold text-primary mb-3">Authentication Required</CardTitle>
+            <CardDescription className="text-lg text-muted-foreground mb-6">
+              Please sign in to access the Secret Lair Control Panel.
+            </CardDescription>
+            <Button asChild variant="outline" className="w-full max-w-xs mx-auto hover:bg-primary/10 hover:text-primary">
+              <Link href="/">Return to Portfolio</Link>
+            </Button>
+             {/* You would typically add a sign-in button/form here or redirect to a login page */}
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] py-12">
@@ -112,7 +171,7 @@ export default function SecretLairPage() {
           <Zap className="h-16 w-16 text-primary mx-auto mb-4 animate-pulse" />
           <CardTitle className="text-3xl font-bold text-primary">Secret Lair Control Panel</CardTitle>
           <CardDescription className="text-lg text-muted-foreground">
-            Manage your portfolio content, Agent M.
+            Welcome, Agent {currentUser.displayName || currentUser.email || 'M'}. Manage your portfolio content.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -227,7 +286,7 @@ export default function SecretLairPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ContactMessagesList />
+                  {currentUser ? <ContactMessagesList /> : <p className="text-muted-foreground">Sign in to view messages.</p>}
                 </CardContent>
               </Card>
             </TabsContent>
