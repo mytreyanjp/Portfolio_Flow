@@ -73,7 +73,11 @@ export default function Header() {
 
   const handlePasswordSubmit = (event: React.FormEvent) => {
     event.preventDefault(); 
+    console.log(`[Header] Attempting password: '${passwordAttempt}' (length: ${passwordAttempt.length})`);
+    console.log(`[Header] Expected password: '${SECRET_PASSWORD}' (length: ${SECRET_PASSWORD.length})`);
+
     if (passwordAttempt === SECRET_PASSWORD) {
+      console.log('[Header] Password MATCHED!');
       setShowPasswordDialog(false);
       setPasswordAttempt('');
       setShowPasswordAttempt(false);
@@ -81,6 +85,7 @@ export default function Header() {
       setLastClickTime(0);
       router.push('/secret-lair');
     } else {
+      console.log('[Header] Password MISMATCH.');
       toast({
         title: "Incorrect Password",
         description: "Please try again.",
