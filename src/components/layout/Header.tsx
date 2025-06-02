@@ -31,6 +31,7 @@ const navItems = [
 
 const SECRET_PASSWORD = "tinku@197";
 const CLICKS_TO_ACTIVATE = 5;
+const MAX_CLICK_DELAY_MS = 1000; // 1 second
 
 export default function Header() {
   const [mounted, setMounted] = useState(false);
@@ -39,6 +40,7 @@ export default function Header() {
   const { toast } = useToast();
 
   const [logoClickCount, setLogoClickCount] = useState(0);
+  const [lastClickTime, setLastClickTime] = useState(0);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [passwordAttempt, setPasswordAttempt] = useState('');
 
@@ -47,20 +49,34 @@ export default function Header() {
   }, []);
 
   const handleLogoClick = () => {
-    const newClickCount = logoClickCount + 1;
+    const currentTime = Date.now();
+    let newClickCount;
+
+    if (currentTime - lastClickTime > MAX_CLICK_DELAY_MS) {
+      // If the delay is too long, reset to 1
+      newClickCount = 1;
+    } else {
+      // Otherwise, increment
+      newClickCount = logoClickCount + 1;
+    }
+
+    setLogoClickCount(newClickCount);
+    setLastClickTime(currentTime);
+
     if (newClickCount >= CLICKS_TO_ACTIVATE) {
       setShowPasswordDialog(true);
       setLogoClickCount(0); // Reset after triggering
-    } else {
-      setLogoClickCount(newClickCount);
+      setLastClickTime(0); // Reset time as well
     }
   };
 
   const handlePasswordSubmit = (event: React.FormEvent) => {
-    event.preventDefault(); // Prevent form submission if it's in a form
+    event.preventDefault(); 
     if (passwordAttempt === SECRET_PASSWORD) {
       setShowPasswordDialog(false);
       setPasswordAttempt('');
+      setLogoClickCount(0); // Reset click count on successful entry
+      setLastClickTime(0);
       router.push('/secret-lair');
     } else {
       toast({
@@ -69,10 +85,7 @@ export default function Header() {
         variant: "destructive",
       });
       setPasswordAttempt('');
-      // Optionally keep the dialog open:
-      // setShowPasswordDialog(true); 
-      // Or close it:
-      // setShowPasswordDialog(false);
+      // Optionally, keep the dialog open or close it. Here, it stays open.
     }
   };
 
@@ -83,7 +96,7 @@ export default function Header() {
           <Link href="/" className="flex items-center space-x-2 text-xl font-bold" passHref>
             <div 
               onClick={handleLogoClick} 
-              aria-label="Site Logo - click multiple times for a surprise" 
+              aria-label="Site Logo - click multiple times rapidly for a surprise" 
               role="button" 
               tabIndex={0}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleLogoClick(); }}}
@@ -144,7 +157,14 @@ export default function Header() {
         </div>
       </header>
 
-      <AlertDialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+      <AlertDialog open={showPasswordDialog} onOpenChange={(isOpen) => {
+        setShowPasswordDialog(isOpen);
+        if (!isOpen) { // Reset states if dialog is closed manually
+          setPasswordAttempt('');
+          setLogoClickCount(0);
+          setLastClickTime(0);
+        }
+      }}>
         <AlertDialogContent>
           <form onSubmit={handlePasswordSubmit}>
             <AlertDialogHeader>
@@ -166,7 +186,11 @@ export default function Header() {
               />
             </div>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setPasswordAttempt('')}>Cancel</AlertDialogCancel>
+              <AlertDialogCancel onClick={() => {
+                setPasswordAttempt(''); 
+                setLogoClickCount(0); 
+                setLastClickTime(0);
+              }}>Cancel</AlertDialogCancel>
               <AlertDialogAction type="submit">Unlock</AlertDialogAction>
             </AlertDialogFooter>
           </form>
