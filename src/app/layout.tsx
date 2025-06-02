@@ -90,8 +90,7 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
         <Header />
         <main className={cn(
             "flex-grow container mx-auto py-8",
-            "px-4 pb-20 md:pb-8", // Default paddings for all themes
-            isLightNotebookTheme && "pl-10 border-l-[1.5px] border-destructive/25" // Light theme notebook overrides
+            "px-4 pb-20 md:pb-8" // Default paddings for all themes
           )}
         >
           {children}
