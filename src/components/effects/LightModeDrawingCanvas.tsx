@@ -4,10 +4,10 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 
 const PENCIL_COLOR_RGB = '50, 50, 50'; // Dark gray for pencil
-const FADE_START_DELAY_MS = 2000; 
-const FADE_DURATION_MS = 1500;   
-const TOTAL_FADE_TIME_MS = FADE_START_DELAY_MS + FADE_DURATION_MS;
-const MIN_DISTANCE_BETWEEN_POINTS = 2; 
+const FADE_START_DELAY_MS = 1000; // Start fading after 1 second
+const FADE_DURATION_MS = 2000;   // Fade out over 2 seconds
+const TOTAL_FADE_TIME_MS = FADE_START_DELAY_MS + FADE_DURATION_MS; // Now 3000ms
+const MIN_DISTANCE_BETWEEN_POINTS = 2;
 
 // New constants for spray paint effect
 const SPRAY_AREA_DIAMETER = 20; // How wide the spray effect is
@@ -29,9 +29,12 @@ interface LightModeDrawingCanvasProps {
 const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawingActive }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameIdRef = useRef<number | null>(null);
-  const drawnPointsListRef = useRef<Point[]>([]);
-  const [pointsCount, setPointsCount] = useState(0); // Used to trigger re-evaluation of animation loop
   
+  // Store points in a ref to avoid re-triggering effects that depend on it
+  const drawnPointsListRef = useRef<Point[]>([]);
+  // State to trigger re-renders when points are added/removed, to manage animation loop
+  const [pointsCount, setPointsCount] = useState(0); 
+
   const isDrawingActiveRef = useRef(isDrawingActive);
   useEffect(() => {
     isDrawingActiveRef.current = isDrawingActive;
@@ -54,8 +57,10 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
     const currentDisplayPoints = drawnPointsListRef.current;
     const stillRelevantPoints = currentDisplayPoints.filter(point => (now - point.timestamp) < TOTAL_FADE_TIME_MS);
     
+    // Update the ref directly
     drawnPointsListRef.current = stillRelevantPoints;
         
+    // If the number of relevant points changed, update state to ensure loop continues/stops correctly
     if (stillRelevantPoints.length !== pointsCount) {
         setPointsCount(stillRelevantPoints.length); 
     }
@@ -72,18 +77,19 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
     if (stillRelevantPoints.length > 0) {
       stillRelevantPoints.forEach(point => {
         const baseOpacity = getOpacity(point);
-        if (baseOpacity <= 0) return;
+        if (baseOpacity <= 0) return; // Don't draw fully faded points
 
+        // Spray paint effect
         for (let i = 0; i < SPRAY_PARTICLES_PER_POINT; i++) {
           const angle = Math.random() * 2 * Math.PI;
           // Distribute points more towards the center for a denser core
-          const radiusMagnitude = Math.random() * (SPRAY_AREA_DIAMETER / 2);
+          const radiusMagnitude = Math.pow(Math.random(), 1.5) * (SPRAY_AREA_DIAMETER / 2); // Pow for denser center
           const offsetX = Math.cos(angle) * radiusMagnitude;
           const offsetY = Math.sin(angle) * radiusMagnitude;
           
           const particleRadius = SPRAY_PARTICLE_MIN_RADIUS + Math.random() * (SPRAY_PARTICLE_MAX_RADIUS - SPRAY_PARTICLE_MIN_RADIUS);
           // Vary particle opacity slightly for a more natural look
-          const particleOpacity = baseOpacity * (0.6 + Math.random() * 0.4);
+          const particleOpacity = baseOpacity * (0.6 + Math.random() * 0.4); // Random variation
 
           ctx.fillStyle = `rgba(${PENCIL_COLOR_RGB}, ${particleOpacity})`;
           ctx.beginPath();
@@ -93,13 +99,14 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
       });
     }
 
+    // Decide if animation should continue
     if (isDrawingActiveRef.current || stillRelevantPoints.length > 0) {
       animationFrameIdRef.current = requestAnimationFrame(animatePoints);
     } else {
       animationFrameIdRef.current = null;
-      ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear if no longer active and no points
+      ctx.clearRect(0, 0, canvas.width, canvas.height); // Final clear if nothing to draw
     }
-  }, [pointsCount]); // animatePoints itself is stable due to useCallback, pointsCount triggers re-check
+  }, [pointsCount]); // Depend on pointsCount to re-evaluate loop logic
 
   const localHandleMouseMove = useCallback((event: MouseEvent) => {
     if (!isDrawingActiveRef.current) {
@@ -119,10 +126,11 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
       }
     }
     
+    // Update points ref and then set state to trigger re-render/animation check
     drawnPointsListRef.current = [...drawnPointsListRef.current, currentPosition];
     setPointsCount(prevCount => prevCount + 1); 
     lastMousePositionRef.current = currentPosition;
-  }, []); 
+  }, []); // Empty dependency array as refs are stable
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -135,7 +143,7 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
       }
     };
     
-    fitToContainer();
+    fitToContainer(); // Initial size set
     window.addEventListener('resize', fitToContainer);
     document.addEventListener('mousemove', localHandleMouseMove);
 
@@ -152,24 +160,20 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
         animationFrameIdRef.current = null;
       }
     };
-  }, [localHandleMouseMove, animatePoints]); // Ensure animatePoints is included if its definition might change based on other refs/state
+  }, [localHandleMouseMove, animatePoints]); 
 
+  // This effect specifically manages starting/stopping the animation loop
   useEffect(() => {
-    // This effect specifically manages starting/stopping the animation loop
-    // based on isDrawingActive or if there are points to render/fade.
     const needsAnimation = isDrawingActiveRef.current || pointsCount > 0;
     if (needsAnimation && !animationFrameIdRef.current) {
       animationFrameIdRef.current = requestAnimationFrame(animatePoints);
-    } else if (!needsAnimation && animationFrameIdRef.current) {
-      // This case might be handled inside animatePoints itself, 
-      // but an explicit check here can also be useful.
-      // If animatePoints clears its own frame, this might be redundant.
     }
+    // The animation loop will stop itself if !needsAnimation by not requesting another frame
   }, [isDrawingActive, pointsCount, animatePoints]);
 
   const shouldRenderCanvas = isDrawingActive || pointsCount > 0;
 
-  if (!shouldRenderCanvas && !isDrawingActiveRef.current) { // Only hide if not active AND no points
+  if (!shouldRenderCanvas && !isDrawingActiveRef.current) {
     return null;
   }
 
@@ -183,8 +187,8 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none',
-        zIndex: 1, 
-        opacity: (isDrawingActiveRef.current || pointsCount > 0) ? 1 : 0, // Ensure visible if active or has points
+        zIndex: 1, // Above background lines, below main content
+        opacity: (isDrawingActiveRef.current || pointsCount > 0) ? 1 : 0, 
         transition: 'opacity 0.3s ease-in-out',
       }}
       aria-hidden="true"
