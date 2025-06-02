@@ -78,6 +78,15 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
   const [categoryInputValue, setCategoryInputValue] = useState('');
   const [isCategoryPopoverOpen, setIsCategoryPopoverOpen] = useState(false);
   const categoryInputRef = useRef<HTMLInputElement>(null);
+  
+  // Local state for categories available for suggestion within this form instance
+  const [internalAvailableCategories, setInternalAvailableCategories] = useState<string[]>(availableCategories);
+
+  // Sync internalAvailableCategories when the prop changes (e.g., on initial load or after a project save refreshes the list from parent)
+  useEffect(() => {
+    setInternalAvailableCategories(availableCategories.sort((a,b) => a.localeCompare(b)));
+  }, [availableCategories]);
+
 
   const form = useForm<AddProjectFormValues>({
     resolver: zodResolver(addProjectSchema),
@@ -137,16 +146,19 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
     if (newCategory && !currentProjectCategories.includes(newCategory)) {
       setCurrentProjectCategories(prev => [...prev, newCategory]);
     }
+    // If this category is not in our internal list, add it for future suggestions in this form instance.
+    if (newCategory && !internalAvailableCategories.some(cat => cat.toLowerCase() === newCategory.toLowerCase())) {
+      setInternalAvailableCategories(prev => [...prev, newCategory].sort((a,b) => a.localeCompare(b)));
+    }
     setCategoryInputValue('');
-    // setIsCategoryPopoverOpen(false); // Popover will close via its onOpenChange or Enter key
     categoryInputRef.current?.focus();
-  }, [currentProjectCategories]);
+  }, [currentProjectCategories, internalAvailableCategories]);
 
   const handleRemoveCategory = (categoryToRemove: string) => {
     setCurrentProjectCategories(prev => prev.filter(cat => cat !== categoryToRemove));
   };
 
-  const filteredCategorySuggestions = availableCategories.filter(
+  const filteredCategorySuggestions = internalAvailableCategories.filter(
     cat => cat.toLowerCase().includes(categoryInputValue.toLowerCase()) && !currentProjectCategories.includes(cat)
   );
 
@@ -356,14 +368,13 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
                            setCategoryInputValue(newTypedValue);
                            if (newTypedValue.trim()) {
                              if(!isCategoryPopoverOpen) setIsCategoryPopoverOpen(true);
-                           } else {
-                             // if (isCategoryPopoverOpen) setIsCategoryPopoverOpen(false); // User might clear to type something else
                            }
                         }}
                         onFocus={() => {
-                          if (categoryInputValue.trim() || filteredCategorySuggestions.length > 0) {
-                            if(!isCategoryPopoverOpen) setIsCategoryPopoverOpen(true);
-                          }
+                           // Open popover on focus if there's input or suggestions
+                           if (categoryInputValue.trim() || filteredCategorySuggestions.length > 0) {
+                             if(!isCategoryPopoverOpen) setIsCategoryPopoverOpen(true);
+                           }
                         }}
                         onKeyDownCapture={(e) => {
                           if (e.key === 'Enter' && categoryInputValue.trim()) {
@@ -376,7 +387,8 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
                             } else {
                               handleAddCategory(categoryInputValue.trim());
                             }
-                            setIsCategoryPopoverOpen(false); 
+                            // Keep popover open if user might want to add more from suggestions. 
+                            // To close on Enter, uncomment: setIsCategoryPopoverOpen(false); 
                           } else if (e.key === 'Backspace' && !categoryInputValue && currentProjectCategories.length > 0) {
                             e.preventDefault();
                             handleRemoveCategory(currentProjectCategories[currentProjectCategories.length - 1]);
@@ -394,7 +406,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
                         onClick={() => {
                             if (categoryInputValue.trim()) {
                                 handleAddCategory(categoryInputValue.trim());
-                                setIsCategoryPopoverOpen(false);
+                                // setIsCategoryPopoverOpen(false); // Optional: close popover after adding with button
                             }
                         }}
                         disabled={!categoryInputValue.trim()}
@@ -407,13 +419,14 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
                 <PopoverContent 
                     className="w-[--radix-popover-trigger-width] p-0" 
                     align="start"
-                    onOpenAutoFocus={(e) => e.preventDefault()}
+                    onOpenAutoFocus={(e) => e.preventDefault()} // Prevents auto-focusing first item
                 >
                   <Command>
+                    {/* <CommandInput placeholder="Search or add new..." value={categoryInputValue} onValueChange={setCategoryInputValue} /> */}
                     <CommandList>
                        <CommandEmpty>
                          {categoryInputValue.trim() 
-                           ? `No suggestions found for "${categoryInputValue.trim()}". Press Enter or click + to add.` 
+                           ? `No suggestions. Press Enter or click '+' to add "${categoryInputValue.trim()}".` 
                            : "Type to search or add new."}
                        </CommandEmpty>
                       {filteredCategorySuggestions.length > 0 && (
