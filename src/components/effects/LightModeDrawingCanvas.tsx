@@ -4,11 +4,17 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 
 const PENCIL_COLOR_RGB = '50, 50, 50'; // Dark gray for pencil
-const LINE_WIDTH = 3.5; // Increased line width for a thicker tail
-const FADE_START_DELAY_MS = 2000; // Start fading after 2 seconds
-const FADE_DURATION_MS = 1500;   // Fade over 1.5 seconds
+const FADE_START_DELAY_MS = 2000; 
+const FADE_DURATION_MS = 1500;   
 const TOTAL_FADE_TIME_MS = FADE_START_DELAY_MS + FADE_DURATION_MS;
-const MIN_DISTANCE_BETWEEN_POINTS = 2; // To avoid adding too many points if mouse barely moves
+const MIN_DISTANCE_BETWEEN_POINTS = 2; 
+
+// New constants for spray paint effect
+const SPRAY_AREA_DIAMETER = 20; // How wide the spray effect is
+const SPRAY_PARTICLES_PER_POINT = 15; // Number of particles per mouse point
+const SPRAY_PARTICLE_MIN_RADIUS = 0.5;
+const SPRAY_PARTICLE_MAX_RADIUS = 2.5;
+
 
 interface Point {
   x: number;
@@ -23,16 +29,15 @@ interface LightModeDrawingCanvasProps {
 const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawingActive }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameIdRef = useRef<number | null>(null);
+  const drawnPointsListRef = useRef<Point[]>([]);
+  const [pointsCount, setPointsCount] = useState(0); // Used to trigger re-evaluation of animation loop
   
   const isDrawingActiveRef = useRef(isDrawingActive);
   useEffect(() => {
     isDrawingActiveRef.current = isDrawingActive;
   }, [isDrawingActive]);
 
-  const drawnPointsListRef = useRef<Point[]>([]);
-  const [pointsCount, setPointsCount] = useState(0);
-  const lastMousePositionRef = useRef<Point | null>(null); // Moved to top level
-
+  const lastMousePositionRef = useRef<Point | null>(null);
 
   const animatePoints = useCallback(() => {
     const canvas = canvasRef.current;
@@ -55,98 +60,46 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
         setPointsCount(stillRelevantPoints.length); 
     }
 
-    if (stillRelevantPoints.length > 0) {
-        ctx.lineWidth = LINE_WIDTH;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-
-        const getOpacity = (point: Point) => {
-            const age = now - point.timestamp;
-            let opacity = 1;
-            if (age > FADE_START_DELAY_MS) {
-                opacity = Math.max(0, 1 - (age - FADE_START_DELAY_MS) / FADE_DURATION_MS);
-            }
-            return opacity;
-        };
-
-        if (stillRelevantPoints.length < 2) { 
-            const p = stillRelevantPoints[0];
-            const opacity = getOpacity(p);
-            if (opacity > 0) {
-                ctx.fillStyle = `rgba(${PENCIL_COLOR_RGB}, ${opacity})`;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, LINE_WIDTH / 2, 0, 2 * Math.PI);
-                ctx.fill();
-            }
-        } else {
-            const p0 = stillRelevantPoints[0];
-            const p1 = stillRelevantPoints[1];
-            let op0 = getOpacity(p0);
-            if (op0 > 0) {
-                ctx.strokeStyle = `rgba(${PENCIL_COLOR_RGB}, ${op0})`;
-                ctx.beginPath();
-                ctx.moveTo(p0.x, p0.y);
-                if (stillRelevantPoints.length === 2) {
-                    ctx.lineTo(p1.x, p1.y);
-                } else {
-                    ctx.lineTo((p0.x + p1.x) / 2, (p0.y + p1.y) / 2);
-                }
-                ctx.stroke();
-            }
-
-            for (let i = 1; i < stillRelevantPoints.length - 1; i++) {
-                const prevP = stillRelevantPoints[i-1];
-                const currP = stillRelevantPoints[i];
-                const nextP = stillRelevantPoints[i+1];
-                
-                const opCurr = getOpacity(currP);
-                if (opCurr <= 0) continue;
-
-                const M_prev_curr = { x: (prevP.x + currP.x) / 2, y: (prevP.y + currP.y) / 2 };
-                const M_curr_next = { x: (currP.x + nextP.x) / 2, y: (currP.y + nextP.y) / 2 };
-
-                ctx.strokeStyle = `rgba(${PENCIL_COLOR_RGB}, ${opCurr})`;
-                ctx.beginPath();
-                ctx.moveTo(M_prev_curr.x, M_prev_curr.y);
-                ctx.quadraticCurveTo(currP.x, currP.y, M_curr_next.x, M_curr_next.y);
-                ctx.stroke();
-            }
-
-            if (stillRelevantPoints.length > 2) { 
-                const pN_1 = stillRelevantPoints[stillRelevantPoints.length - 2];
-                const pN = stillRelevantPoints[stillRelevantPoints.length - 1];
-                let opN = getOpacity(pN); 
-                if (opN > 0) { 
-                    ctx.strokeStyle = `rgba(${PENCIL_COLOR_RGB}, ${opN})`;
-                    ctx.beginPath();
-                    ctx.moveTo((pN_1.x + pN.x) / 2, (pN_1.y + pN.y) / 2);
-                    ctx.lineTo(pN.x, pN.y);
-                    ctx.stroke();
-                }
-            }
+    const getOpacity = (point: Point) => {
+        const age = now - point.timestamp;
+        let opacity = 1;
+        if (age > FADE_START_DELAY_MS) {
+            opacity = Math.max(0, 1 - (age - FADE_START_DELAY_MS) / FADE_DURATION_MS);
         }
+        return opacity;
+    };
+
+    if (stillRelevantPoints.length > 0) {
+      stillRelevantPoints.forEach(point => {
+        const baseOpacity = getOpacity(point);
+        if (baseOpacity <= 0) return;
+
+        for (let i = 0; i < SPRAY_PARTICLES_PER_POINT; i++) {
+          const angle = Math.random() * 2 * Math.PI;
+          // Distribute points more towards the center for a denser core
+          const radiusMagnitude = Math.random() * (SPRAY_AREA_DIAMETER / 2);
+          const offsetX = Math.cos(angle) * radiusMagnitude;
+          const offsetY = Math.sin(angle) * radiusMagnitude;
+          
+          const particleRadius = SPRAY_PARTICLE_MIN_RADIUS + Math.random() * (SPRAY_PARTICLE_MAX_RADIUS - SPRAY_PARTICLE_MIN_RADIUS);
+          // Vary particle opacity slightly for a more natural look
+          const particleOpacity = baseOpacity * (0.6 + Math.random() * 0.4);
+
+          ctx.fillStyle = `rgba(${PENCIL_COLOR_RGB}, ${particleOpacity})`;
+          ctx.beginPath();
+          ctx.arc(point.x + offsetX, point.y + offsetY, particleRadius, 0, 2 * Math.PI);
+          ctx.fill();
+        }
+      });
     }
 
     if (isDrawingActiveRef.current || stillRelevantPoints.length > 0) {
       animationFrameIdRef.current = requestAnimationFrame(animatePoints);
     } else {
       animationFrameIdRef.current = null;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear if no longer active and no points
     }
-  }, [pointsCount]); // Re-run if pointsCount (derived from drawnPointsListRef.current.length) changes
-
-  useEffect(() => {
-    const needsAnimation = isDrawingActiveRef.current || pointsCount > 0;
-    if (needsAnimation && !animationFrameIdRef.current) {
-      animationFrameIdRef.current = requestAnimationFrame(animatePoints);
-    }
-    return () => {
-      if (animationFrameIdRef.current && !(isDrawingActiveRef.current || pointsCount > 0)) {
-        // Intentionally left blank, cleanup is in main unmount and inside animatePoints
-      }
-    };
-  }, [isDrawingActive, pointsCount, animatePoints]);
-
+  }, [pointsCount]); // animatePoints itself is stable due to useCallback, pointsCount triggers re-check
 
   const localHandleMouseMove = useCallback((event: MouseEvent) => {
     if (!isDrawingActiveRef.current) {
@@ -167,9 +120,9 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
     }
     
     drawnPointsListRef.current = [...drawnPointsListRef.current, currentPosition];
-    setPointsCount(prevCount => prevCount + 1); // Increment count to trigger animation check
+    setPointsCount(prevCount => prevCount + 1); 
     lastMousePositionRef.current = currentPosition;
-  }, []); // isDrawingActiveRef, lastMousePositionRef, drawnPointsListRef, setPointsCount are stable or refs
+  }, []); 
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -186,6 +139,11 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
     window.addEventListener('resize', fitToContainer);
     document.addEventListener('mousemove', localHandleMouseMove);
 
+    // Initial kick-off for animation if active
+    if (isDrawingActiveRef.current && !animationFrameIdRef.current) {
+        animationFrameIdRef.current = requestAnimationFrame(animatePoints);
+    }
+
     return () => {
       window.removeEventListener('resize', fitToContainer);
       document.removeEventListener('mousemove', localHandleMouseMove);
@@ -194,11 +152,24 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
         animationFrameIdRef.current = null;
       }
     };
-  }, [localHandleMouseMove]); 
+  }, [localHandleMouseMove, animatePoints]); // Ensure animatePoints is included if its definition might change based on other refs/state
+
+  useEffect(() => {
+    // This effect specifically manages starting/stopping the animation loop
+    // based on isDrawingActive or if there are points to render/fade.
+    const needsAnimation = isDrawingActiveRef.current || pointsCount > 0;
+    if (needsAnimation && !animationFrameIdRef.current) {
+      animationFrameIdRef.current = requestAnimationFrame(animatePoints);
+    } else if (!needsAnimation && animationFrameIdRef.current) {
+      // This case might be handled inside animatePoints itself, 
+      // but an explicit check here can also be useful.
+      // If animatePoints clears its own frame, this might be redundant.
+    }
+  }, [isDrawingActive, pointsCount, animatePoints]);
 
   const shouldRenderCanvas = isDrawingActive || pointsCount > 0;
 
-  if (!shouldRenderCanvas) {
+  if (!shouldRenderCanvas && !isDrawingActiveRef.current) { // Only hide if not active AND no points
     return null;
   }
 
@@ -213,7 +184,7 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
         height: '100vh',
         pointerEvents: 'none',
         zIndex: 1, 
-        opacity: shouldRenderCanvas ? 1 : 0,
+        opacity: (isDrawingActiveRef.current || pointsCount > 0) ? 1 : 0, // Ensure visible if active or has points
         transition: 'opacity 0.3s ease-in-out',
       }}
       aria-hidden="true"
