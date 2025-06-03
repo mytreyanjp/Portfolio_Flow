@@ -34,7 +34,7 @@ const SECRET_PASSWORD = "tinku@197";
 const CLICKS_TO_ACTIVATE = 5;
 const MAX_CLICK_DELAY_MS = 1000; // 1 second
 const MAX_FAILED_ATTEMPTS = 6;
-const LOCKOUT_DURATION_MS = 5 * 60 * 60 * 1000; // 5 hours
+const LOCKOUT_DURATION_MS = 1 * 60 * 60 * 1000; // 1 hour
 
 const FAILED_ATTEMPTS_KEY = 'portfolioSecretLairFailedAttempts';
 const LOCKOUT_END_TIME_KEY = 'portfolioSecretLairLockoutEndTime';
