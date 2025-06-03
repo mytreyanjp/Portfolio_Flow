@@ -1,6 +1,6 @@
 
 // Import the functions you need from the SDKs you need
-import { initializeApp, getApps, getApp } from "firebase/app";
+import { initializeApp, getApps, getApp, type FirebaseOptions } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth"; // Added getAuth
 
@@ -21,7 +21,7 @@ WARNING: Invalid Firebase Project ID detected in environment variables.
 NEXT_PUBLIC_FIREBASE_PROJECT_ID is currently: "${firebaseProjectId}"
 Please ensure this is set correctly in your .env or .env.local file
 and that you've restarted your development server.
-Firestore operations will likely fail until this is corrected.
+Firebase services might not work correctly until this is resolved.
 *********************************************************************\n\n`);
 }
 
@@ -31,7 +31,7 @@ WARNING: Invalid or missing Firebase API Key detected.
 NEXT_PUBLIC_FIREBASE_API_KEY is currently: "${firebaseApiKey}"
 Please ensure this is set correctly in your .env or .env.local file
 and that you've restarted your development server.
-Firebase Authentication will fail until this is corrected.
+Firebase Authentication will likely fail until this is corrected.
 *********************************************************************\n\n`);
 }
 
@@ -49,7 +49,7 @@ Firebase Authentication may fail until this is corrected.
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
+const firebaseConfig: FirebaseOptions = {
   apiKey: firebaseApiKey,
   authDomain: firebaseAuthDomain,
   projectId: firebaseProjectId,
@@ -58,23 +58,35 @@ const firebaseConfig = {
   appId: firebaseAppId
 };
 
+// Log the config being used for initialization
+console.log("Firebase Config for Initialization in firebase.ts:", JSON.stringify(firebaseConfig, null, 2));
+
 // Initialize Firebase
 let app;
 if (!getApps().length) {
   try {
     app = initializeApp(firebaseConfig);
-    console.log("Firebase app initialized successfully.");
+    console.log("Firebase app initialized successfully in firebase.ts using the logged config above.");
+    if (app.options.authDomain) {
+        console.log(`Initialized Firebase App in firebase.ts - authDomain from app.options: ${app.options.authDomain}, projectId: ${app.options.projectId}`);
+    } else {
+        console.warn("Initialized Firebase App in firebase.ts - authDomain from app.options is undefined/empty.");
+    }
   } catch (error) {
-    console.error("Error initializing Firebase app:", error);
-    console.error("Firebase Config used:", firebaseConfig);
-    // Provide more direct feedback for API key issues if initialization itself fails
+    console.error("Error initializing Firebase app in firebase.ts:", error);
+    console.error("Firebase Config used at initialization in firebase.ts:", firebaseConfig);
     if (error instanceof Error && error.message.toLowerCase().includes('api key')) {
         console.error("\n\nSDK INITIALIZATION FAILED. THIS OFTEN MEANS THE API KEY IS INVALID OR MISSING. DOUBLE CHECK YOUR .env FILE AND FIREBASE CONSOLE SETTINGS.\n\n");
     }
   }
 } else {
   app = getApp();
-  console.log("Existing Firebase app retrieved.");
+  console.log("Existing Firebase app retrieved in firebase.ts.");
+   if (app.options.authDomain) {
+        console.log(`Retrieved Firebase App in firebase.ts - authDomain from app.options: ${app.options.authDomain}, projectId: ${app.options.projectId}`);
+    } else {
+        console.warn("Retrieved Firebase App in firebase.ts - authDomain from app.options is undefined/empty.");
+    }
 }
 
 let db;
@@ -83,7 +95,7 @@ let authInst; // Renamed to avoid conflict with exported 'auth'
 try {
   if (app) {
     db = getFirestore(app);
-    console.log("Firestore instance obtained successfully.");
+    // console.log("Firestore instance obtained successfully."); // Reduced verbosity
   } else {
     throw new Error("Firebase app not initialized, cannot get Firestore.");
   }
@@ -94,7 +106,7 @@ try {
 try {
   if (app) {
     authInst = getAuth(app); // Use the local variable
-    console.log("Firebase Auth instance obtained successfully.");
+    // console.log("Firebase Auth instance obtained successfully."); // Reduced verbosity
   } else {
     throw new Error("Firebase app not initialized, cannot get Auth.");
   }
