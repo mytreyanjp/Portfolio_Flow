@@ -74,7 +74,7 @@ export default function SecretLairPage() {
   }, [toast]);
 
   useEffect(() => {
-    if (isUserAdmin) {
+    if (isUserAdmin && ADMIN_EMAIL !== "your-admin-email@example.com") { // Only fetch if admin and configured
       fetchProjectData();
     }
   }, [isUserAdmin, fetchProjectData]);
@@ -126,6 +126,21 @@ export default function SecretLairPage() {
     setProjectToEdit(project);
     setShowEditDialog(true);
   };
+  
+  if (ADMIN_EMAIL === "your-admin-email@example.com") {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] py-12 px-4 text-center">
+        <ShieldAlert className="h-16 w-16 text-destructive mx-auto mb-4" />
+        <h1 className="text-2xl font-bold text-destructive mb-2">Configuration Required</h1>
+        <p className="text-muted-foreground mb-4 max-w-md">
+          To enable admin access, please edit the `ADMIN_EMAIL` constant in the file `src/app/secret-lair/page.tsx` and set it to your Google account email.
+        </p>
+        <Button asChild variant="outline">
+          <Link href="/">Return to Portfolio</Link>
+        </Button>
+      </div>
+    )
+  }
 
   if (isAuthLoading) {
     return (
@@ -136,20 +151,6 @@ export default function SecretLairPage() {
     );
   }
   
-  if (ADMIN_EMAIL === "your-admin-email@example.com") {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] py-12 px-4 text-center">
-        <ShieldAlert className="h-16 w-16 text-destructive mx-auto mb-4" />
-        <h1 className="text-2xl font-bold text-destructive mb-2">Configuration Required</h1>
-        <p className="text-muted-foreground mb-4 max-w-md">
-          Please set the `ADMIN_EMAIL` constant in `src/app/secret-lair/page.tsx` to your Google account email to enable admin access.
-        </p>
-        <Button asChild variant="outline">
-          <Link href="/">Return to Portfolio</Link>
-        </Button>
-      </div>
-    )
-  }
 
   if (!user) {
     return (
@@ -182,6 +183,7 @@ export default function SecretLairPage() {
         <h1 className="text-2xl font-bold text-destructive mb-2">Unauthorized Access</h1>
         <p className="text-muted-foreground mb-2">
           The account <span className="font-medium text-foreground">{user.email}</span> is not authorized to access this area.
+          Ensure the `ADMIN_EMAIL` constant in `src/app/secret-lair/page.tsx` is set to this email address if it's correct.
         </p>
         <Button onClick={handleSignOut} variant="destructive" size="lg">
           <LogOut className="mr-2 h-5 w-5" /> Sign Out
