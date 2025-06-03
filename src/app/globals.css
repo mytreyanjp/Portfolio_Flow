@@ -130,9 +130,8 @@
 
 /* Flashlight clip effect for buttons */
 .flashlight-clip {
-  /* Ensure the button's content is rendered and opaque so clip-path can reveal it */
-  opacity: 1 !important; 
-  color: hsl(var(--primary-foreground)); /* Explicitly set text color for dark theme reveal */
+  /* The button's own classes (e.g., text-foreground, dark:text-primary-foreground) should handle text color. */
+  /* Opacity is handled by the component's inline style logic or default visibility. */
   clip-path: circle(var(--flashlight-radius) at var(--flashlight-x) var(--flashlight-y));
   -webkit-clip-path: circle(var(--flashlight-radius) at var(--flashlight-x) var(--flashlight-y));
   /* transition: clip-path 0.05s linear; */ /* Optional: for smoother edge transition */
