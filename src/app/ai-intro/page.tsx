@@ -63,19 +63,17 @@ export default function AiIntroPage() {
       )}
     >
       <header className="text-center mb-12">
-        <div> 
-          {/* Sparkles icon removed from here */}
-          <h1 
-            id="ai-intro-page-main-heading"
-            className="text-4xl font-display font-bold text-transparent bg-clip-text mb-4 relative overflow-hidden"
-            style={{
-              ...parallaxStyle,
-              backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
-            }}
-          >
-            AI-Powered Introduction Generator
-          </h1>
-        </div>
+        {/* Sparkles icon and its container div removed from here */}
+        <h1 
+          id="ai-intro-page-main-heading"
+          className="text-4xl font-display font-bold text-transparent bg-clip-text mb-4 relative overflow-hidden"
+          style={{
+            ...parallaxStyle,
+            backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
+          }}
+        >
+          AI-Powered Introduction Generator
+        </h1>
         <p className="text-lg text-muted-foreground">
           Craft the perfect first impression. Let AI help you create tailored introductory messages 
           for potential employers.
