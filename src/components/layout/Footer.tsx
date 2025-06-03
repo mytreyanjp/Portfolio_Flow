@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Briefcase, MessageSquare, FileText, Brain } from 'lucide-react';
+import { Briefcase, MessageSquare, FileText, Bot } from 'lucide-react'; // Changed Brain to Bot
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -13,7 +13,7 @@ const navItems = [
   { href: '/', label: 'Portfolio', icon: Briefcase },
   { href: '/contact', label: 'Contact', icon: MessageSquare },
   { href: '/resume', label: 'Resume', icon: FileText },
-  { href: '/ai-intro', label: 'AI Intro', icon: Brain },
+  { href: '/mr-m', label: 'Mr.M', icon: Bot }, // Changed from AI Intro to Mr.M
 ];
 
 export default function Footer() {
@@ -25,7 +25,7 @@ export default function Footer() {
       <footer className="fixed bottom-0 left-0 right-0 z-40 h-16 border-t border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">
         <nav className="container mx-auto flex h-full max-w-md items-center justify-around px-4">
           {navItems.map((item) => {
-            const isDisabled = !!(item as any).disabled; 
+            const isDisabled = !!(item as any).disabled;
             const isActive = !isDisabled && pathname === item.href;
 
             return (

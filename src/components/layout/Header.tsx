@@ -7,7 +7,7 @@ import ThemeSwitcher from './ThemeSwitcher';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Briefcase, MessageSquare, FileText, Brain, LockKeyhole, Eye, EyeOff, Volume2, VolumeX, Pencil, AlertTriangle, Save, Loader2 } from 'lucide-react';
+import { Briefcase, MessageSquare, FileText, Bot, LockKeyhole, Eye, EyeOff, Volume2, VolumeX, Pencil, AlertTriangle, Save, Loader2 } from 'lucide-react'; // Changed Brain to Bot
 import { usePathname, useRouter } from 'next/navigation';
 import {
   AlertDialog,
@@ -20,7 +20,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input"; 
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from 'next-themes';
@@ -33,12 +33,12 @@ const navItems = [
   { href: '/', label: 'Portfolio', icon: Briefcase },
   { href: '/contact', label: 'Contact', icon: MessageSquare },
   { href: '/resume', label: 'Resume', icon: FileText },
-  { href: '/ai-intro', label: 'AI Intro', icon: Brain },
+  { href: '/mr-m', label: 'Mr.M', icon: Bot }, // Changed from AI Intro to Mr.M
 ];
 
 const SECRET_PASSWORD = "tinku@197";
 const CLICKS_TO_ACTIVATE = 5;
-const MAX_CLICK_DELAY_MS = 1000; 
+const MAX_CLICK_DELAY_MS = 1000;
 const MAX_FAILED_ATTEMPTS = 6;
 const LOCKOUT_DURATION_MS = 1 * 60 * 60 * 1000; // 1 hour
 
@@ -54,8 +54,8 @@ interface HeaderProps {
   isLightTheme: boolean;
 }
 
-export default function Header({ 
-  isSoundEnabled, 
+export default function Header({
+  isSoundEnabled,
   toggleSoundEnabled,
   isPersonalizationActive,
   toggleNameInputDialog,
@@ -95,7 +95,7 @@ export default function Header({
       } else {
         localStorage.removeItem(FAILED_ATTEMPTS_KEY);
         localStorage.removeItem(LOCKOUT_END_TIME_KEY);
-        setFailedAttemptsState(0); 
+        setFailedAttemptsState(0);
         setLockoutEndTimeState(null);
       }
     }
@@ -114,10 +114,10 @@ export default function Header({
     setLogoClickCount(newClickCount);
     setLastClickTime(currentTime);
     if (newClickCount >= CLICKS_TO_ACTIVATE) {
-      updateLockoutStateFromStorage(); 
+      updateLockoutStateFromStorage();
       setShowPasswordDialog(true);
-      setPasswordAttempt(''); 
-      setShowPasswordAttemptVisual(false); 
+      setPasswordAttempt('');
+      setShowPasswordAttemptVisual(false);
     }
   };
 
@@ -129,7 +129,7 @@ export default function Header({
       localStorage.removeItem(LOCKOUT_END_TIME_KEY);
       setFailedAttemptsState(0); setLockoutEndTimeState(null); setShowLockedUI(false);
       router.push('/secret-lair');
-      setShowPasswordDialog(false); 
+      setShowPasswordDialog(false);
     } else {
       const newAttempts = failedAttempts + 1;
       setFailedAttemptsState(newAttempts);
@@ -146,9 +146,9 @@ export default function Header({
       setPasswordAttempt('');
     }
   };
-  
+
   const handlePasswordSubmitFormEvent = (event: React.FormEvent) => {
-    event.preventDefault(); 
+    event.preventDefault();
     handlePasswordCheck();
   };
 
@@ -171,7 +171,7 @@ export default function Header({
       const result = await recognizeHandwriting({ imageDataUri });
       if (result.recognizedText && result.recognizedText.trim() !== "") {
         setUserName(result.recognizedText.trim());
-        toggleNameInputDialog(); 
+        toggleNameInputDialog();
       } else {
         toast({ title: "Recognition Failed", description: "Could not recognize a name. Please try drawing more clearly.", variant: "destructive" });
       }
@@ -187,7 +187,7 @@ export default function Header({
     if (handwritingCanvasRef.current) {
       handwritingCanvasRef.current.clearCanvas();
     }
-    toggleNameInputDialog(); 
+    toggleNameInputDialog();
   };
 
 
@@ -203,7 +203,7 @@ export default function Header({
           {mounted && (
             <nav className="hidden md:flex items-center space-x-1">
               {navItems.map((item) => {
-                const isDisabled = !!(item as any).disabled; 
+                const isDisabled = !!(item as any).disabled;
                 const isActive = pathname === item.href;
                 return (
                   <Button key={item.href} asChild variant="ghost" className={cn('text-sm font-medium', isDisabled ? 'cursor-not-allowed opacity-50' : isActive ? 'text-primary hover:bg-transparent' : 'text-muted-foreground hover:text-primary hover:bg-transparent')} disabled={isDisabled} tabIndex={isDisabled ? -1 : undefined}>
@@ -231,7 +231,7 @@ export default function Header({
 
       <AlertDialog open={showPasswordDialog} onOpenChange={(isOpen) => { setShowPasswordDialog(isOpen); if (isOpen) updateLockoutStateFromStorage(); if (!isOpen) handlePasswordDialogClose(); }}>
         <AlertDialogContent>
-          <form onSubmit={handlePasswordSubmitFormEvent}> 
+          <form onSubmit={handlePasswordSubmitFormEvent}>
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center">
                 {showLockedUI ? <AlertTriangle className="mr-2 h-5 w-5 text-destructive" /> : <LockKeyhole className="mr-2 h-5 w-5 text-primary" />}
@@ -250,7 +250,7 @@ export default function Header({
               </div>
             )}
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setShowPasswordDialog(false)} disabled={showLockedUI && lockoutEndTime !== null && Date.now() < lockoutEndTime}>{showLockedUI ? "Close" : "Cancel"}</AlertDialogCancel> 
+              <AlertDialogCancel onClick={() => setShowPasswordDialog(false)} disabled={showLockedUI && lockoutEndTime !== null && Date.now() < lockoutEndTime}>{showLockedUI ? "Close" : "Cancel"}</AlertDialogCancel>
               {!showLockedUI && <Button type="submit" disabled={showLockedUI}>Unlock</Button>}
             </AlertDialogFooter>
           </form>
@@ -258,28 +258,28 @@ export default function Header({
       </AlertDialog>
 
       <Dialog open={showNameInputDialog} onOpenChange={(isOpen) => {
-        if (!isOpen) { 
+        if (!isOpen) {
           if (handwritingCanvasRef.current) {
-            handwritingCanvasRef.current.clearCanvas(); 
+            handwritingCanvasRef.current.clearCanvas();
           }
         }
-        toggleNameInputDialog(); 
+        toggleNameInputDialog();
       }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Draw Your Name</DialogTitle>
             <DialogDescription>
-              
+              {/* Removed description text */}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 flex justify-center">
             <HandwritingCanvas ref={handwritingCanvasRef} />
           </div>
-          <DialogFooter className="sm:justify-end"> 
-            <Button 
-              type="button" 
-              size="sm" 
-              onClick={handleSaveDrawnName} 
+          <DialogFooter className="sm:justify-end">
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleSaveDrawnName}
               disabled={isRecognizingName}
             >
               {isRecognizingName ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
