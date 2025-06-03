@@ -1,10 +1,14 @@
 
 // Import the functions you need from the SDKs you need
-import { initializeApp, getApps, getApp, type FirebaseOptions } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth"; // Added getAuth
+import { initializeApp, getApps, getApp, type FirebaseOptions, type FirebaseApp } from "firebase/app";
+import { getFirestore, type Firestore } from "firebase/firestore";
+import { getAuth, type Auth } from "firebase/auth";
 
 console.log("firebase.ts: SCRIPT EXECUTION STARTED. Next.js server is attempting to load this module.");
+
+let app: FirebaseApp | undefined = undefined;
+let db: Firestore | undefined = undefined;
+let auth: Auth | undefined = undefined;
 
 const firebaseProjectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 const firebaseApiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
@@ -13,115 +17,113 @@ const firebaseStorageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
 const firebaseMessagingSenderId = process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID;
 const firebaseAppId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID;
 
-console.log(`firebase.ts: Env Var - NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${firebaseProjectId}`);
-console.log(`firebase.ts: Env Var - NEXT_PUBLIC_FIREBASE_API_KEY: ${firebaseApiKey ? 'Present' : 'MISSING!'}`);
-console.log(`firebase.ts: Env Var - NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${firebaseAuthDomain}`);
-console.log(`firebase.ts: Env Var - NEXT_PUBLIC_FIREBASE_APP_ID: ${firebaseAppId}`);
+const allowFirebaseInit = process.env.TEMP_ALLOW_FIREBASE_INIT === 'true';
 
+console.log(`firebase.ts: TEMP_ALLOW_FIREBASE_INIT is set to: ${process.env.TEMP_ALLOW_FIREBASE_INIT}, so Firebase initialization will ${allowFirebaseInit ? 'BE ATTEMPTED' : 'BE SKIPPED'}.`);
 
-const CRITICAL_ERROR_PREFIX = "CRITICAL FIREBASE CONFIG ERROR:";
-
-if (!firebaseProjectId || firebaseProjectId === 'YOUR_PROJECT_ID_HERE' || firebaseProjectId.includes('YOUR_') || firebaseProjectId.length < 4) {
-  const message = `${CRITICAL_ERROR_PREFIX} Invalid or missing Firebase Project ID. NEXT_PUBLIC_FIREBASE_PROJECT_ID is currently: "${firebaseProjectId}". Please ensure this is set correctly in your environment variables for the deployed environment.`;
-  console.error(message);
-  throw new Error(message);
-}
-
-if (!firebaseApiKey || firebaseApiKey.includes('YOUR_') || firebaseApiKey.length < 10) {
-  const message = `${CRITICAL_ERROR_PREFIX} Invalid or missing Firebase API Key. NEXT_PUBLIC_FIREBASE_API_KEY is "REDACTED". Please ensure this is set correctly for the deployed environment.`;
-  console.error(message);
-  throw new Error(message);
-}
-
-if (!firebaseAuthDomain || firebaseAuthDomain.includes('YOUR_') || (!firebaseAuthDomain.includes('.firebaseapp.com') && !firebaseAuthDomain.includes('.web.app') && !firebaseAuthDomain.includes('localhost'))) {
-  const message = `${CRITICAL_ERROR_PREFIX} Invalid or missing Firebase Auth Domain. NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN is currently: "${firebaseAuthDomain}". It should typically be 'YOUR_PROJECT_ID.firebaseapp.com', 'YOUR_PROJECT_ID.web.app', or 'localhost' for local development.`;
-  console.error(message);
-  throw new Error(message);
-}
-
-if (!firebaseAppId || firebaseAppId.includes('YOUR_') || !firebaseAppId.startsWith('1:') || firebaseAppId.split(':').length < 3) {
-  const message = `${CRITICAL_ERROR_PREFIX} Invalid or missing Firebase App ID. NEXT_PUBLIC_FIREBASE_APP_ID is currently: "${firebaseAppId}". It should be in the format '1:XXXXXXXXXXXX:web:XXXXXXXXXXXXXXXXXXXXXX'.`;
-  console.error(message);
-  throw new Error(message);
-}
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-// Using only the strictly necessary fields for initializeApp first.
-const minimalFirebaseConfig: FirebaseOptions = {
-  apiKey: firebaseApiKey!, // Non-null assertion due to checks above
-  authDomain: firebaseAuthDomain!,
-  projectId: firebaseProjectId!,
-  appId: firebaseAppId!,
-};
-// Add other optional fields only if they are defined and not empty strings
-if (firebaseStorageBucket && firebaseStorageBucket.trim() !== "") {
-  minimalFirebaseConfig.storageBucket = firebaseStorageBucket;
-}
-if (firebaseMessagingSenderId && firebaseMessagingSenderId.trim() !== "") {
-  minimalFirebaseConfig.messagingSenderId = firebaseMessagingSenderId;
-}
-
-
-console.log("firebase.ts: Firebase Config Object to be used for initialization:", JSON.stringify(minimalFirebaseConfig, (key, value) => key === "apiKey" ? "REDACTED_FOR_LOGS" : value, 2));
-
-// Initialize Firebase
-let app;
-console.log("firebase.ts: Checking if Firebase apps are already initialized...");
-if (!getApps().length) {
-  console.log("firebase.ts: No Firebase apps initialized. Attempting to initializeApp...");
+if (allowFirebaseInit) {
   try {
-    app = initializeApp(minimalFirebaseConfig);
-    console.log("firebase.ts: Firebase app initialized successfully.");
-    if (app.options.authDomain) {
-        console.log(`firebase.ts: Initialized Firebase App - authDomain from app.options: ${app.options.authDomain}, projectId: ${app.options.projectId}`);
+    console.log("firebase.ts: Attempting Firebase initialization because TEMP_ALLOW_FIREBASE_INIT is true.");
+    console.log(`firebase.ts: Env Var - NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${firebaseProjectId}`);
+    console.log(`firebase.ts: Env Var - NEXT_PUBLIC_FIREBASE_API_KEY: ${firebaseApiKey ? 'Present' : 'MISSING!'}`);
+    console.log(`firebase.ts: Env Var - NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${firebaseAuthDomain}`);
+    console.log(`firebase.ts: Env Var - NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${firebaseStorageBucket}`);
+    console.log(`firebase.ts: Env Var - NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${firebaseMessagingSenderId}`);
+    console.log(`firebase.ts: Env Var - NEXT_PUBLIC_FIREBASE_APP_ID: ${firebaseAppId}`);
+
+    const CRITICAL_ERROR_PREFIX = "CRITICAL FIREBASE CONFIG ERROR (firebase.ts):";
+    let hasCriticalError = false;
+
+    if (!firebaseProjectId || firebaseProjectId === 'YOUR_PROJECT_ID_HERE' || firebaseProjectId.includes('YOUR_') || firebaseProjectId.length < 4) {
+      console.error(`${CRITICAL_ERROR_PREFIX} Invalid or missing Firebase Project ID. NEXT_PUBLIC_FIREBASE_PROJECT_ID is currently: "${firebaseProjectId}". Firebase will NOT be initialized.`);
+      hasCriticalError = true;
+    }
+    if (!firebaseApiKey || firebaseApiKey.includes('YOUR_') || firebaseApiKey.length < 10) {
+      console.error(`${CRITICAL_ERROR_PREFIX} Invalid or missing Firebase API Key. NEXT_PUBLIC_FIREBASE_API_KEY is "REDACTED". Firebase will NOT be initialized.`);
+      hasCriticalError = true;
+    }
+    if (!firebaseAuthDomain || firebaseAuthDomain.includes('YOUR_') || (!firebaseAuthDomain.includes('.firebaseapp.com') && !firebaseAuthDomain.includes('.web.app') && !firebaseAuthDomain.includes('localhost'))) {
+      console.error(`${CRITICAL_ERROR_PREFIX} Invalid or missing Firebase Auth Domain. NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN is currently: "${firebaseAuthDomain}". Firebase will NOT be initialized.`);
+      hasCriticalError = true;
+    }
+    if (!firebaseAppId || firebaseAppId.includes('YOUR_') || !firebaseAppId.startsWith('1:') || firebaseAppId.split(':').length < 3) {
+      console.error(`${CRITICAL_ERROR_PREFIX} Invalid or missing Firebase App ID. NEXT_PUBLIC_FIREBASE_APP_ID is currently: "${firebaseAppId}". Firebase will NOT be initialized.`);
+      hasCriticalError = true;
+    }
+
+    if (hasCriticalError) {
+      console.error("firebase.ts: Due to critical configuration errors, Firebase initialization is HALTED.");
+      // app, db, auth remain undefined
     } else {
-        console.warn("firebase.ts: Initialized Firebase App - authDomain from app.options is undefined/empty.");
+      const minimalFirebaseConfig: FirebaseOptions = {
+        apiKey: firebaseApiKey!,
+        authDomain: firebaseAuthDomain!,
+        projectId: firebaseProjectId!,
+        appId: firebaseAppId!,
+      };
+      if (firebaseStorageBucket && firebaseStorageBucket.trim() !== "") {
+        minimalFirebaseConfig.storageBucket = firebaseStorageBucket;
+      }
+      if (firebaseMessagingSenderId && firebaseMessagingSenderId.trim() !== "") {
+        minimalFirebaseConfig.messagingSenderId = firebaseMessagingSenderId;
+      }
+
+      console.log("firebase.ts: Firebase Config Object to be used for initialization:", JSON.stringify(minimalFirebaseConfig, (key, value) => key === "apiKey" ? "REDACTED_FOR_LOGS" : value, 2));
+
+      console.log("firebase.ts: Checking if Firebase apps are already initialized...");
+      if (!getApps().length) {
+        console.log("firebase.ts: No Firebase apps initialized. Attempting to initializeApp...");
+        try {
+          app = initializeApp(minimalFirebaseConfig);
+          console.log("firebase.ts: Firebase app initialized successfully.");
+        } catch (initError) {
+          console.error("firebase.ts: ERROR during initializeApp(minimalFirebaseConfig):", initError);
+          console.error("firebase.ts: Firebase Config used at initialization attempt:", JSON.stringify(minimalFirebaseConfig, (key, value) => key === "apiKey" ? "REDACTED_FOR_LOGS" : value, 2));
+          app = undefined;
+        }
+      } else {
+        console.log("firebase.ts: Existing Firebase app found. Retrieving with getApp().");
+        app = getApp();
+      }
+
+      if (app) {
+        if (app.options.authDomain) {
+          console.log(`firebase.ts: Using Firebase App - authDomain from app.options: ${app.options.authDomain}, projectId: ${app.options.projectId}`);
+        } else {
+          console.warn("firebase.ts: Using Firebase App - authDomain from app.options is undefined/empty.");
+        }
+
+        console.log("firebase.ts: Attempting to get Firestore instance...");
+        try {
+          db = getFirestore(app);
+          console.log("firebase.ts: Firestore instance obtained successfully.");
+        } catch (firestoreError) {
+          console.error("firebase.ts: ERROR obtaining Firestore instance:", firestoreError);
+          db = undefined;
+        }
+
+        console.log("firebase.ts: Attempting to get Auth instance...");
+        try {
+          auth = getAuth(app);
+          console.log("firebase.ts: Firebase Auth instance obtained successfully.");
+        } catch (authError) {
+          console.error("firebase.ts: ERROR obtaining Firebase Auth instance:", authError);
+          auth = undefined;
+        }
+      } else {
+        console.error("firebase.ts: Firebase app is not available (either not initialized or initialization failed). Firestore and Auth will not be initialized.");
+      }
     }
-  } catch (error) {
-    console.error("firebase.ts: ERROR during initializeApp(minimalFirebaseConfig):", error);
-    console.error("firebase.ts: Firebase Config used at initialization attempt:", JSON.stringify(minimalFirebaseConfig, (key, value) => key === "apiKey" ? "REDACTED_FOR_LOGS" : value, 2));
-    if (error instanceof Error && (error.message.toLowerCase().includes('api key') || error.message.toLowerCase().includes('project id') || error.message.toLowerCase().includes('auth domain') || error.message.toLowerCase().includes('app id'))) {
-        console.error("\n\nSDK INITIALIZATION FAILED. THIS OFTEN MEANS ONE OF THE CRITICAL FIREBASE CONFIG VALUES (API KEY, PROJECT ID, AUTH DOMAIN, APP ID) IS INVALID OR MISSING. DOUBLE CHECK YOUR ENVIRONMENT VARIABLES AND FIREBASE CONSOLE SETTINGS.\n\n");
-    }
-    throw error;
+  } catch (e) {
+    console.error("firebase.ts: UNEXPECTED TOP-LEVEL ERROR during Firebase setup:", e);
+    app = undefined;
+    db = undefined;
+    auth = undefined;
   }
 } else {
-  console.log("firebase.ts: Existing Firebase app found. Retrieving with getApp().");
-  app = getApp();
-   if (app.options.authDomain) {
-        console.log(`firebase.ts: Retrieved Firebase App - authDomain from app.options: ${app.options.authDomain}, projectId: ${app.options.projectId}`);
-    } else {
-        console.warn("firebase.ts: Retrieved Firebase App - authDomain from app.options is undefined/empty.");
-    }
+  console.log("firebase.ts: SKIPPING Firebase initialization as TEMP_ALLOW_FIREBASE_INIT is not 'true'. `app`, `db`, and `auth` will be undefined.");
 }
 
-let db;
-let authInst;
+console.log(`firebase.ts: Script end. Exporting app: ${app ? 'DEFINED' : 'UNDEFINED'}, db: ${db ? 'DEFINED' : 'UNDEFINED'}, auth: ${auth ? 'DEFINED' : 'UNDEFINED'}.`);
+export { app, db, auth };
 
-if (app) {
-  console.log("firebase.ts: Attempting to get Firestore instance...");
-  try {
-    db = getFirestore(app);
-    console.log("firebase.ts: Firestore instance obtained successfully.");
-  } catch (error) {
-    console.error("firebase.ts: ERROR obtaining Firestore instance:", error);
-    throw error;
-  }
-
-  console.log("firebase.ts: Attempting to get Auth instance...");
-  try {
-    authInst = getAuth(app);
-    console.log("firebase.ts: Firebase Auth instance obtained successfully.");
-  } catch (error) {
-    console.error("firebase.ts: ERROR obtaining Firebase Auth instance:", error);
-    throw error;
-  }
-} else {
-  const message = "firebase.ts: Firebase app is not available. Cannot get Firestore or Auth.";
-  console.error(message);
-  throw new Error(message);
-}
-
-console.log("firebase.ts: Script end, exporting app, db, auth.");
-export { app, db, authInst as auth };
