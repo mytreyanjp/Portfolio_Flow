@@ -45,9 +45,12 @@ export default function PortfolioPage() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [buttonMaskStyle, setButtonMaskStyle] = useState({});
 
-  const { userName, isLoadingName, detectedLanguage } = useName(); // Get userName, loading state, and detectedLanguage
+  const { userName, isLoadingName, detectedLanguage } = useName();
   const [translatedGreeting, setTranslatedGreeting] = useState<string | null>(null);
   const [isTranslatingGreeting, setIsTranslatingGreeting] = useState(false);
+  const [translatedMytreyanHere, setTranslatedMytreyanHere] = useState<string | null>(null);
+  const [translatedMotto, setTranslatedMotto] = useState<string | null>(null);
+  const [isTranslatingSnippets, setIsTranslatingSnippets] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -103,34 +106,50 @@ export default function PortfolioPage() {
     };
   }, []);
 
-  // Effect for translating greeting
   useEffect(() => {
-    const translateGreeting = async () => {
+    const translatePageContent = async () => {
       if (userName && detectedLanguage && !detectedLanguage.toLowerCase().startsWith('en')) {
         setIsTranslatingGreeting(true);
-        setTranslatedGreeting(null); // Reset previous translation
+        setIsTranslatingSnippets(true);
+        setTranslatedGreeting(null);
+        setTranslatedMytreyanHere(null);
+        setTranslatedMotto(null);
+
         try {
           const greetingText = `Hello ${userName}`;
-          const result = await translateText({ textToTranslate: greetingText, targetLanguage: detectedLanguage });
-          setTranslatedGreeting(result.translatedText);
+          const greetingResult = await translateText({ textToTranslate: greetingText, targetLanguage: detectedLanguage });
+          setTranslatedGreeting(greetingResult.translatedText);
+
+          const mytreyanHereText = "Mytreyan here";
+          const mytreyanHereResult = await translateText({ textToTranslate: mytreyanHereText, targetLanguage: detectedLanguage });
+          setTranslatedMytreyanHere(mytreyanHereResult.translatedText);
+
+          const mottoText = "Can create light outta a blackhole";
+          const mottoResult = await translateText({ textToTranslate: mottoText, targetLanguage: detectedLanguage });
+          setTranslatedMotto(mottoResult.translatedText);
+
         } catch (err) {
-          console.error("Greeting translation error:", err);
+          console.error("Page content translation error:", err);
           toast({
             title: "Translation Error",
-            description: "Could not translate greeting. Displaying in English.",
+            description: "Could not translate some page content. Displaying in English.",
             variant: "destructive",
           });
-          setTranslatedGreeting(null); // Fallback to default
         } finally {
           setIsTranslatingGreeting(false);
+          setIsTranslatingSnippets(false);
         }
       } else {
-        setTranslatedGreeting(null); // If no translation needed, ensure it's null
+        setTranslatedGreeting(null);
+        setTranslatedMytreyanHere(null);
+        setTranslatedMotto(null);
+        setIsTranslatingGreeting(false);
+        setIsTranslatingSnippets(false);
       }
     };
 
-    if (!isLoadingName) { // Only attempt translation once name and lang are loaded
-      translateGreeting();
+    if (!isLoadingName) {
+      translatePageContent();
     }
   }, [userName, detectedLanguage, isLoadingName, toast]);
 
@@ -280,6 +299,9 @@ export default function PortfolioPage() {
   );
   
   const displayGreeting = translatedGreeting || (userName ? `Hello ${userName}` : 'Hello there');
+  const displayMytreyanHere = translatedMytreyanHere || "Mytreyan here";
+  const displayMotto = translatedMotto || "Can create light outta a blackhole";
+  const isIntroTextLoading = isLoadingName || isTranslatingGreeting || isTranslatingSnippets;
 
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-12 mt-8">
@@ -292,7 +314,7 @@ export default function PortfolioPage() {
         ref={welcomeSectionRef}
       >
         <div className="max-w-3xl mx-auto" ref={introContentRef}>
-          {(isLoadingName || isTranslatingGreeting) ? (
+          {isIntroTextLoading ? (
             <Skeleton className="h-10 sm:h-12 md:h-14 w-3/4 mx-auto mb-2" /> 
           ) : (
             <h1
@@ -306,20 +328,28 @@ export default function PortfolioPage() {
               {displayGreeting}
             </h1>
           )}
-          <p
-            className="font-display text-lg sm:text-xl md:text-2xl lg:text-3xl text-transparent bg-clip-text relative overflow-hidden mb-2"
-             style={{
-              backgroundImage:
-                'radial-gradient(circle at calc(100% - var(--gradient-center-x, 50%)) calc(100% - var(--gradient-center-y, 50%)), hsl(var(--primary)) 5%, hsl(var(--accent)) 75%)',
-            }}
-          >
-            <Link href="/resume" className="hover:underline focus:underline outline-none">
-              Mytreyan
-            </Link> here
-          </p>
-          <p className="font-subtext text-sm sm:text-base md:text-lg text-foreground mb-4">
-            Can create light outta a blackhole
-          </p>
+          {isIntroTextLoading ? (
+             <Skeleton className="h-8 sm:h-10 md:h-11 w-1/2 mx-auto mb-2" />
+          ) : (
+            <p
+              className="font-display text-lg sm:text-xl md:text-2xl lg:text-3xl text-transparent bg-clip-text relative overflow-hidden mb-2"
+              style={{
+                backgroundImage:
+                  'radial-gradient(circle at calc(100% - var(--gradient-center-x, 50%)) calc(100% - var(--gradient-center-y, 50%)), hsl(var(--primary)) 5%, hsl(var(--accent)) 75%)',
+              }}
+            >
+              <Link href="/resume" className="hover:underline focus:underline outline-none">
+                {displayMytreyanHere}
+              </Link>
+            </p>
+          )}
+          {isIntroTextLoading ? (
+            <Skeleton className="h-6 sm:h-7 md:h-8 w-3/5 mx-auto mb-4" />
+          ) : (
+            <p className="font-subtext text-sm sm:text-base md:text-lg text-foreground mb-4">
+              {displayMotto}
+            </p>
+          )}
           <Button
             ref={viewProjectsButtonRef}
             size="lg"
@@ -478,4 +508,5 @@ export default function PortfolioPage() {
     
 
     
+
 
