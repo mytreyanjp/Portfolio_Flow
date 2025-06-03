@@ -81,13 +81,13 @@ export default function EditResumeForm() {
     defaultValues: {
       summary: (DEFAULT_RESUME_DATA.summaryItems || []).join('\n'),
       skills: (DEFAULT_RESUME_DATA.skills || []).map(s => ({ ...s, id: s.id || generateId('skill') })),
-      education: (DEFAULT_RESUME_DATA.education || []).map(e => ({ ...e, id: e.id || generateId('edu') })),
+      education: (DEFAULT_RESUME_DATA.education || []).map(e => ({ ...e, id: e.id || generateId('edu'), description: e.description || '' })),
       experience: (DEFAULT_RESUME_DATA.experience || []).map(e => ({
         ...e,
         id: e.id || generateId('exp'),
         responsibilities: (e.responsibilities || []).join('\n')
       })),
-      awards: (DEFAULT_RESUME_DATA.awards || []).map(a => ({ ...a, id: a.id || generateId('award') })),
+      awards: (DEFAULT_RESUME_DATA.awards || []).map(a => ({ ...a, id: a.id || generateId('award'), issuer: a.issuer || '', date: a.date || '', url: a.url || '' })),
       instagramUrl: DEFAULT_RESUME_DATA.instagramUrl || '',
       githubUrl: DEFAULT_RESUME_DATA.githubUrl || '',
       linkedinUrl: DEFAULT_RESUME_DATA.linkedinUrl || '',
@@ -106,13 +106,13 @@ export default function EditResumeForm() {
       form.reset({
         summary: (data.summaryItems || []).join('\n'),
         skills: (data.skills || []).map(s => ({ ...s, id: s.id || generateId('skill') })),
-        education: (data.education || []).map(e => ({ ...e, id: e.id || generateId('edu') })),
+        education: (data.education || []).map(e => ({ ...e, id: e.id || generateId('edu'), description: e.description || '' })),
         experience: (data.experience || []).map(e => ({
           ...e,
           id: e.id || generateId('exp'),
           responsibilities: (e.responsibilities || []).join('\n')
         })),
-        awards: (data.awards || []).map(a => ({ ...a, id: a.id || generateId('award') })),
+        awards: (data.awards || []).map(a => ({ ...a, id: a.id || generateId('award'), issuer: a.issuer || '', date: a.date || '', url: a.url || '' })),
         instagramUrl: data.instagramUrl || '',
         githubUrl: data.githubUrl || '',
         linkedinUrl: data.linkedinUrl || '',
@@ -134,6 +134,8 @@ export default function EditResumeForm() {
 
   async function onSubmit(data: EditResumeFormValues) {
     setIsSubmitting(true);
+    console.log("[EditResumeForm] Raw form data:", data);
+
 
     if (!auth || !auth.currentUser) {
       toast({
@@ -156,21 +158,30 @@ export default function EditResumeForm() {
     }
 
     try {
-      const resumeDataToSave: any = { // Using 'any' for Firestore payload flexibility. Be cautious.
+      const resumeDataToSave: any = { 
         summaryItems: data.summary.split('\n').map(line => line.trim()).filter(line => line.length > 0),
-        skillsList: (data.skills || []).map(skill => ({ name: skill.name, level: skill.level })), // Note: 'skillsList'
-        educationList: (data.education || []).map(edu => ({ degree: edu.degree, institution: edu.institution, dates: edu.dates, description: edu.description })),
+        skillsList: (data.skills || []).map(skill => ({ name: skill.name, level: skill.level })),
+        educationList: (data.education || []).map(edu => ({
+          degree: edu.degree,
+          institution: edu.institution,
+          dates: edu.dates,
+          description: edu.description || '', 
+        })),
         experienceList: (data.experience || []).map(exp => ({
           jobTitle: exp.jobTitle,
           company: exp.company,
           dates: exp.dates,
           responsibilities: exp.responsibilities.split('\n').map(line => line.trim()).filter(line => line.length > 0),
         })),
-        awardsList: (data.awards || []).map(award => ({ title: award.title, issuer: award.issuer, date: award.date, url: award.url })),
-        instagramUrl: data.instagramUrl,
-        githubUrl: data.githubUrl,
-        linkedinUrl: data.linkedinUrl,
-        // Timestamps
+        awardsList: (data.awards || []).map(award => ({
+          title: award.title,
+          issuer: award.issuer || '',
+          date: award.date || '',
+          url: award.url || '',
+        })),
+        instagramUrl: data.instagramUrl || '',
+        githubUrl: data.githubUrl || '',
+        linkedinUrl: data.linkedinUrl || '',
         updatedAt: serverTimestamp(),
       };
       
@@ -193,7 +204,7 @@ export default function EditResumeForm() {
         title: 'Resume Updated!',
         description: 'Your resume has been successfully updated in Firestore.',
       });
-      fetchResume(); // Refetch to ensure form and data are in sync
+      fetchResume(); 
     } catch (error) {
       console.error("[EditResumeForm] Client-side resume update error: ", error);
       const firestoreError = error as any;
@@ -240,9 +251,9 @@ export default function EditResumeForm() {
         <Card>
           <CardHeader><CardTitle className="text-xl font-semibold">Social Links</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <FormField control={form.control} name="instagramUrl" render={({ field }) => ( <FormItem><FormLabel>Instagram URL</FormLabel><FormControl><Input placeholder="https://instagram.com/yourprofile" {...field} /></FormControl><FormMessage /></FormItem> )} />
-            <FormField control={form.control} name="githubUrl" render={({ field }) => ( <FormItem><FormLabel>GitHub URL</FormLabel><FormControl><Input placeholder="https://github.com/yourprofile" {...field} /></FormControl><FormMessage /></FormItem> )} />
-            <FormField control={form.control} name="linkedinUrl" render={({ field }) => ( <FormItem><FormLabel>LinkedIn URL</FormLabel><FormControl><Input placeholder="https://linkedin.com/in/yourprofile" {...field} /></FormControl><FormMessage /></FormItem> )} />
+            <FormField control={form.control} name="instagramUrl" render={({ field }) => ( <FormItem><FormLabel>Instagram URL</FormLabel><FormControl><Input placeholder="https://instagram.com/yourprofile" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem> )} />
+            <FormField control={form.control} name="githubUrl" render={({ field }) => ( <FormItem><FormLabel>GitHub URL</FormLabel><FormControl><Input placeholder="https://github.com/yourprofile" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem> )} />
+            <FormField control={form.control} name="linkedinUrl" render={({ field }) => ( <FormItem><FormLabel>LinkedIn URL</FormLabel><FormControl><Input placeholder="https://linkedin.com/in/yourprofile" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem> )} />
           </CardContent>
         </Card>
 
@@ -278,7 +289,7 @@ export default function EditResumeForm() {
                 <FormField control={form.control} name={`education.${index}.degree`} render={({ field: f }) => ( <FormItem><FormLabel>Degree</FormLabel><FormControl><Input placeholder="B.Tech in Information Technology" {...f} /></FormControl><FormMessage /></FormItem> )}/>
                 <FormField control={form.control} name={`education.${index}.institution`} render={({ field: f }) => ( <FormItem><FormLabel>Institution</FormLabel><FormControl><Input placeholder="Example University" {...f} /></FormControl><FormMessage /></FormItem> )}/>
                 <FormField control={form.control} name={`education.${index}.dates`} render={({ field: f }) => ( <FormItem><FormLabel>Dates</FormLabel><FormControl><Input placeholder="2020 - 2024" {...f} /></FormControl><FormMessage /></FormItem> )}/>
-                <FormField control={form.control} name={`education.${index}.description`} render={({ field: f }) => ( <FormItem><FormLabel>Description (Optional)</FormLabel><FormControl><Textarea placeholder="Relevant coursework, achievements..." {...f} /></FormControl><FormMessage /></FormItem> )}/>
+                <FormField control={form.control} name={`education.${index}.description`} render={({ field: f }) => ( <FormItem><FormLabel>Description (Optional)</FormLabel><FormControl><Textarea placeholder="Relevant coursework, achievements..." {...f} value={f.value || ''} /></FormControl><FormMessage /></FormItem> )}/>
                 <Button type="button" variant="destructive" size="sm" onClick={() => removeEdu(index)}><Trash2 className="mr-1 h-4 w-4" /> Remove Education Entry</Button>
               </div>
             ))}
@@ -316,9 +327,9 @@ export default function EditResumeForm() {
             {awardFields.map((field, index) => (
               <div key={field.id} className="p-4 border rounded-md bg-muted/30 space-y-3">
                 <FormField control={form.control} name={`awards.${index}.title`} render={({ field: f }) => ( <FormItem><FormLabel>Title</FormLabel><FormControl><Input placeholder="Certified Cloud Practitioner" {...f} /></FormControl><FormMessage /></FormItem> )}/>
-                <FormField control={form.control} name={`awards.${index}.issuer`} render={({ field: f }) => ( <FormItem><FormLabel>Issuer (Optional)</FormLabel><FormControl><Input placeholder="AWS" {...f} /></FormControl><FormMessage /></FormItem> )}/>
-                <FormField control={form.control} name={`awards.${index}.date`} render={({ field: f }) => ( <FormItem><FormLabel>Date (Optional)</FormLabel><FormControl><Input placeholder="2023" {...f} /></FormControl><FormMessage /></FormItem> )}/>
-                <FormField control={form.control} name={`awards.${index}.url`} render={({ field: f }) => ( <FormItem><FormLabel>Link (Optional)</FormLabel><FormControl><Input type="url" placeholder="https://example.com/certificate" {...f} /></FormControl><FormMessage /></FormItem> )}/>
+                <FormField control={form.control} name={`awards.${index}.issuer`} render={({ field: f }) => ( <FormItem><FormLabel>Issuer (Optional)</FormLabel><FormControl><Input placeholder="AWS" {...f} value={f.value || ''}/></FormControl><FormMessage /></FormItem> )}/>
+                <FormField control={form.control} name={`awards.${index}.date`} render={({ field: f }) => ( <FormItem><FormLabel>Date (Optional)</FormLabel><FormControl><Input placeholder="2023" {...f} value={f.value || ''}/></FormControl><FormMessage /></FormItem> )}/>
+                <FormField control={form.control} name={`awards.${index}.url`} render={({ field: f }) => ( <FormItem><FormLabel>Link (Optional)</FormLabel><FormControl><Input type="url" placeholder="https://example.com/certificate" {...f} value={f.value || ''}/></FormControl><FormMessage /></FormItem> )}/>
                 <Button type="button" variant="destructive" size="sm" onClick={() => removeAward(index)}><Trash2 className="mr-1 h-4 w-4" /> Remove Award/Cert.</Button>
               </div>
             ))}
