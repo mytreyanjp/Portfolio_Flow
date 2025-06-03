@@ -11,29 +11,29 @@ import { useTheme } from 'next-themes';
 // import dynamic from 'next/dynamic'; // Visual effects still commented out
 import { cn } from '@/lib/utils';
 // import { usePathname } from 'next/navigation'; // Temporarily unused
-// import localFont from 'next/font/local'; // Custom fonts still commented out
+import localFont from 'next/font/local'; // Restored
 // import { useIsMobile } from '@/hooks/use-mobile'; // Temporarily unused
 // import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'; // Temporarily unused
 // import { Terminal, X as XIcon, Laptop } from 'lucide-react'; // Temporarily unused
 import { NameProvider, useName } from '@/contexts/NameContext'; // Restored
 import { AuthProvider } from '@/contexts/AuthContext'; // Restored
 
-// Custom fonts still commented out
-// const greaterTheory = localFont({
-//   src: '../../public/fonts/GreaterTheory.otf',
-//   variable: '--font-greater-theory',
-//   display: 'swap',
-//   preload: true,
-//   fallback: ['sans-serif'],
-// });
+// Custom fonts restored
+const greaterTheory = localFont({
+  src: '../../public/fonts/GreaterTheory.otf',
+  variable: '--font-greater-theory',
+  display: 'swap',
+  preload: true,
+  fallback: ['sans-serif'],
+});
 
-// const wastedVindey = localFont({
-//   src: '../../public/fonts/Wasted-Vindey.ttf',
-//   variable: '--font-wasted-vindey',
-//   display: 'swap',
-//   preload: true,
-//   fallback: ['sans-serif'],
-// });
+const wastedVindey = localFont({
+  src: '../../public/fonts/Wasted-Vindey.ttf',
+  variable: '--font-wasted-vindey',
+  display: 'swap',
+  preload: true,
+  fallback: ['sans-serif'],
+});
 
 // Visual effects still commented out
 // const CursorTail = dynamic(() => import('@/components/effects/CursorTail'), { ssr: false });
@@ -133,9 +133,9 @@ export default function RootLayout({
         <link rel="icon" href="/favicon22.png" type="image/png" sizes="any" />
       </head>
       <body className={cn(
-          "antialiased flex flex-col min-h-screen bg-background"
-          // Custom font variables still commented out
-          // greaterTheory.variable, wastedVindey.variable
+          "antialiased flex flex-col min-h-screen bg-background",
+          // Custom font variables restored
+          greaterTheory.variable, wastedVindey.variable
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
