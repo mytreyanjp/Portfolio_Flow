@@ -28,7 +28,7 @@ export default function MrMPage() {
         <Bot className="h-16 w-16 text-primary mx-auto mb-4 animate-bounce" />
         <h1
           ref={headingRef} 
-          className="text-4xl font-display font-bold text-transparent bg-clip-text relative overflow-hidden"
+          className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold text-transparent bg-clip-text relative overflow-hidden"
           style={{
             backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
           }}

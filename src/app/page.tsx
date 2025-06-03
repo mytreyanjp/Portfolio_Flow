@@ -153,8 +153,7 @@ export default function PortfolioPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <header className="mb-12 text-center">
-        {/* Sparkles icon removed from here */}
-        <h1 className="text-4xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent mb-2">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent mb-2">
           {displayGreeting}
         </h1>
         <p className="text-lg text-muted-foreground font-subtext italic max-w-2xl mx-auto mb-8">

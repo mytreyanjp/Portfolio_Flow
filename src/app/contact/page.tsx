@@ -77,7 +77,7 @@ export default function ContactPage() {
       <h1
         id="contact-page-main-heading"
         ref={headingRef}
-        className="font-display text-4xl font-bold text-center mb-12 text-transparent bg-clip-text relative overflow-hidden"
+        className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-center mb-12 text-transparent bg-clip-text relative overflow-hidden"
         style={{
           backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)',
         }}

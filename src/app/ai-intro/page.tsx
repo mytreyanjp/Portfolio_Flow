@@ -63,10 +63,9 @@ export default function AiIntroPage() {
       )}
     >
       <header className="text-center mb-12">
-        {/* Sparkles icon and its container div removed from here */}
         <h1 
           id="ai-intro-page-main-heading"
-          className="text-4xl font-display font-bold text-transparent bg-clip-text mb-4 relative overflow-hidden"
+          className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold text-transparent bg-clip-text mb-4 relative overflow-hidden"
           style={{
             ...parallaxStyle,
             backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
