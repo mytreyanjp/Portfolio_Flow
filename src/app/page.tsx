@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import ProjectCard from '@/components/portfolio/ProjectCard';
 import ProjectFilter, { type Filters } from '@/components/portfolio/ProjectFilter';
 import type { Project } from '@/data/projects';
@@ -25,15 +25,13 @@ export default function PortfolioPage() {
   const [filters, setFilters] = useState<Filters>(INITIAL_FILTERS);
   const [isLoading, setIsLoading] = useState(true); // For project data
   const [error, setError] = useState<string | null>(null);
-  const pageRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false); // For IntersectionObserver
   const { userName, detectedLanguage, isLoadingName } = useName();
 
   const [greetingPrefixText, setGreetingPrefixText] = useState(ORIGINAL_GREETING_PREFIX);
   const [greetingNoNameText, setGreetingNoNameText] = useState(ORIGINAL_GREETING_NO_NAME);
   const [nameFallbackText, setNameFallbackText] = useState(ORIGINAL_NAME_FALLBACK);
   const [mottoText, setMottoText] = useState(ORIGINAL_MOTTO);
-  const [isTextProcessed, setIsTextProcessed] = useState(false); // New state for text readiness
+  const [isTextProcessed, setIsTextProcessed] = useState(false);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -60,16 +58,12 @@ export default function PortfolioPage() {
   }, [fetchData]);
 
   useEffect(() => {
-    setIsTextProcessed(false); // Reset when dependencies change, text needs reprocessing
+    setIsTextProcessed(false); 
 
     if (isLoadingName) {
-      // While name context is loading, actual text content is not yet determined.
-      // Placeholders will be shown by displayGreeting/displayMotto.
-      // We don't set isTextProcessed to true here, as final text is not ready.
       return;
     }
 
-    // isLoadingName is false, proceed to set/translate text
     const processTextContent = async () => {
       if (detectedLanguage && detectedLanguage !== 'en') {
         try {
@@ -101,7 +95,7 @@ export default function PortfolioPage() {
         setNameFallbackText(ORIGINAL_NAME_FALLBACK);
         setMottoText(ORIGINAL_MOTTO);
       }
-      setIsTextProcessed(true); // All text processing is done
+      setIsTextProcessed(true); 
     };
 
     processTextContent();
@@ -130,29 +124,15 @@ export default function PortfolioPage() {
     setFilters(INITIAL_FILTERS);
   };
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => setIsVisible(entry.isIntersecting),
-      { threshold: 0.1 }
-    );
-    const currentRef = pageRef.current;
-    if (currentRef) {
-      observer.observe(currentRef);
-    }
-    return () => {
-      if (currentRef && observer) {
-        observer.unobserve(currentRef);
-      }
-    };
-  }, []);
+  const isPageReady = !isLoading && !isLoadingName && isTextProcessed;
 
-  const isPageReadyForFadeIn = isVisible && !isLoading && !isLoadingName && isTextProcessed;
-
-  if (isLoading) {
+  if (isLoading || isLoadingName || !isTextProcessed) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] py-12">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-        <p className="text-muted-foreground">Loading projects...</p>
+        <p className="text-muted-foreground">
+          {isLoading ? "Loading projects..." : "Preparing content..."}
+        </p>
       </div>
     );
   }
@@ -172,10 +152,9 @@ export default function PortfolioPage() {
 
   return (
     <div
-      ref={pageRef}
       className={cn(
-        "container mx-auto px-4 py-8 transition-opacity duration-700 ease-in-out",
-        isPageReadyForFadeIn ? "opacity-100" : "opacity-0"
+        "container mx-auto px-4 py-8",
+        isPageReady ? "opacity-100" : "opacity-0" // Keep opacity for initial render before ready
       )}
     >
       <header className="mb-12 text-center">
