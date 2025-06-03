@@ -183,7 +183,7 @@ export default function SecretLairPage() {
         <h1 className="text-2xl font-bold text-destructive mb-2">Unauthorized Access</h1>
         <p className="text-muted-foreground mb-2">
           The account <span className="font-medium text-foreground">{user.email}</span> is not authorized to access this area.
-          Ensure the `ADMIN_EMAIL` constant in `src/app/secret-lair/page.tsx` is set to this email address if it's correct.
+          Please sign out and try again with an authorized account.
         </p>
         <Button onClick={handleSignOut} variant="destructive" size="lg">
           <LogOut className="mr-2 h-5 w-5" /> Sign Out
@@ -385,3 +385,4 @@ export default function SecretLairPage() {
     </div>
   );
 }
+
