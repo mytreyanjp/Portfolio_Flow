@@ -66,13 +66,15 @@ export default function PortfolioPage() {
   }, []);
 
   useEffect(() => {
-    if (!isClient || resolvedTheme !== 'dark' || isViewProjectsButtonClicked || !hasScrolled) {
-      if (resolvedTheme !== 'dark' || isViewProjectsButtonClicked) {
-        setIsButtonIntersectingCursor(false);
-      }
+    // If not client-side, or not in dark theme, or button already permanently visible via click,
+    // then we don't need to listen for mouse moves for collision detection.
+    // Also, if in light theme or button clicked, ensure intersection is false.
+    if (!isClient || resolvedTheme !== 'dark' || isViewProjectsButtonClicked) {
+      setIsButtonIntersectingCursor(false); // Ensure it's false if not in the active "flashlight" mode
       return;
     }
 
+    // This effect is for dark theme and button not yet clicked
     const handleMouseMove = (event: MouseEvent) => {
       if (viewProjectsButtonRef.current) {
         const intersecting = checkCollision(
@@ -89,7 +91,7 @@ export default function PortfolioPage() {
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
     };
-  }, [isClient, resolvedTheme, isViewProjectsButtonClicked, checkCollision, hasScrolled]);
+  }, [isClient, resolvedTheme, isViewProjectsButtonClicked, checkCollision]);
 
 
   useEffect(() => {
@@ -263,7 +265,7 @@ export default function PortfolioPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <header className="mb-8 text-center"> {/* Reduced bottom margin */}
+      <header className="mb-8 text-center">
         <h1
           ref={headingRef}
           className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold text-transparent bg-clip-text mb-2 relative overflow-hidden"
@@ -280,9 +282,8 @@ export default function PortfolioPage() {
 
       <div 
         className={cn(
-            "flex justify-center mb-12", // Added margin bottom
-            "transition-opacity duration-500 ease-in-out",
-            hasScrolled ? "opacity-100" : "opacity-0 pointer-events-none"
+            "flex justify-center mb-12", // This div is now always rendered with opacity 1
+            "transition-opacity duration-500 ease-in-out opacity-100" 
         )}
       >
         <Button
@@ -295,7 +296,7 @@ export default function PortfolioPage() {
               resolvedTheme === 'dark' && (isButtonVisibleInDarkTheme ? "dark:opacity-100 dark:pointer-events-auto dark:hover:scale-105" : "dark:opacity-0 dark:pointer-events-none")
             )}
             onClick={handleViewProjectsClick}
-            disabled={resolvedTheme === 'dark' && !isButtonVisibleInDarkTheme && !isViewProjectsButtonClicked && !isButtonIntersectingCursor}
+            disabled={resolvedTheme === 'dark' && !isButtonVisibleInDarkTheme}
           >
             <ViewIcon className="mr-2 h-5 w-5" /> View Projects
         </Button>
@@ -390,6 +391,8 @@ export default function PortfolioPage() {
     </div>
   );
 }
+    
+
     
 
     
