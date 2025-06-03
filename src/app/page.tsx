@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
@@ -7,15 +6,16 @@ import ProjectFilter, { type Filters } from '@/components/portfolio/ProjectFilte
 import type { Project } from '@/data/projects';
 import { getProjects, getUniqueCategoriesFromProjects } from '@/services/projectsService';
 import { Button } from '@/components/ui/button';
-import { Loader2, AlertTriangle, Palette, Code2, Sparkles, MessageSquare, FileTextIcon, ArrowRight } from 'lucide-react'; 
+import { Loader2, AlertTriangle, Palette, Code2, Sparkles, MessageSquare, FileTextIcon } from 'lucide-react'; 
 import { cn } from '@/lib/utils';
 import { useName } from '@/contexts/NameContext'; 
 import { translateText } from '@/ai/flows/translate-text-flow'; 
 import Link from 'next/link';
 
 const INITIAL_FILTERS: Filters = { category: '' };
-const ORIGINAL_GREETING = "Hello there, ";
-const ORIGINAL_NAME = "Mytreyan here";
+const ORIGINAL_GREETING_PREFIX = "Hello there, ";
+const ORIGINAL_GREETING_NO_NAME = "Hello there, "; // Fallback if no user name
+const ORIGINAL_NAME_FALLBACK = "Mytreyan here"; // Used if userName is null
 const ORIGINAL_MOTTO = "Crafting digital experiences, one line of code at a time.";
 
 export default function PortfolioPage() {
@@ -28,10 +28,11 @@ export default function PortfolioPage() {
   const [isVisible, setIsVisible] = useState(false);
   const { userName, detectedLanguage } = useName();
 
-  const [greetingText, setGreetingText] = useState(ORIGINAL_GREETING);
-  const [nameText, setNameText] = useState(ORIGINAL_NAME);
+  const [greetingPrefixText, setGreetingPrefixText] = useState(ORIGINAL_GREETING_PREFIX);
+  const [greetingNoNameText, setGreetingNoNameText] = useState(ORIGINAL_GREETING_NO_NAME);
+  const [nameFallbackText, setNameFallbackText] = useState(ORIGINAL_NAME_FALLBACK);
   const [mottoText, setMottoText] = useState(ORIGINAL_MOTTO);
-
+  
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -41,12 +42,7 @@ export default function PortfolioPage() {
         getUniqueCategoriesFromProjects(),
       ]);
       
-      if (fetchedProjects.length > 1) {
-        setProjects(fetchedProjects.filter(p => p.id !== 'default-project-1'));
-      } else {
-         setProjects(fetchedProjects.filter(p => p.id !== 'default-project-1' || (fetchedProjects[0]?.title === 'Sample Project: Interactive Model' && fetchedProjects.length === 1)));
-      }
-      
+      setProjects(fetchedProjects);
       setAllCategories(fetchedCategories);
     } catch (err) {
       console.error('Error fetching portfolio data:', err);
@@ -64,7 +60,7 @@ export default function PortfolioPage() {
   
   useEffect(() => {
     const translateContent = async (text: string, targetLang: string) => {
-      if (!text || !targetLang) return text;
+      if (!text || !targetLang || targetLang === 'en') return text; // Skip translation for English
       try {
         const result = await translateText({ textToTranslate: text, targetLanguage: targetLang });
         return result.translatedText;
@@ -76,22 +72,29 @@ export default function PortfolioPage() {
 
     if (detectedLanguage && detectedLanguage !== 'en') { 
       Promise.all([
-        translateContent(ORIGINAL_GREETING, detectedLanguage),
-        translateContent(ORIGINAL_NAME, detectedLanguage),
+        translateContent(ORIGINAL_GREETING_PREFIX, detectedLanguage),
+        translateContent(ORIGINAL_GREETING_NO_NAME, detectedLanguage),
+        translateContent(ORIGINAL_NAME_FALLBACK, detectedLanguage),
         translateContent(ORIGINAL_MOTTO, detectedLanguage),
-      ]).then(([translatedGreeting, translatedName, translatedMotto]) => {
-        setGreetingText(translatedGreeting);
-        setNameText(translatedName);
+      ]).then(([translatedGreetingPrefix, translatedGreetingNoName, translatedNameFallback, translatedMotto]) => {
+        setGreetingPrefixText(translatedGreetingPrefix);
+        setGreetingNoNameText(translatedGreetingNoName);
+        setNameFallbackText(translatedNameFallback);
         setMottoText(translatedMotto);
       });
     } else {
-      setGreetingText(ORIGINAL_GREETING);
-      setNameText(ORIGINAL_NAME);
+      // Reset to original English if language is English or not detected
+      setGreetingPrefixText(ORIGINAL_GREETING_PREFIX);
+      setGreetingNoNameText(ORIGINAL_GREETING_NO_NAME);
+      setNameFallbackText(ORIGINAL_NAME_FALLBACK);
       setMottoText(ORIGINAL_MOTTO);
     }
   }, [detectedLanguage]);
 
-  const displayGreeting = userName ? `${greetingText}${userName}, ` : greetingText;
+  const displayGreeting = userName 
+    ? `${greetingPrefixText}${userName}, ${nameFallbackText}` 
+    : `${greetingNoNameText}${nameFallbackText}`;
+
 
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {
@@ -113,11 +116,14 @@ export default function PortfolioPage() {
       ([entry]) => setIsVisible(entry.isIntersecting),
       { threshold: 0.1 }
     );
-    if (pageRef.current) {
-      observer.observe(pageRef.current);
+    const currentRef = pageRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
     }
     return () => {
-      if (pageRef.current && observer) observer.unobserve(pageRef.current);
+      if (currentRef && observer) {
+        observer.unobserve(currentRef);
+      }
     };
   }, []);
 
@@ -157,7 +163,7 @@ export default function PortfolioPage() {
           <Sparkles className="h-12 w-12 text-primary" />
         </div>
         <h1 className="text-4xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent mb-2">
-          {displayGreeting}{nameText}
+          {displayGreeting}
         </h1>
         <p className="text-lg text-muted-foreground font-subtext italic max-w-2xl mx-auto mb-8">
           {mottoText}
@@ -165,7 +171,7 @@ export default function PortfolioPage() {
       </header>
 
       <section className="mb-16 p-6 bg-card border border-border rounded-xl shadow-lg">
-        <h2 className="text-2xl font-semibold text-center text-foreground mb-3">Explore & Connect</h2>
+        <h2 className="text-2xl font-semibold text-center text-foreground mb-3">Explore &amp; Connect</h2>
         <p className="text-muted-foreground text-center max-w-xl mx-auto mb-6">
           Dive deeper into my work, or get in touch to discuss potential collaborations, projects, or just to say hi!
         </p>
