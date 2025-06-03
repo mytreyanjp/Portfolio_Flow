@@ -38,7 +38,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const [isClient, setIsClient] = useState(false);
-  const { resolvedTheme } = useTheme(); // resolvedTheme is still useful here for other logic
+  const { resolvedTheme } = useTheme();
   const { toast } = useToast();
 
   const [isSoundEnabled, setIsSoundEnabled] = useState(false);
@@ -95,10 +95,9 @@ export default function RootLayout({
     } else {
       setIsPersonalizationActive(false);
     }
-  }, [showNameInputDialog]);
+  }, [showNameInputDialog]); // Re-check personalization when dialog closes
 
-  const isLightTheme = isClient && resolvedTheme === 'light';
-  // isDarkTheme variable is no longer needed here for CursorTail/FirefliesEffect
+  const isLightThemeForDrawingCanvas = isClient && resolvedTheme === 'light';
 
   if (!isClient) {
     return (
@@ -132,7 +131,7 @@ export default function RootLayout({
                   isPersonalizationActive={isPersonalizationActive}
                   toggleNameInputDialog={toggleNameInputDialog}
                   showNameInputDialog={showNameInputDialog}
-                  isLightTheme={isLightTheme}
+                  // isLightTheme prop removed
                   isPencilModeActive={isPencilModeActive}
                   togglePencilMode={togglePencilMode}
                 />
@@ -142,10 +141,9 @@ export default function RootLayout({
                 <Footer />
               </div>
               <Toaster />
-              {/* CursorTail and FirefliesEffect no longer take isDarkTheme prop */}
               <CursorTail />
               <FirefliesEffect />
-              <LightModeDrawingCanvas isDrawingActive={isPencilModeActive && isLightTheme} />
+              <LightModeDrawingCanvas isDrawingActive={isPencilModeActive && isLightThemeForDrawingCanvas} />
             </NameProvider>
           </AuthProvider>
         </ThemeProvider>

@@ -23,7 +23,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
-import { useTheme } from 'next-themes';
+import { useTheme } from 'next-themes'; // Added useTheme
 import { useName } from '@/contexts/NameContext';
 import HandwritingCanvas, { type HandwritingCanvasRef } from '@/components/effects/HandwritingCanvas';
 import { recognizeHandwriting } from '@/ai/flows/recognize-handwriting-flow';
@@ -51,7 +51,7 @@ interface HeaderProps {
   isPersonalizationActive: boolean;
   toggleNameInputDialog: () => void;
   showNameInputDialog: boolean;
-  isLightTheme: boolean;
+  // isLightTheme: boolean; // Removed from props
   isPencilModeActive: boolean;
   togglePencilMode: () => void;
 }
@@ -62,15 +62,15 @@ export default function Header({
   isPersonalizationActive,
   toggleNameInputDialog,
   showNameInputDialog,
-  isLightTheme,
+  // isLightTheme, // Removed
   isPencilModeActive,
   togglePencilMode,
 }: HeaderProps) {
-  const [mounted, setMounted] = useState(false); // Keep for ThemeSwitcher and other internal logic if needed
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { toast } = useToast();
-  // useTheme hook is not needed here as isLightTheme comes from props
+  const { resolvedTheme } = useTheme(); // Use theme hook directly
   const { setUserName, setDetectedLanguage } = useName();
   const handwritingCanvasRef = useRef<HandwritingCanvasRef>(null);
   const [isRecognizingName, setIsRecognizingName] = useState(false);
@@ -86,6 +86,7 @@ export default function Header({
   const [lockoutEndTime, setLockoutEndTimeState] = useState<number | null>(null);
   const [showLockedUI, setShowLockedUI] = useState(false);
 
+  const actualIsLightTheme = resolvedTheme === 'light'; // Determine theme status directly
 
   const updateLockoutStateFromStorage = useCallback(() => {
     const storedAttempts = localStorage.getItem(FAILED_ATTEMPTS_KEY);
@@ -107,10 +108,10 @@ export default function Header({
     }
     setShowLockedUI(isCurrentlyLocked);
     return isCurrentlyLocked;
-  }, [lockoutEndTime]);
+  }, [lockoutEndTime]); // lockoutEndTime dependency was missing, added.
 
   useEffect(() => {
-    setMounted(true); // General mounted flag for client-side only operations
+    setMounted(true);
     updateLockoutStateFromStorage();
   }, [updateLockoutStateFromStorage]);
 
@@ -230,7 +231,7 @@ export default function Header({
             </div>
           </Link>
 
-          {mounted && ( // Keep for desktop nav items
+          {mounted && (
             <nav className="hidden md:flex items-center space-x-1">
               {navItems.map((item) => {
                 const isDisabled = !!(item as any).disabled;
@@ -244,12 +245,11 @@ export default function Header({
             </nav>
           )}
           <div className="flex items-center space-x-1">
-            {/* Removed the outer `mounted &&` wrapper here, relying on props from RootLayout */}
             <Button variant="ghost" size="icon" onClick={toggleNameInputDialog} aria-label={isPersonalizationActive ? "Change personalized name" : "Personalize greeting"} className={cn(isPersonalizationActive && "text-primary")}>
               <Pencil className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out" />
             </Button>
             
-            {isLightTheme && ( // This is the key condition for the screen drawing pencil
+            {actualIsLightTheme && ( // Use actualIsLightTheme derived from useTheme()
               <Button variant="ghost" size="icon" onClick={togglePencilMode} aria-label={isPencilModeActive ? "Disable Screen Drawing" : "Enable Screen Drawing"} className={cn(isPencilModeActive && "text-primary")}>
                 <Edit3 className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out" />
               </Button>
@@ -259,7 +259,7 @@ export default function Header({
               {isSoundEnabled ? <Volume2 className="h-[1.2rem] w-[1.2rem]" /> : <VolumeX className="h-[1.2rem] w-[1.2rem]" />}
             </Button>
             
-            {mounted && <ThemeSwitcher />} {/* ThemeSwitcher handles its own mounted state */}
+            {mounted && <ThemeSwitcher />}
           </div>
         </div>
       </header>

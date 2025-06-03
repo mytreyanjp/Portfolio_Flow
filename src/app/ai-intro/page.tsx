@@ -64,7 +64,7 @@ export default function AiIntroPage() {
     >
       <header className="text-center mb-12">
         <div> 
-          <Sparkles className="h-16 w-16 text-primary mx-auto mb-4 animate-pulse" />
+          {/* Sparkles icon removed from here */}
           <h1 
             id="ai-intro-page-main-heading"
             className="text-4xl font-display font-bold text-transparent bg-clip-text mb-4 relative overflow-hidden"
