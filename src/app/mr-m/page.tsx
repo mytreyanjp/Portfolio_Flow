@@ -52,7 +52,8 @@ export default function MrMPage() {
           <li>Select a project from the list to start chatting with Mr.M about it.</li>
           <li>Mr.M has access to the details of the selected project.</li>
           <li>Ask questions like "What was the main challenge in this project?" or "What technologies were used?".</li>
-          <li>Mr.M will do its best to answer based on the information available for that specific project.</li>
+          <li>Mr.M will do its best to answer based on the information available for that specific project and its general knowledge.</li>
+          <li>Remember, as an AI, Mr.M may not always be perfectly accurate, so always double-check critical information.</li>
         </ul>
       </div>
     </div>
