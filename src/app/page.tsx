@@ -20,7 +20,7 @@ const ORIGINAL_GREETING_NO_NAME = "Hello there, ";
 const ORIGINAL_NAME_FALLBACK = "Mytreyan here";
 const ORIGINAL_MOTTO = "can create light outta a blackhole";
 
-const CURSOR_TAIL_RADIUS = 150; // Matching CursorTail.tsx
+const CURSOR_TAIL_RADIUS = 150; 
 
 export default function PortfolioPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -57,23 +57,16 @@ export default function PortfolioPage() {
   const checkCollision = useCallback((circleX: number, circleY: number, circleR: number, buttonElement: HTMLElement | null) => {
     if (!buttonElement) return false;
     const rect = buttonElement.getBoundingClientRect();
-    // Find the closest point to the circle within the rectangle
     const closestX = Math.max(rect.left, Math.min(circleX, rect.right));
     const closestY = Math.max(rect.top, Math.min(circleY, rect.bottom));
-
-    // Calculate the distance between the circle's center and this closest point
     const distanceX = circleX - closestX;
     const distanceY = circleY - closestY;
     const distanceSquared = (distanceX * distanceX) + (distanceY * distanceY);
-
     return distanceSquared < (circleR * circleR);
   }, []);
 
   useEffect(() => {
     if (!isClient || resolvedTheme !== 'dark' || isViewProjectsButtonClicked || !hasScrolled) {
-      // If not dark theme, button already clicked, or section not scrolled into view,
-      // intersection logic is not active or not needed for visibility trigger.
-      // We can ensure isButtonIntersectingCursor is false if conditions aren't met.
       if (resolvedTheme !== 'dark' || isViewProjectsButtonClicked) {
         setIsButtonIntersectingCursor(false);
       }
@@ -270,7 +263,7 @@ export default function PortfolioPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <header className="mb-12 text-center">
+      <header className="mb-8 text-center"> {/* Reduced bottom margin */}
         <h1
           ref={headingRef}
           className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold text-transparent bg-clip-text mb-2 relative overflow-hidden"
@@ -280,10 +273,33 @@ export default function PortfolioPage() {
         >
           {displayGreeting}
         </h1>
-        <p className="text-lg text-muted-foreground font-subtext italic max-w-2xl mx-auto mb-8">
+        <p className="text-lg text-muted-foreground font-subtext italic max-w-2xl mx-auto">
           {displayMotto}
         </p>
       </header>
+
+      <div 
+        className={cn(
+            "flex justify-center mb-12", // Added margin bottom
+            "transition-opacity duration-500 ease-in-out",
+            hasScrolled ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}
+      >
+        <Button
+            ref={viewProjectsButtonRef}
+            size="lg"
+            className={cn(
+              "w-full sm:w-auto transition-all duration-300 ease-out",
+              "bg-card text-foreground hover:bg-card hover:text-foreground hover:scale-105", 
+              "dark:bg-black dark:text-primary-foreground dark:hover:bg-black", 
+              resolvedTheme === 'dark' && (isButtonVisibleInDarkTheme ? "dark:opacity-100 dark:pointer-events-auto dark:hover:scale-105" : "dark:opacity-0 dark:pointer-events-none")
+            )}
+            onClick={handleViewProjectsClick}
+            disabled={resolvedTheme === 'dark' && !isButtonVisibleInDarkTheme && !isViewProjectsButtonClicked && !isButtonIntersectingCursor}
+          >
+            <ViewIcon className="mr-2 h-5 w-5" /> View Projects
+        </Button>
+      </div>
 
       <section
         aria-label="Quick navigation links"
@@ -295,21 +311,6 @@ export default function PortfolioPage() {
       >
         <h2 className="text-2xl font-semibold text-center text-foreground mb-6">Explore &amp; Connect</h2>
         <div className="flex flex-col sm:flex-row flex-wrap justify-center items-center gap-4">
-          <Button
-            ref={viewProjectsButtonRef}
-            size="lg"
-            className={cn(
-              "w-full sm:w-auto transition-all duration-300 ease-out",
-              "bg-card text-foreground hover:bg-card hover:text-foreground hover:scale-105", // Light theme
-              "dark:bg-black dark:text-primary-foreground dark:hover:bg-black", // Dark theme base
-              resolvedTheme === 'dark' && (isButtonVisibleInDarkTheme ? "dark:opacity-100 dark:pointer-events-auto dark:hover:scale-105" : "dark:opacity-0 dark:pointer-events-none")
-            )}
-            onClick={handleViewProjectsClick}
-            // Disable button if it's supposed to be hidden by flashlight effect logic and hasn't been clicked
-            disabled={resolvedTheme === 'dark' && !isButtonVisibleInDarkTheme && !isViewProjectsButtonClicked && !isButtonIntersectingCursor}
-          >
-            <ViewIcon className="mr-2 h-5 w-5" /> View Projects
-          </Button>
           <Button
             asChild
             size="lg"
@@ -389,4 +390,6 @@ export default function PortfolioPage() {
     </div>
   );
 }
+    
+
     
