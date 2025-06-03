@@ -14,7 +14,7 @@ import type { Project } from '@/data/projects'; // Keep this for reference if ne
 
 // Zod schema for Project data structure (subset for AI)
 // This schema defines what project details the AI will receive.
-export const ProjectZodSchema = z.object({
+const ProjectZodSchema = z.object({
   id: z.string(),
   title: z.string(),
   description: z.string(),
@@ -28,7 +28,7 @@ export const ProjectZodSchema = z.object({
 export type ProjectZod = z.infer<typeof ProjectZodSchema>;
 
 
-export const ProjectQnaInputSchema = z.object({
+const ProjectQnaInputSchema = z.object({
   question: z.string().describe("The user's question about the selected project."),
   projectContext: ProjectZodSchema.describe("The details of the project the user is asking about."),
   chatHistory: z.array(z.object({
@@ -40,7 +40,7 @@ export const ProjectQnaInputSchema = z.object({
 });
 export type ProjectQnaInput = z.infer<typeof ProjectQnaInputSchema>;
 
-export const ProjectQnaOutputSchema = z.object({
+const ProjectQnaOutputSchema = z.object({
   answer: z.string().describe("Mr.M's answer to the user's question about the specific project."),
 });
 export type ProjectQnaOutput = z.infer<typeof ProjectQnaOutputSchema>;
