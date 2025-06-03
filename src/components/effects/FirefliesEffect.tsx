@@ -8,8 +8,12 @@ const FIREFLY_BASE_COLOR_HSLA = '270, 80%, 70%'; // HSL part of hsla(H, S, L, A)
 const MAX_SPEED = 0.3;
 const MIN_RADIUS = 1;
 const MAX_RADIUS = 2.5;
-const MIN_OPACITY = 0.2; // Slightly increased min opacity
-const MAX_OPACITY = 0.9; // Increased max opacity for brighter effect
+const MIN_OPACITY = 0.2;
+const MAX_OPACITY = 0.9;
+
+// Cursor interaction parameters
+const CURSOR_ATTRACTION_RADIUS = 250; // How close fireflies need to be to be affected by the cursor
+const ATTRACTION_STRENGTH = 0.03;   // How strongly they are pulled towards the cursor
 
 interface Firefly {
   x: number;
@@ -30,6 +34,7 @@ const FirefliesEffect: React.FC<FirefliesEffectProps> = ({ isDarkTheme }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameIdRef = useRef<number | null>(null);
   const firefliesRef = useRef<Firefly[]>([]);
+  const mousePositionRef = useRef<{ x: number; y: number }>({ x: -1000, y: -1000 }); // Initialize off-screen
 
   const initializeFireflies = useCallback((width: number, height: number) => {
     const newFireflies: Firefly[] = [];
@@ -39,8 +44,8 @@ const FirefliesEffect: React.FC<FirefliesEffectProps> = ({ isDarkTheme }) => {
         y: Math.random() * height,
         radius: MIN_RADIUS + Math.random() * (MAX_RADIUS - MIN_RADIUS),
         opacity: MIN_OPACITY + Math.random() * (MAX_OPACITY - MIN_OPACITY),
-        vx: (Math.random() - 0.5) * MAX_SPEED * 2,
-        vy: (Math.random() - 0.5) * MAX_SPEED * 2,
+        vx: (Math.random() - 0.5) * MAX_SPEED * 0.5, // Start with a bit less speed
+        vy: (Math.random() - 0.5) * MAX_SPEED * 0.5,
         opacitySpeed: 0.005 + Math.random() * 0.01,
         opacityDirection: Math.random() > 0.5 ? 1 : -1,
       });
@@ -59,6 +64,7 @@ const FirefliesEffect: React.FC<FirefliesEffectProps> = ({ isDarkTheme }) => {
         const ctx = canvas.getContext('2d');
         ctx?.clearRect(0, 0, canvas.width, canvas.height);
       }
+      // Mouse move listener is managed within the main effect logic
       return;
     }
 
@@ -69,6 +75,13 @@ const FirefliesEffect: React.FC<FirefliesEffectProps> = ({ isDarkTheme }) => {
     if (!ctx) return;
 
     let isMounted = true;
+
+    const handleMouseMove = (event: MouseEvent) => {
+      if (isMounted) {
+        mousePositionRef.current = { x: event.clientX, y: event.clientY };
+      }
+    };
+    window.addEventListener('mousemove', handleMouseMove);
 
     const resizeCanvas = () => {
       if (!isMounted || !canvas) return;
@@ -83,22 +96,47 @@ const FirefliesEffect: React.FC<FirefliesEffectProps> = ({ isDarkTheme }) => {
       if (!isMounted || !ctx || !canvasRef.current) return;
 
       ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      const { x: mouseX, y: mouseY } = mousePositionRef.current;
 
       firefliesRef.current.forEach((firefly) => {
-        // Update position
+        // 1. Base random walk for velocity
+        let current_vx = firefly.vx + (Math.random() - 0.5) * 0.08; // Slightly reduced random influence
+        let current_vy = firefly.vy + (Math.random() - 0.5) * 0.08;
+
+        // 2. Cursor attraction logic
+        const dx = mouseX - firefly.x;
+        const dy = mouseY - firefly.y;
+        const distanceSquared = dx * dx + dy * dy;
+
+        if (distanceSquared < CURSOR_ATTRACTION_RADIUS * CURSOR_ATTRACTION_RADIUS && distanceSquared > 1) {
+            const distance = Math.sqrt(distanceSquared);
+            const forceDirectionX = dx / distance;
+            const forceDirectionY = dy / distance;
+
+            current_vx += forceDirectionX * ATTRACTION_STRENGTH;
+            current_vy += forceDirectionY * ATTRACTION_STRENGTH;
+        }
+
+        // 3. Clamp speed
+        const speed = Math.sqrt(current_vx * current_vx + current_vy * current_vy);
+        if (speed > MAX_SPEED) {
+          firefly.vx = (current_vx / speed) * MAX_SPEED;
+          firefly.vy = (current_vy / speed) * MAX_SPEED;
+        } else if (speed < MAX_SPEED * 0.15 && speed > 0.001) { // If too slow, give a nudge
+            const minSpeedFactor = (MAX_SPEED * 0.15) / speed;
+            firefly.vx = current_vx * minSpeedFactor;
+            firefly.vy = current_vy * minSpeedFactor;
+        } else if (speed <= 0.001) { // If practically stationary, give a fresh random nudge
+            firefly.vx = (Math.random() - 0.5) * 0.05 * MAX_SPEED;
+            firefly.vy = (Math.random() - 0.5) * 0.05 * MAX_SPEED;
+        } else {
+            firefly.vx = current_vx;
+            firefly.vy = current_vy;
+        }
+        
+        // 4. Update position
         firefly.x += firefly.vx;
         firefly.y += firefly.vy;
-
-        // Random walk for velocity
-        firefly.vx += (Math.random() - 0.5) * 0.1;
-        firefly.vy += (Math.random() - 0.5) * 0.1;
-
-        // Clamp speed
-        const speed = Math.sqrt(firefly.vx * firefly.vx + firefly.vy * firefly.vy);
-        if (speed > MAX_SPEED) {
-          firefly.vx = (firefly.vx / speed) * MAX_SPEED;
-          firefly.vy = (firefly.vy / speed) * MAX_SPEED;
-        }
         
         // Update opacity (flicker)
         firefly.opacity += firefly.opacitySpeed * firefly.opacityDirection;
@@ -106,7 +144,6 @@ const FirefliesEffect: React.FC<FirefliesEffectProps> = ({ isDarkTheme }) => {
           firefly.opacityDirection *= -1;
           firefly.opacity = Math.max(MIN_OPACITY, Math.min(MAX_OPACITY, firefly.opacity));
         }
-
 
         // Boundary conditions (wrap around)
         if (firefly.x < -firefly.radius) firefly.x = canvasRef.current.width + firefly.radius;
@@ -124,7 +161,6 @@ const FirefliesEffect: React.FC<FirefliesEffectProps> = ({ isDarkTheme }) => {
           firefly.y,
           firefly.radius
         );
-        // Adjusted gradient stops for brighter core
         gradient.addColorStop(0, `hsla(${FIREFLY_BASE_COLOR_HSLA}, ${firefly.opacity})`); 
         gradient.addColorStop(0.6, `hsla(${FIREFLY_BASE_COLOR_HSLA}, ${firefly.opacity * 0.6})`);
         gradient.addColorStop(1, `hsla(${FIREFLY_BASE_COLOR_HSLA}, 0)`); 
@@ -137,17 +173,15 @@ const FirefliesEffect: React.FC<FirefliesEffectProps> = ({ isDarkTheme }) => {
       animationFrameIdRef.current = requestAnimationFrame(animate);
     };
 
-    if (isDarkTheme) {
-       if (animationFrameIdRef.current) cancelAnimationFrame(animationFrameIdRef.current); // Clear any existing animation frame
-       animate();
-    }
-
+    if (animationFrameIdRef.current) cancelAnimationFrame(animationFrameIdRef.current);
+    animate();
 
     window.addEventListener('resize', resizeCanvas);
 
     return () => {
       isMounted = false;
       window.removeEventListener('resize', resizeCanvas);
+      window.removeEventListener('mousemove', handleMouseMove);
       if (animationFrameIdRef.current) {
         cancelAnimationFrame(animationFrameIdRef.current);
         animationFrameIdRef.current = null;
