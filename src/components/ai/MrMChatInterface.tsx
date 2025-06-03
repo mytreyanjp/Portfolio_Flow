@@ -22,6 +22,8 @@ interface Message {
   timestamp: Date;
 }
 
+const ALL_CATEGORIES_FILTER_VALUE = "_ALL_CATEGORIES_"; // Special value for "All Categories"
+
 export default function MrMChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -36,7 +38,7 @@ export default function MrMChatInterface() {
   const [projectFetchError, setProjectFetchError] = useState<string | null>(null);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('');
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState(''); // Empty string means all
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
 
   const fetchProjectsList = useCallback(async () => {
@@ -228,13 +230,16 @@ export default function MrMChatInterface() {
                 />
             </div>
             <div className="flex-shrink-0 sm:w-56">
-                <Select value={selectedCategoryFilter} onValueChange={setSelectedCategoryFilter}>
+                <Select
+                  value={selectedCategoryFilter === '' ? ALL_CATEGORIES_FILTER_VALUE : selectedCategoryFilter}
+                  onValueChange={(value) => setSelectedCategoryFilter(value === ALL_CATEGORIES_FILTER_VALUE ? '' : value)}
+                >
                     <SelectTrigger className="w-full">
                         <Filter className="h-4 w-4 mr-2 text-muted-foreground" />
                         <SelectValue placeholder="All Categories" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="">All Categories</SelectItem>
+                        <SelectItem value={ALL_CATEGORIES_FILTER_VALUE}>All Categories</SelectItem>
                         {availableCategories.map(category => (
                             <SelectItem key={category} value={category}>{category}</SelectItem>
                         ))}
