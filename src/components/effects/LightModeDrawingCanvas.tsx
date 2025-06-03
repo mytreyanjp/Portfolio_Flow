@@ -4,15 +4,17 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 
 const LINE_COLOR_RGB = '50, 50, 50'; // Dark gray for pencil line
-const LINE_WIDTH = 3; 
-const FADE_START_DELAY_MS = 1000; 
-const FADE_DURATION_MS = 2000;   
+const LINE_WIDTH = 3;
+const BASE_LINE_OPACITY = 0.5; // Max opacity of a fresh line
+const BLUR_AMOUNT_PX = 2; // Blur intensity in pixels
+
+const FADE_START_DELAY_MS = 1000;
+const FADE_DURATION_MS = 2000;
 const TOTAL_FADE_TIME_MS = FADE_START_DELAY_MS + FADE_DURATION_MS;
 
-const LERP_FACTOR_CURSOR_FOLLOW = 0.15; // Lower = smoother, more "drag"
-const MIN_DISTANCE_TO_ADD_LERPED_POINT = 1.5; // Min distance the lerped point must move to add a new segment
+const LERP_FACTOR_CURSOR_FOLLOW = 0.15;
+const MIN_DISTANCE_TO_ADD_LERPED_POINT = 1.5;
 const MAX_POINTS_IN_TAIL = 200;
-
 
 interface Point {
   x: number;
@@ -27,7 +29,7 @@ interface LightModeDrawingCanvasProps {
 const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawingActive }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameIdRef = useRef<number | null>(null);
-  const drawnPointsListRef = useRef<Point[]>([]); // Stores the smoothed points for the tail
+  const drawnPointsListRef = useRef<Point[]>([]);
   
   const isDrawingActiveRef = useRef(isDrawingActive);
   useEffect(() => {
@@ -36,7 +38,6 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
 
   const lastRawMousePositionRef = useRef<Point | null>(null);
   const [hasPointsToRender, setHasPointsToRender] = useState(false);
-
 
   const animatePoints = useCallback(() => {
     const canvas = canvasRef.current;
@@ -50,7 +51,6 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
     const now = Date.now();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Add new smoothed point if drawing is active
     if (isDrawingActiveRef.current && lastRawMousePositionRef.current) {
       const rawMousePos = lastRawMousePositionRef.current;
       if (drawnPointsListRef.current.length === 0) {
@@ -66,26 +66,20 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
 
         if (distanceMoved >= MIN_DISTANCE_TO_ADD_LERPED_POINT) {
           drawnPointsListRef.current.push({ x: newSmoothX, y: newSmoothY, timestamp: now });
-        } else {
-          // Optionally, update the last point slightly if not moving enough to add a new one
-          // This can make the tail end "settle" but might be too jittery.
-          // For now, only add if significant movement.
         }
       }
     }
     
-    // Limit the number of points
     if (drawnPointsListRef.current.length > MAX_POINTS_IN_TAIL) {
       drawnPointsListRef.current.splice(0, drawnPointsListRef.current.length - MAX_POINTS_IN_TAIL);
     }
 
-    // Filter out old points for fading
     const stillRelevantPoints = drawnPointsListRef.current.filter(point => (now - point.timestamp) < TOTAL_FADE_TIME_MS);
     drawnPointsListRef.current = stillRelevantPoints;
         
     setHasPointsToRender(stillRelevantPoints.length > 0);
 
-    const getOpacity = (point: Point) => {
+    const getFadeOpacity = (point: Point) => {
         const age = now - point.timestamp;
         let opacity = 1;
         if (age > FADE_START_DELAY_MS) {
@@ -95,6 +89,9 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
     };
 
     if (stillRelevantPoints.length > 1) {
+      if (BLUR_AMOUNT_PX > 0) {
+        ctx.filter = `blur(${BLUR_AMOUNT_PX}px)`;
+      }
       ctx.lineWidth = LINE_WIDTH;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
@@ -104,10 +101,12 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
         const p1 = stillRelevantPoints[i];
         const p2 = stillRelevantPoints[i + 1];
         
-        const opacity = getOpacity(p1);
-        if (opacity <= 0) continue;
+        const fadeOpacity = getFadeOpacity(p1);
+        if (fadeOpacity <= 0) continue;
+
+        const finalOpacity = BASE_LINE_OPACITY * fadeOpacity;
+        ctx.strokeStyle = `rgba(${LINE_COLOR_RGB}, ${finalOpacity})`;
         
-        ctx.strokeStyle = `rgba(${LINE_COLOR_RGB}, ${opacity})`;
         ctx.beginPath();
 
         const mid1 = { x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2 };
@@ -122,6 +121,9 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
         }
         ctx.stroke();
       }
+      if (BLUR_AMOUNT_PX > 0) {
+        ctx.filter = 'none'; // Reset filter
+      }
     }
 
     if (isDrawingActiveRef.current || stillRelevantPoints.length > 0) {
@@ -134,7 +136,6 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
 
   const localHandleMouseMove = useCallback((event: MouseEvent) => {
     lastRawMousePositionRef.current = { x: event.clientX, y: event.clientY, timestamp: Date.now() };
-    // If drawing is active and animation isn't running, start it.
     if (isDrawingActiveRef.current && !animationFrameIdRef.current) {
       animationFrameIdRef.current = requestAnimationFrame(animatePoints);
     }
@@ -155,7 +156,6 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
     window.addEventListener('resize', fitToContainer);
     document.addEventListener('mousemove', localHandleMouseMove);
 
-    // Initial animation start if active
     if (isDrawingActiveRef.current && !animationFrameIdRef.current) {
         animationFrameIdRef.current = requestAnimationFrame(animatePoints);
     }
@@ -170,15 +170,12 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
     };
   }, [localHandleMouseMove, animatePoints]); 
 
-  // Effect to manage animation loop based on drawing state AND if points are still rendering
   useEffect(() => {
     const needsAnimation = isDrawingActiveRef.current || drawnPointsListRef.current.length > 0;
     if (needsAnimation && !animationFrameIdRef.current) {
       animationFrameIdRef.current = requestAnimationFrame(animatePoints);
-    } else if (!needsAnimation && animationFrameIdRef.current) {
-      // No specific stop needed here as animatePoints self-stops if no points and not active
     }
-  }, [isDrawingActive, animatePoints]); // Removed pointsCount, relying on animatePoints internal logic
+  }, [isDrawingActive, animatePoints]);
 
   const shouldRenderCanvas = isDrawingActiveRef.current || hasPointsToRender;
 
