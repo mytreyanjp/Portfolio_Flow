@@ -22,7 +22,7 @@ import { useAuth } from '@/contexts/AuthContext'; // Import useAuth
 
 // IMPORTANT: Replace this with your actual admin email.
 // For production, this should ideally be managed via environment variables or a secure config.
-const ADMIN_EMAIL = "your-admin-email@example.com"; 
+const ADMIN_EMAIL = "mytreyan197@gmail.com"; 
 
 export default function SecretLairPage() {
   const { toast } = useToast();
