@@ -7,7 +7,7 @@ import ThemeSwitcher from './ThemeSwitcher';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Briefcase, MessageSquare, FileText, Brain, LockKeyhole, Eye, EyeOff, Volume2, VolumeX, Pencil, AlertTriangle } from 'lucide-react';
+import { Briefcase, MessageSquare, FileText, Brain, LockKeyhole, Eye, EyeOff, Volume2, VolumeX, Pencil, AlertTriangle, Save } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   AlertDialog,
@@ -18,10 +18,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from 'next-themes';
+import { useName } from '@/contexts/NameContext';
 
 const navItems = [
   { href: '/', label: 'Portfolio', icon: Briefcase },
@@ -32,7 +36,7 @@ const navItems = [
 
 const SECRET_PASSWORD = "tinku@197";
 const CLICKS_TO_ACTIVATE = 5;
-const MAX_CLICK_DELAY_MS = 1000; // 1 second
+const MAX_CLICK_DELAY_MS = 1000; 
 const MAX_FAILED_ATTEMPTS = 6;
 const LOCKOUT_DURATION_MS = 1 * 60 * 60 * 1000; // 1 hour
 
@@ -43,16 +47,18 @@ const LOCKOUT_END_TIME_KEY = 'portfolioSecretLairLockoutEndTime';
 interface HeaderProps {
   isSoundEnabled: boolean;
   toggleSoundEnabled: () => void;
-  isPencilDrawingEnabled: boolean;
-  togglePencilDrawing: () => void;
+  isPersonalizationActive: boolean; // Renamed from isPencilDrawingEnabled
+  toggleNameInputDialog: () => void;    // Renamed from togglePencilDrawing
+  showNameInputDialog: boolean;
   isLightTheme: boolean;
 }
 
 export default function Header({ 
   isSoundEnabled, 
   toggleSoundEnabled,
-  isPencilDrawingEnabled,
-  togglePencilDrawing,
+  isPersonalizationActive,
+  toggleNameInputDialog,
+  showNameInputDialog,
   isLightTheme
 }: HeaderProps) {
   const [mounted, setMounted] = useState(false);
@@ -60,6 +66,7 @@ export default function Header({
   const router = useRouter();
   const { toast } = useToast();
   const { resolvedTheme } = useTheme();
+  const { setUserName } = useName();
 
   const [logoClickCount, setLogoClickCount] = useState(0);
   const [lastClickTime, setLastClickTime] = useState(0);
@@ -70,6 +77,9 @@ export default function Header({
   const [failedAttempts, setFailedAttemptsState] = useState(0);
   const [lockoutEndTime, setLockoutEndTimeState] = useState<number | null>(null);
   const [showLockedUI, setShowLockedUI] = useState(false);
+
+  const [currentNameInput, setCurrentNameInput] = useState('');
+
 
   const updateLockoutStateFromStorage = useCallback(() => {
     const storedAttempts = localStorage.getItem(FAILED_ATTEMPTS_KEY);
@@ -87,10 +97,9 @@ export default function Header({
           isCurrentlyLocked = true;
         }
       } else {
-        // Lockout expired
         localStorage.removeItem(FAILED_ATTEMPTS_KEY);
         localStorage.removeItem(LOCKOUT_END_TIME_KEY);
-        setFailedAttemptsState(0); // Reset state too
+        setFailedAttemptsState(0); 
         setLockoutEndTimeState(null);
       }
     }
@@ -117,7 +126,7 @@ export default function Header({
     setLastClickTime(currentTime);
 
     if (newClickCount >= CLICKS_TO_ACTIVATE) {
-      updateLockoutStateFromStorage(); // Refresh lockout state before showing dialog
+      updateLockoutStateFromStorage(); 
       setShowPasswordDialog(true);
       setPasswordAttempt(''); 
       setShowPasswordAttemptVisual(false); 
@@ -125,7 +134,7 @@ export default function Header({
   };
 
   const handlePasswordCheck = () => {
-    if (showLockedUI) return; // Already showing locked UI, no further checks
+    if (showLockedUI) return;
 
     if (passwordAttempt === SECRET_PASSWORD) {
       toast({
@@ -151,9 +160,9 @@ export default function Header({
         setShowLockedUI(true);
         toast({
           title: "Access Denied",
-          description: "Too many failed attempts. This feature has been permanently disabled.",
+          description: "Too many failed attempts. This feature has been temporarily disabled.",
           variant: "destructive",
-          duration: 10 * 60 * 1000, // 10 minutes for visibility
+          duration: 10 * 60 * 1000, 
         });
       } else {
         toast({
@@ -175,13 +184,23 @@ export default function Header({
     setShowPasswordAttemptVisual(prev => !prev);
   };
 
-  const handleDialogClose = () => {
+  const handlePasswordDialogClose = () => {
     setPasswordAttempt('');
     setShowPasswordAttemptVisual(false);
     setLogoClickCount(0); 
     setLastClickTime(0);
-    // Lockout state persists, no reset here unless explicitly done
   };
+
+  const handleSaveName = () => {
+    if (currentNameInput.trim()) {
+      setUserName(currentNameInput.trim());
+      toast({ title: "Name Saved!", description: `Your greeting is now personalized, ${currentNameInput.trim()}!`});
+      toggleNameInputDialog(); // Close dialog
+    } else {
+      toast({ title: "Oops!", description: "Please enter a name.", variant: "destructive" });
+    }
+  };
+
 
   return (
     <>
@@ -253,9 +272,9 @@ export default function Header({
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={togglePencilDrawing}
-                aria-label={isPencilDrawingEnabled ? "Disable pencil drawing" : "Enable pencil drawing"}
-                className={cn(isPencilDrawingEnabled && "text-primary")}
+                onClick={toggleNameInputDialog} // Opens the name input dialog
+                aria-label={isPersonalizationActive ? "Change personalized name" : "Personalize greeting"}
+                className={cn(isPersonalizationActive && "text-primary")}
               >
                 <Pencil className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out" />
               </Button>
@@ -279,13 +298,14 @@ export default function Header({
         </div>
       </header>
 
+      {/* Password Dialog for Secret Lair */}
       <AlertDialog open={showPasswordDialog} onOpenChange={(isOpen) => {
         setShowPasswordDialog(isOpen); 
         if (isOpen) {
-          updateLockoutStateFromStorage(); // Re-check on open
+          updateLockoutStateFromStorage(); 
         }
         if (!isOpen) {
-          handleDialogClose(); 
+          handlePasswordDialogClose(); 
         }
       }}>
         <AlertDialogContent>
@@ -293,11 +313,11 @@ export default function Header({
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center">
                 {showLockedUI ? <AlertTriangle className="mr-2 h-5 w-5 text-destructive" /> : <LockKeyhole className="mr-2 h-5 w-5 text-primary" />}
-                {showLockedUI ? "Access Disabled" : "Enter Secret Code"}
+                {showLockedUI ? "Access Temporarily Disabled" : "Enter Secret Code"}
               </AlertDialogTitle>
               <AlertDialogDescription>
                 {showLockedUI 
-                  ? "Access to this feature has been permanently disabled due to multiple incorrect attempts."
+                  ? "Access to this feature has been temporarily disabled due to multiple incorrect attempts. Please try again later."
                   : "You've discovered a hidden path. Enter the password to proceed."
                 }
               </AlertDialogDescription>
@@ -327,7 +347,7 @@ export default function Header({
               </div>
             )}
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={showLockedUI && lockoutEndTime !== null && Date.now() < lockoutEndTime}>
+              <AlertDialogCancel onClick={() => setShowPasswordDialog(false)} disabled={showLockedUI && lockoutEndTime !== null && Date.now() < lockoutEndTime}>
                 {showLockedUI ? "Close" : "Cancel"}
               </AlertDialogCancel> 
               {!showLockedUI && <Button type="submit" disabled={showLockedUI}>Unlock</Button>}
@@ -335,7 +355,41 @@ export default function Header({
           </form>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Name Input Dialog */}
+      <Dialog open={showNameInputDialog} onOpenChange={toggleNameInputDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Personalize Your Greeting</DialogTitle>
+            <DialogDescription>
+              Enter your name to see a personalized welcome message on the site.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name-input" className="text-right">
+                Name
+              </Label>
+              <Input
+                id="name-input"
+                value={currentNameInput}
+                onChange={(e) => setCurrentNameInput(e.target.value)}
+                placeholder="Your Name"
+                className="col-span-3"
+                onKeyDown={(e) => { if (e.key === 'Enter') handleSaveName(); }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button type="button" onClick={handleSaveName}>
+              <Save className="mr-2 h-4 w-4" /> Save Name
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
-

@@ -15,23 +15,7 @@ import localFont from 'next/font/local';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal, X as XIcon, Laptop } from 'lucide-react';
-
-// --- CUSTOM FONT LOADING ---
-// If custom fonts are not appearing, especially on mobile:
-// 1. VERIFY FILE PATHS & NAMES:
-//    - Ensure 'GreaterTheory.otf' and 'Wasted-Vindey.ttf' are EXACTLY named (case-sensitive).
-//    - Ensure they are located at '/home/user/studio/public/fonts/GreaterTheory.otf'
-//      and '/home/user/studio/public/fonts/Wasted-Vindey.ttf' respectively in your project structure.
-//      The `src` paths below are relative to this file (src/app/layout.tsx) and should correctly
-//      point to PROJECT_ROOT/public/fonts/.
-// 2. CHECK MOBILE BROWSER DEVTOOLS:
-//    - Connect your phone to a desktop browser for debugging.
-//    - Network Tab: Look for requests for font files (e.g., .otf, .ttf, or hashed .woff2 files under _next/static/media).
-//      Are they 404 (Not Found) or another error?
-//    - Console Tab: Check for any font-related error messages.
-// 3. CLEAR CACHE: Clear the browser cache and site data on your mobile device.
-// 4. FONT FILE INTEGRITY: Ensure the font files are not corrupted.
-// 5. SERVER LOGS: Check server logs (if accessible for your .cloudworkstations.dev environment) for any errors related to serving static files.
+import { NameProvider, useName } from '@/contexts/NameContext';
 
 const greaterTheory = localFont({
   src: '../../public/fonts/GreaterTheory.otf',
@@ -60,36 +44,29 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   const mobileStatus = useIsMobile();
   const [showMobileMessage, setShowMobileMessage] = useState(false);
   const [isSoundEnabled, setIsSoundEnabled] = useState(false); 
-  const [isPencilDrawingEnabled, setIsPencilDrawingEnabled] = useState(false);
+  
+  const { userName } = useName(); // Get userName from context
+  const [showNameInputDialog, setShowNameInputDialog] = useState(false);
+
 
   const backgroundAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     setIsClient(true);
-    // Initialize Audio object on client-side
     backgroundAudioRef.current = new Audio('/sounds/dark-theme-sound.mp3'); 
     if (backgroundAudioRef.current) {
       backgroundAudioRef.current.volume = 0.5;
       backgroundAudioRef.current.loop = true; 
     }
 
-    // Load sound preference from localStorage
     const storedSoundPreference = localStorage.getItem('portfolioSoundEnabled');
     if (storedSoundPreference !== null) {
       setIsSoundEnabled(storedSoundPreference === 'true');
     } else {
-      // If no preference stored, set to default (which is `false` from useState)
       localStorage.setItem('portfolioSoundEnabled', String(false));
       setIsSoundEnabled(false); 
     }
     
-    // Load pencil drawing preference (optional, defaults to off)
-    const storedPencilPreference = localStorage.getItem('portfolioPencilDrawingEnabled');
-    if (storedPencilPreference !== null) {
-      setIsPencilDrawingEnabled(storedPencilPreference === 'true');
-    }
-
-
     return () => {
       backgroundAudioRef.current?.pause();
       backgroundAudioRef.current = null;
@@ -102,11 +79,10 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
     localStorage.setItem('portfolioSoundEnabled', String(newSoundState));
   };
 
-  const togglePencilDrawing = () => {
-    const newPencilState = !isPencilDrawingEnabled;
-    setIsPencilDrawingEnabled(newPencilState);
-    localStorage.setItem('portfolioPencilDrawingEnabled', String(newPencilState));
+  const toggleNameInputDialog = () => {
+    setShowNameInputDialog(prev => !prev);
   };
+
 
   useEffect(() => {
     if (isClient && backgroundAudioRef.current) {
@@ -153,20 +129,23 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
   const currentIsLightTheme = resolvedTheme === 'light';
   const showDarkThemeEffects = isClient && currentIsDarkTheme;
   const showLightThemeEffects = isClient && currentIsLightTheme;
+  const isPersonalizationActive = !!userName;
 
 
   return (
     <>
       {showDarkThemeEffects && <CursorTail isDarkTheme={currentIsDarkTheme} />}
       {showDarkThemeEffects && <FirefliesEffect isDarkTheme={currentIsDarkTheme} />}
-      {showLightThemeEffects && <LightModeDrawingCanvas isDrawingActive={isPencilDrawingEnabled && currentIsLightTheme} />}
+      {/* LightModeDrawingCanvas functionality is removed, but kept for potential future use */}
+      {showLightThemeEffects && <LightModeDrawingCanvas isDrawingActive={false} />}
       
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header 
           isSoundEnabled={isSoundEnabled} 
           toggleSoundEnabled={toggleSoundEnabled}
-          isPencilDrawingEnabled={isPencilDrawingEnabled}
-          togglePencilDrawing={togglePencilDrawing}
+          isPersonalizationActive={isPersonalizationActive} // Changed prop name
+          toggleNameInputDialog={toggleNameInputDialog}    // Changed prop name
+          showNameInputDialog={showNameInputDialog}         // Pass dialog state
           isLightTheme={currentIsLightTheme}
         />
         <main className={cn(
@@ -219,10 +198,11 @@ export default function RootLayout({
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-          <MainContentWithTheme>{children}</MainContentWithTheme>
+          <NameProvider> {/* Wrap with NameProvider */}
+            <MainContentWithTheme>{children}</MainContentWithTheme>
+          </NameProvider>
         </ThemeProvider>
       </body>
     </html>
   );
 }
-

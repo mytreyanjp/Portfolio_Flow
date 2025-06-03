@@ -7,12 +7,13 @@ import ProjectFilter from '@/components/portfolio/ProjectFilter';
 import type { Project } from '@/data/projects';
 import { getProjects, getUniqueCategoriesFromProjects } from '@/services/projectsService';
 import { Button } from '@/components/ui/button';
-import { ArrowDown, Mail, FileText, AlertTriangle, X as XIcon, Loader2 } from 'lucide-react';
+import { ArrowDown, Mail, FileText, AlertTriangle, X as XIcon, Loader2, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
+import { useName } from '@/contexts/NameContext'; // Import useName hook
 
 interface Filters {
   category: string;
@@ -41,6 +42,8 @@ export default function PortfolioPage() {
   const [hasButtonClicked, setHasButtonClicked] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [buttonMaskStyle, setButtonMaskStyle] = useState({});
+
+  const { userName, isLoadingName } = useName(); // Get userName and loading state
 
   useEffect(() => {
     const handleGlobalMouseMove = (event: MouseEvent) => {
@@ -197,10 +200,6 @@ export default function PortfolioPage() {
         headerHeight = headerElement.offsetHeight;
       }
       
-      // Calculate the target scroll position:
-      // elementTopRelativeToDocument is the absolute top of the heading.
-      // Subtract headerHeight to account for the sticky header.
-      // Subtract an additional 20px to provide space above the title.
       const targetScrollY = elementTopRelativeToDocument - headerHeight - 20;
 
       window.scrollTo({
@@ -254,16 +253,20 @@ export default function PortfolioPage() {
         ref={welcomeSectionRef}
       >
         <div className="max-w-3xl mx-auto" ref={introContentRef}>
-          <h1
-            id="portfolio-page-main-heading"
-            className="font-display text-5xl sm:text-6xl md:text-7xl text-transparent bg-clip-text relative overflow-hidden mb-2"
-            style={{
-              backgroundImage:
-                'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)',
-            }}
-          >
-            Hello there
-          </h1>
+          {isLoadingName ? (
+            <Skeleton className="h-16 w-3/4 mx-auto mb-2" /> 
+          ) : (
+            <h1
+              id="portfolio-page-main-heading"
+              className="font-display text-5xl sm:text-6xl md:text-7xl text-transparent bg-clip-text relative overflow-hidden mb-2"
+              style={{
+                backgroundImage:
+                  'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)',
+              }}
+            >
+              Hello {userName ? userName : 'there'}
+            </h1>
+          )}
           <p
             className="font-display text-2xl sm:text-3xl md:text-4xl text-transparent bg-clip-text relative overflow-hidden mb-2"
              style={{
@@ -419,4 +422,3 @@ export default function PortfolioPage() {
     </div>
   );
 }
-
