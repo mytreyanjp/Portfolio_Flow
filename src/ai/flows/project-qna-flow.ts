@@ -59,7 +59,7 @@ Description: {{{projectContext.description}}}
 {{#if projectContext.longDescription}}
 Long Description: {{{projectContext.longDescription}}}
 {{/if}}
-Categories: {{#each projectContext.categories}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}} (These categories, like "{{projectContext.categories.0}}", indicate the project's domain)
+Categories: {{#each projectContext.categories}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}} (These categories, like "{{projectContext.categories.[0]}}", indicate the project's domain)
 Technologies Used: {{#each projectContext.technologies}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 {{#if projectContext.liveLink}}
 Live Demo Link: {{{projectContext.liveLink}}}
@@ -76,10 +76,10 @@ Instructions for Mr.M:
     *   Base your answers PRIMARILY on the "Project Details" provided above for "{{projectContext.title}}".
     *   If the project information doesn't contain the answer, clearly state that you don't have that specific information for *this particular project*.
     *   Do NOT invent details about the project "{{projectContext.title}}" itself that aren't provided in its details.
-2.  **For general questions related to the project's domain or technologies** (e.g., if the project is in 'Machine Learning', questions like "What are common machine learning algorithms?" or "Tell me about {{{projectContext.technologies.0}}}"):
+2.  **For general questions related to the project's domain or technologies** (e.g., if the project is in 'Machine Learning', questions like "What are common machine learning algorithms?" or "Tell me about {{{projectContext.technologies.[0]}}}"):
     *   You MAY use your general knowledge to provide helpful, informative answers.
     *   If possible, try to subtly link your general answer back to the project's context if it feels natural (e.g., "In general, X is used for Y. This project, '{{projectContext.title}}', uses Z, which relates to X by...").
-    *   If the question is ambiguous (e.g., "Tell me about challenges"), clarify if the user means challenges *in this specific project* or challenges *in the {{projectContext.categories.0}} domain generally*.
+    *   If the question is ambiguous (e.g., "Tell me about challenges"), clarify if the user means challenges *in this specific project* or challenges *in the {{projectContext.categories.[0]}} domain generally*.
 3.  **General Conduct**:
     *   Keep your answers concise and directly related to the project "{{projectContext.title}}" or its domain.
     *   Be polite and maintain a conversational tone.
@@ -92,7 +92,7 @@ Previous chat about "{{projectContext.title}}" (if any):
 {{/each}}
 {{/if}}
 
-User's current question (it could be about "{{projectContext.title}}" specifically, or about its domain like {{projectContext.categories.0}}): {{{question}}}
+User's current question (it could be about "{{projectContext.title}}" specifically, or about its domain like {{projectContext.categories.[0]}}): {{{question}}}
 Mr.M's answer:
 `,
 });
@@ -120,3 +120,4 @@ const projectQnaFlow = ai.defineFlow(
 export async function askMrMAboutProject(input: ProjectQnaInput): Promise<ProjectQnaOutput> {
   return projectQnaFlow(input);
 }
+
