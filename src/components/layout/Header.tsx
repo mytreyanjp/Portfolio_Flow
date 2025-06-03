@@ -7,7 +7,7 @@ import ThemeSwitcher from './ThemeSwitcher';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Briefcase, MessageSquare, FileText, Bot, LockKeyhole, Eye, EyeOff, Volume2, VolumeX, Pencil, Edit3, AlertTriangle, Save, Loader2 } from 'lucide-react';
+import { Briefcase, MessageSquare, FileText, Bot, LockKeyhole, Eye, EyeOff, Volume2, VolumeX, Pencil, AlertTriangle, Save, Loader2 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   AlertDialog,
@@ -51,8 +51,7 @@ interface HeaderProps {
   isPersonalizationActive: boolean;
   toggleNameInputDialog: () => void;
   showNameInputDialog: boolean;
-  isPencilModeActive: boolean;
-  togglePencilMode: () => void;
+  // isPencilModeActive and togglePencilMode are removed
 }
 
 export default function Header({
@@ -61,8 +60,6 @@ export default function Header({
   isPersonalizationActive,
   toggleNameInputDialog,
   showNameInputDialog,
-  isPencilModeActive,
-  togglePencilMode,
 }: HeaderProps) {
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
@@ -110,15 +107,6 @@ export default function Header({
     setMounted(true);
     updateLockoutStateFromStorage();
   }, [updateLockoutStateFromStorage]);
-
-
-  // This variable determines if the "Screen Drawing" pencil (Edit3 icon) should be visible.
-  // It should only be true if the component is mounted AND the resolved theme is 'light'.
-  const showScreenDrawingPencilButton = mounted && resolvedTheme === 'light';
-  // For debugging, you can add a log here:
-  // if (mounted) {
-  //   console.log('[Header.tsx] resolvedTheme:', resolvedTheme, 'showScreenDrawingPencilButton:', showScreenDrawingPencilButton);
-  // }
 
   const handleLogoClick = () => {
     const currentTime = Date.now();
@@ -249,15 +237,10 @@ export default function Header({
             </nav>
           )}
           <div className="flex items-center space-x-1">
-            {/* Name Personalization Pencil Button (uses Pencil icon) */}
-            <Button variant="ghost" size="icon" onClick={toggleNameInputDialog} aria-label={isPersonalizationActive ? "Change personalized name" : "Personalize greeting"} className={cn(isPersonalizationActive && "text-primary")}>
-              <Pencil className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out" />
-            </Button>
-            
-            {/* Screen Drawing Pencil Button (uses Edit3 icon) - Should only show in light theme */}
-            {showScreenDrawingPencilButton && (
-              <Button variant="ghost" size="icon" onClick={togglePencilMode} aria-label={isPencilModeActive ? "Disable Screen Drawing" : "Enable Screen Drawing"} className={cn(isPencilModeActive && "text-primary")}>
-                <Edit3 className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out" />
+            {/* Name Personalization Pencil Button - Visible only in light theme */}
+            {mounted && resolvedTheme === 'light' && (
+              <Button variant="ghost" size="icon" onClick={toggleNameInputDialog} aria-label={isPersonalizationActive ? "Change personalized name" : "Personalize greeting"} className={cn(isPersonalizationActive && "text-primary")}>
+                <Pencil className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out" />
               </Button>
             )}
             

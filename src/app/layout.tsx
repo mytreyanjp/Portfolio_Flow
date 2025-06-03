@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 
 import CursorTail from '@/components/effects/CursorTail';
 import FirefliesEffect from '@/components/effects/FirefliesEffect';
-import LightModeDrawingCanvas from '@/components/effects/LightModeDrawingCanvas';
+// LightModeDrawingCanvas is removed
 
 const greaterTheory = localFont({
   src: '../../public/fonts/GreaterTheory.otf',
@@ -38,13 +38,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const [isClient, setIsClient] = useState(false);
-  const { resolvedTheme } = useTheme();
-  const { toast } = useToast();
+  const { resolvedTheme } = useTheme(); // Keep this to log theme if needed elsewhere
+  const { toast } = useToast(); // Keep toast if used
 
   const [isSoundEnabled, setIsSoundEnabled] = useState(false);
   const [isPersonalizationActive, setIsPersonalizationActive] = useState(false);
   const [showNameInputDialog, setShowNameInputDialog] = useState(false);
-  const [isPencilModeActive, setIsPencilModeActive] = useState(false);
+  // isPencilModeActive state is removed
 
   useEffect(() => {
     setIsClient(true);
@@ -70,23 +70,13 @@ export default function RootLayout({
     setShowNameInputDialog(prev => !prev);
   }, []);
 
-  const togglePencilMode = useCallback(() => {
-    if (resolvedTheme === 'light') {
-      setIsPencilModeActive(prev => !prev);
-    } else {
-      setIsPencilModeActive(false); 
-      toast({ title: "Pencil Mode", description: "Pencil drawing is only available in light mode."});
-    }
-  }, [resolvedTheme, toast]);
+  // togglePencilMode function is removed
 
   useEffect(() => {
-    if (resolvedTheme !== 'light' && isPencilModeActive) {
-      setIsPencilModeActive(false);
-    }
     if (isClient) {
       console.log('RootLayout: Current resolved theme:', resolvedTheme);
     }
-  }, [resolvedTheme, isPencilModeActive, isClient]);
+  }, [resolvedTheme, isClient]);
 
   useEffect(() => {
     const storedName = localStorage.getItem('portfolioUserName');
@@ -97,7 +87,6 @@ export default function RootLayout({
     }
   }, [showNameInputDialog]); // Re-check personalization when dialog closes
 
-  const isLightThemeForDrawingCanvas = isClient && resolvedTheme === 'light';
 
   if (!isClient) {
     return (
@@ -131,9 +120,7 @@ export default function RootLayout({
                   isPersonalizationActive={isPersonalizationActive}
                   toggleNameInputDialog={toggleNameInputDialog}
                   showNameInputDialog={showNameInputDialog}
-                  // isLightTheme prop removed
-                  isPencilModeActive={isPencilModeActive}
-                  togglePencilMode={togglePencilMode}
+                  // isPencilModeActive and togglePencilMode props removed
                 />
                 <main className="flex-1 container mx-auto px-4 py-8 md:py-12 mt-16 mb-16 md:mt-0 md:mb-0">
                   {children}
@@ -143,7 +130,7 @@ export default function RootLayout({
               <Toaster />
               <CursorTail />
               <FirefliesEffect />
-              <LightModeDrawingCanvas isDrawingActive={isPencilModeActive && isLightThemeForDrawingCanvas} />
+              {/* LightModeDrawingCanvas component removed */}
             </NameProvider>
           </AuthProvider>
         </ThemeProvider>
