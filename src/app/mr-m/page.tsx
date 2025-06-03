@@ -4,17 +4,35 @@
 import MrMChatInterface from '@/components/ai/MrMChatInterface';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bot } from 'lucide-react';
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react'; // Added imports
 
 export default function MrMPage() {
+  const headingRef = useRef<HTMLHeadingElement>(null); // Ref for the heading
+
+  // Effect for cursor-interactive gradient
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      if (headingRef.current) {
+        const gradientX = (event.clientX / window.innerWidth) * 100;
+        const gradientY = (event.clientY / window.innerHeight) * 100;
+        headingRef.current.style.setProperty('--gradient-center-x', `${gradientX}%`);
+        headingRef.current.style.setProperty('--gradient-center-y', `${gradientY}%`);
+      }
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
       <header className="text-center mb-12">
         <Bot className="h-16 w-16 text-primary mx-auto mb-4 animate-bounce" />
         <h1
-          className="text-4xl font-display font-bold text-transparent bg-clip-text"
+          ref={headingRef} // Added ref
+          className="text-4xl font-display font-bold text-transparent bg-clip-text relative overflow-hidden" // Added relative and overflow-hidden
           style={{
-            backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
+            // Updated backgroundImage to use CSS variables
+            backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
           }}
         >
           Chat with Mr.M
