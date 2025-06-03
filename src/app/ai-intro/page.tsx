@@ -4,7 +4,6 @@
 import type { Metadata } from 'next';
 import AiIntroGeneratorForm from '@/components/ai/AiIntroGeneratorForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sparkles } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -12,14 +11,24 @@ export default function AiIntroPage() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
+  const headingRef = useRef<HTMLHeadingElement>(null); // Ref for the heading
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
       const { clientX, clientY } = event;
+      // Parallax for other elements
       const x = (clientX / window.innerWidth - 0.5) * 2;
       const y = (clientY / window.innerHeight - 0.5) * 2;
-      const sensitivity = 10; 
+      const sensitivity = 10;
       setParallaxOffset({ x: x * sensitivity, y: y * sensitivity });
+
+      // For dynamic gradient on main heading
+      if (headingRef.current) {
+        const gradientX = (clientX / window.innerWidth) * 100;
+        const gradientY = (clientY / window.innerHeight) * 100;
+        headingRef.current.style.setProperty('--gradient-center-x', `${gradientX}%`);
+        headingRef.current.style.setProperty('--gradient-center-y', `${gradientY}%`);
+      }
     };
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
@@ -29,7 +38,7 @@ export default function AiIntroPage() {
     transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`,
     transition: 'transform 0.1s ease-out',
   };
-  
+
 
   useEffect(() => {
     const observerOptions = {
@@ -45,17 +54,17 @@ export default function AiIntroPage() {
     if (sectionRef.current) {
       observer.observe(sectionRef.current);
     }
-    
+
     return () => {
       if (sectionRef.current) {
         observer.unobserve(sectionRef.current);
       }
     };
   }, []);
-  
+
 
   return (
-    <div 
+    <div
       ref={sectionRef}
       className={cn(
         "max-w-3xl mx-auto py-8 transition-all duration-700 ease-in-out",
@@ -63,18 +72,19 @@ export default function AiIntroPage() {
       )}
     >
       <header className="text-center mb-12">
-        <h1 
+        <h1
           id="ai-intro-page-main-heading"
+          ref={headingRef} // Assign ref here
           className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold text-transparent bg-clip-text mb-4 relative overflow-hidden"
           style={{
-            ...parallaxStyle,
-            backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
+            ...parallaxStyle, // Keep existing parallax style if needed
+            backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)', // Updated background
           }}
         >
           AI-Powered Introduction Generator
         </h1>
         <p className="text-lg text-muted-foreground">
-          Craft the perfect first impression. Let AI help you create tailored introductory messages 
+          Craft the perfect first impression. Let AI help you create tailored introductory messages
           for potential employers.
         </p>
       </header>
@@ -83,7 +93,7 @@ export default function AiIntroPage() {
         <CardHeader>
           <CardTitle className="text-2xl text-foreground">Generate Your Custom Intro</CardTitle>
           <CardDescription>
-            Provide some details about yourself and the job you're applying for, 
+            Provide some details about yourself and the job you're applying for,
             and our AI will whip up a personalized message.
           </CardDescription>
         </CardHeader>
@@ -91,9 +101,9 @@ export default function AiIntroPage() {
           <AiIntroGeneratorForm />
         </CardContent>
       </Card>
-      
+
       <div className="mt-10 p-6 bg-card border border-border rounded-lg shadow-md">
-        <h3 
+        <h3
           className="text-xl font-semibold text-foreground mb-3"
         >
           How it Works:

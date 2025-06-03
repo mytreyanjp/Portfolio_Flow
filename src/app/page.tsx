@@ -32,7 +32,7 @@ export default function PortfolioPage() {
   const [nameFallbackText, setNameFallbackText] = useState(ORIGINAL_NAME_FALLBACK);
   const [mottoText, setMottoText] = useState(ORIGINAL_MOTTO);
   const [isTextProcessed, setIsTextProcessed] = useState(false);
-  const [hasScrolled, setHasScrolled] = useState(false); 
+  const [hasScrolled, setHasScrolled] = useState(false);
 
   const fetchData = useCallback(async () => {
     setIsLoadingProjects(true);
@@ -189,30 +189,28 @@ export default function PortfolioPage() {
       >
         <h2 className="text-2xl font-semibold text-center text-foreground mb-6">Explore &amp; Connect</h2>
         <div className="flex flex-col sm:flex-row flex-wrap justify-center items-center gap-4">
-          <Button 
-            asChild 
-            size="lg" 
-            className="hover:scale-105 transition-transform duration-200 ease-out hover:bg-primary w-full sm:w-auto"
+          <Button
+            asChild
+            size="lg"
+            className="bg-black text-primary-foreground hover:bg-black hover:scale-105 transition-transform duration-200 ease-out w-full sm:w-auto"
           >
             <Link href="/contact">
               <MessageSquare className="mr-2 h-5 w-5" /> Get in Touch
             </Link>
           </Button>
-          <Button 
-            asChild 
-            variant="outline" 
-            size="lg" 
-            className="hover:scale-105 transition-transform duration-200 ease-out hover:bg-background hover:text-foreground hover:border-input w-full sm:w-auto"
+          <Button
+            asChild
+            size="lg"
+            className="bg-black text-primary-foreground hover:bg-black hover:scale-105 transition-transform duration-200 ease-out w-full sm:w-auto"
           >
             <Link href="/resume">
               <FileTextIcon className="mr-2 h-5 w-5" /> View My Resume
             </Link>
           </Button>
-          <Button 
-            asChild 
-            size="lg" 
-            variant="secondary" 
-            className="hover:scale-105 transition-transform duration-200 ease-out hover:bg-secondary hover:text-secondary-foreground w-full sm:w-auto"
+          <Button
+            asChild
+            size="lg"
+            className="bg-black text-primary-foreground hover:bg-black hover:scale-105 transition-transform duration-200 ease-out w-full sm:w-auto"
           >
             <Link href="/mr-m">
               <Bot className="mr-2 h-5 w-5" /> Meet Mr.M
@@ -243,7 +241,7 @@ export default function PortfolioPage() {
           ))}
         </div>
       )}
-      
+
       {projects.length > 0 && filteredProjects.length > 0 && !isLoadingProjects && (
          <div className="mt-16 text-center">
           <Code2 className="h-10 w-10 text-primary/70 mx-auto mb-3"/>
@@ -256,4 +254,3 @@ export default function PortfolioPage() {
     </div>
   );
 }
-
