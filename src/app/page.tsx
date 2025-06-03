@@ -14,6 +14,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { useName } from '@/contexts/NameContext'; // Import useName hook
+import { translateText } from '@/ai/flows/translate-text-flow'; // Import the translation flow
+import { useToast } from '@/hooks/use-toast'; // Import useToast
 
 interface Filters {
   category: string;
@@ -43,7 +45,10 @@ export default function PortfolioPage() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [buttonMaskStyle, setButtonMaskStyle] = useState({});
 
-  const { userName, isLoadingName } = useName(); // Get userName and loading state
+  const { userName, isLoadingName, detectedLanguage } = useName(); // Get userName, loading state, and detectedLanguage
+  const [translatedGreeting, setTranslatedGreeting] = useState<string | null>(null);
+  const [isTranslatingGreeting, setIsTranslatingGreeting] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const handleGlobalMouseMove = (event: MouseEvent) => {
@@ -97,6 +102,38 @@ export default function PortfolioPage() {
       window.removeEventListener('mousemove', handleMouseMoveForGradient);
     };
   }, []);
+
+  // Effect for translating greeting
+  useEffect(() => {
+    const translateGreeting = async () => {
+      if (userName && detectedLanguage && !detectedLanguage.toLowerCase().startsWith('en')) {
+        setIsTranslatingGreeting(true);
+        setTranslatedGreeting(null); // Reset previous translation
+        try {
+          const greetingText = `Hello ${userName}`;
+          const result = await translateText({ textToTranslate: greetingText, targetLanguage: detectedLanguage });
+          setTranslatedGreeting(result.translatedText);
+        } catch (err) {
+          console.error("Greeting translation error:", err);
+          toast({
+            title: "Translation Error",
+            description: "Could not translate greeting. Displaying in English.",
+            variant: "destructive",
+          });
+          setTranslatedGreeting(null); // Fallback to default
+        } finally {
+          setIsTranslatingGreeting(false);
+        }
+      } else {
+        setTranslatedGreeting(null); // If no translation needed, ensure it's null
+      }
+    };
+
+    if (!isLoadingName) { // Only attempt translation once name and lang are loaded
+      translateGreeting();
+    }
+  }, [userName, detectedLanguage, isLoadingName, toast]);
+
 
   useEffect(() => {
     const handleScroll = () => {
@@ -241,6 +278,8 @@ export default function PortfolioPage() {
       </div>
     </div>
   );
+  
+  const displayGreeting = translatedGreeting || (userName ? `Hello ${userName}` : 'Hello there');
 
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-12 mt-8">
@@ -253,7 +292,7 @@ export default function PortfolioPage() {
         ref={welcomeSectionRef}
       >
         <div className="max-w-3xl mx-auto" ref={introContentRef}>
-          {isLoadingName ? (
+          {(isLoadingName || isTranslatingGreeting) ? (
             <Skeleton className="h-10 sm:h-12 md:h-14 w-3/4 mx-auto mb-2" /> 
           ) : (
             <h1
@@ -264,7 +303,7 @@ export default function PortfolioPage() {
                   'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)',
               }}
             >
-              Hello {userName ? userName : 'there'}
+              {displayGreeting}
             </h1>
           )}
           <p
@@ -439,3 +478,4 @@ export default function PortfolioPage() {
     
 
     
+

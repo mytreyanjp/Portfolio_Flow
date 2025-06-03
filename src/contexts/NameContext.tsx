@@ -7,15 +7,19 @@ interface NameContextType {
   userName: string | null;
   setUserName: (name: string | null) => void;
   isLoadingName: boolean;
+  detectedLanguage: string | null;
+  setDetectedLanguage: (lang: string | null) => void;
 }
 
 const NameContext = createContext<NameContextType | undefined>(undefined);
 
 const USER_NAME_STORAGE_KEY = 'portfolioUserName';
+const DETECTED_LANG_STORAGE_KEY = 'portfolioDetectedLanguage';
 
 export const NameProvider = ({ children }: { children: ReactNode }) => {
   const [userName, setUserNameState] = useState<string | null>(null);
-  const [isLoadingName, setIsLoadingName] = useState(true);
+  const [detectedLanguage, setDetectedLanguageState] = useState<string | null>(null);
+  const [isLoadingName, setIsLoadingName] = useState(true); // Covers loading for both
 
   useEffect(() => {
     try {
@@ -23,8 +27,12 @@ export const NameProvider = ({ children }: { children: ReactNode }) => {
       if (storedName) {
         setUserNameState(storedName);
       }
+      const storedLang = localStorage.getItem(DETECTED_LANG_STORAGE_KEY);
+      if (storedLang) {
+        setDetectedLanguageState(storedLang);
+      }
     } catch (error) {
-      console.warn('Failed to load name from localStorage:', error);
+      console.warn('Failed to load name/language from localStorage:', error);
     } finally {
       setIsLoadingName(false);
     }
@@ -43,8 +51,21 @@ export const NameProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const setDetectedLanguage = (lang: string | null) => {
+    try {
+      if (lang) {
+        localStorage.setItem(DETECTED_LANG_STORAGE_KEY, lang);
+      } else {
+        localStorage.removeItem(DETECTED_LANG_STORAGE_KEY);
+      }
+      setDetectedLanguageState(lang);
+    } catch (error) {
+      console.warn('Failed to save language to localStorage:', error);
+    }
+  };
+
   return (
-    <NameContext.Provider value={{ userName, setUserName, isLoadingName }}>
+    <NameContext.Provider value={{ userName, setUserName, isLoadingName, detectedLanguage, setDetectedLanguage }}>
       {children}
     </NameContext.Provider>
   );
@@ -57,3 +78,4 @@ export const useName = (): NameContextType => {
   }
   return context;
 };
+

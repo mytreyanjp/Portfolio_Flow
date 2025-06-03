@@ -67,7 +67,7 @@ export default function Header({
   const router = useRouter();
   const { toast } = useToast();
   const { resolvedTheme } = useTheme();
-  const { setUserName } = useName();
+  const { setUserName, setDetectedLanguage } = useName(); // Added setDetectedLanguage
   const handwritingCanvasRef = useRef<HandwritingCanvasRef>(null);
   const [isRecognizingName, setIsRecognizingName] = useState(false);
 
@@ -171,13 +171,28 @@ export default function Header({
       const result = await recognizeHandwriting({ imageDataUri });
       if (result.recognizedText && result.recognizedText.trim() !== "") {
         setUserName(result.recognizedText.trim());
+        if (result.detectedLanguage) {
+          setDetectedLanguage(result.detectedLanguage);
+          toast({
+            title: "Name & Language Saved!",
+            description: `Name: ${result.recognizedText.trim()}, Language: ${result.detectedLanguage}`,
+          });
+        } else {
+          setDetectedLanguage(null); // Clear if not detected
+           toast({
+            title: "Name Saved!",
+            description: `Name: ${result.recognizedText.trim()}. Language not detected.`,
+          });
+        }
         toggleNameInputDialog();
       } else {
         toast({ title: "Recognition Failed", description: "Could not recognize a name. Please try drawing more clearly.", variant: "destructive" });
+        setDetectedLanguage(null);
       }
     } catch (error) {
       console.error("Handwriting recognition error:", error);
       toast({ title: "Recognition Error", description: "An error occurred while trying to recognize your name. Please try again.", variant: "destructive" });
+      setDetectedLanguage(null);
     } finally {
       setIsRecognizingName(false);
     }
@@ -263,7 +278,10 @@ export default function Header({
             handwritingCanvasRef.current.clearCanvas();
           }
         }
-        toggleNameInputDialog();
+        // Ensure toggleNameInputDialog is called to correctly update state in RootLayout
+        if (isOpen !== showNameInputDialog) { // Prevent calling if already in desired state (e.g. external close)
+            toggleNameInputDialog();
+        }
       }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -276,6 +294,15 @@ export default function Header({
             <HandwritingCanvas ref={handwritingCanvasRef} />
           </div>
           <DialogFooter className="sm:justify-end">
+             <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleCloseNameDialog}
+              disabled={isRecognizingName}
+            >
+              Cancel
+            </Button>
             <Button
               type="button"
               size="sm"
@@ -291,3 +318,4 @@ export default function Header({
     </>
   );
 }
+
