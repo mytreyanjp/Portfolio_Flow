@@ -12,6 +12,7 @@ interface HandwritingCanvasProps {
   lineWidth?: number;
   lineColor?: string;
   backgroundColor?: string;
+  ruledLineColor?: string;
   className?: string;
 }
 
@@ -26,8 +27,9 @@ const HandwritingCanvas = forwardRef<HandwritingCanvasRef, HandwritingCanvasProp
       width = 380,
       height = 150,
       lineWidth = 3,
-      lineColor = 'hsl(var(--foreground))', // Use theme variable
-      backgroundColor = 'hsl(var(--background))', // Use theme variable for canvas bg
+      lineColor = 'hsl(var(--foreground))',
+      backgroundColor = 'hsl(var(--background))',
+      ruledLineColor = 'hsl(var(--border))', // Color for the ruled lines
       className,
     },
     ref
@@ -42,26 +44,57 @@ const HandwritingCanvas = forwardRef<HandwritingCanvasRef, HandwritingCanvasProp
     }, []);
     
     const drawRuledLines = (ctx: CanvasRenderingContext2D) => {
-      const numLines = 5;
-      const lineSpacing = height / (numLines + 1);
+      const numLines = 5; // Number of horizontal lines
+      const lineSpacing = height / (numLines + 1); // Calculate spacing for even distribution
+      
       ctx.save();
-      ctx.strokeStyle = 'hsl(var(--border))'; // Use theme variable for lines
-      ctx.lineWidth = 0.5;
+      ctx.strokeStyle = ruledLineColor;
+      ctx.lineWidth = 0.5; // Thin lines
       ctx.beginPath();
       for (let i = 1; i <= numLines; i++) {
-        const y = lineSpacing * i;
-        ctx.moveTo(10, y);
-        ctx.lineTo(width - 10, y);
+        const yPosition = lineSpacing * i;
+        // Add a small padding from the edges for the lines
+        ctx.moveTo(10, yPosition);
+        ctx.lineTo(width - 10, yPosition);
       }
       ctx.stroke();
       ctx.restore();
+    };
+
+    const clearCanvasContent = () => {
+      const context = contextRef.current;
+      const canvas = canvasRef.current;
+      if (context && canvas) {
+        // Get the actual computed style for background color
+        const computedBackgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--background').trim();
+        context.fillStyle = `hsl(${computedBackgroundColor})`;
+        context.fillRect(0, 0, canvas.width / (window.devicePixelRatio||1), canvas.height / (window.devicePixelRatio||1));
+        
+        // Get actual computed style for ruled line color
+        const computedRuledLineColor = getComputedStyle(document.documentElement).getPropertyValue('--border').trim();
+        const tempRuledLineColor = `hsl(${computedRuledLineColor})`;
+        
+        // Draw ruled lines with the current theme's border color
+        const numLines = 5;
+        const lineSpacing = height / (numLines + 1);
+        context.save();
+        context.strokeStyle = tempRuledLineColor;
+        context.lineWidth = 0.5;
+        context.beginPath();
+        for (let i = 1; i <= numLines; i++) {
+          const y = lineSpacing * i;
+          ctx.moveTo(10, y);
+          ctx.lineTo(width - 10, y);
+        }
+        context.stroke();
+        context.restore();
+      }
     };
 
     useEffect(() => {
       if (!isClient || !canvasRef.current) return;
 
       const canvas = canvasRef.current;
-      // Adjust for device pixel ratio for sharper drawing
       const dpr = window.devicePixelRatio || 1;
       canvas.width = width * dpr;
       canvas.height = height * dpr;
@@ -70,49 +103,24 @@ const HandwritingCanvas = forwardRef<HandwritingCanvasRef, HandwritingCanvasProp
       
       const context = canvas.getContext('2d');
       if (context) {
-        context.scale(dpr, dpr); // Scale context to match canvas size
+        context.scale(dpr, dpr);
         context.lineCap = 'round';
         context.lineJoin = 'round';
-        context.strokeStyle = lineColor;
+        // User's drawing color
+        const computedLineColor = getComputedStyle(document.documentElement).getPropertyValue('--foreground').trim();
+        context.strokeStyle = `hsl(${computedLineColor})`;
         context.lineWidth = lineWidth;
         contextRef.current = context;
-
-        // Initial clear and draw background/rules
-        clearCanvasContent();
+        clearCanvasContent(); // Initial clear with background and ruled lines
       }
-    }, [isClient, width, height, lineColor, lineWidth, backgroundColor]); // Rerun if dimensions or colors change
+    }, [isClient, width, height, backgroundColor, ruledLineColor, lineColor, lineWidth]); // Dependencies updated
 
-    const clearCanvasContent = () => {
-      const context = contextRef.current;
-      const canvas = canvasRef.current;
-      if (context && canvas) {
-        context.fillStyle = backgroundColor;
-        context.fillRect(0, 0, canvas.width / (window.devicePixelRatio||1) , canvas.height / (window.devicePixelRatio||1) );
-        drawRuledLines(context);
-      }
-    };
-    
     useImperativeHandle(ref, () => ({
       getImageDataUrl: () => {
         if (canvasRef.current) {
-          // Create a temporary canvas to draw without ruled lines for better OCR
-          const tempCanvas = document.createElement('canvas');
-          const tempCtx = tempCanvas.getContext('2d');
-          if (!tempCtx) return undefined;
-
-          const dpr = window.devicePixelRatio || 1;
-          tempCanvas.width = width * dpr;
-          tempCanvas.height = height * dpr;
-          
-          // Draw background color
-          tempCtx.fillStyle = backgroundColor; // Match main canvas bg
-          tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-
-          // Draw only the user's drawing (original canvas content) onto temp canvas
-          // This assumes canvasRef.current already has the scaled drawing
-          tempCtx.drawImage(canvasRef.current, 0, 0);
-          
-          return tempCanvas.toDataURL('image/png');
+          // The main canvas already has the background and ruled lines drawn on it.
+          // So, exporting it directly will include them.
+          return canvasRef.current.toDataURL('image/png');
         }
         return undefined;
       },
@@ -136,6 +144,11 @@ const HandwritingCanvas = forwardRef<HandwritingCanvasRef, HandwritingCanvasProp
 
     const startDrawing = (event: React.MouseEvent | React.TouchEvent) => {
       if (!contextRef.current) return;
+      // Ensure drawing color is set from theme variable before drawing
+      const computedLineColor = getComputedStyle(document.documentElement).getPropertyValue('--foreground').trim();
+      contextRef.current.strokeStyle = `hsl(${computedLineColor})`;
+      contextRef.current.lineWidth = lineWidth;
+
       const { x, y } = getCoordinates(event);
       contextRef.current.beginPath();
       contextRef.current.moveTo(x, y);
@@ -170,7 +183,8 @@ const HandwritingCanvas = forwardRef<HandwritingCanvasRef, HandwritingCanvasProp
           onTouchStart={startDrawing}
           onTouchMove={draw}
           onTouchEnd={finishDrawing}
-          className={cn("border border-input rounded-md cursor-crosshair touch-none bg-background")}
+          // The bg-background here is a fallback, JS fill is primary
+          className={cn("border border-input rounded-md cursor-crosshair touch-none bg-background shadow-inner")} 
           style={{ width, height }}
         />
         <Button
@@ -178,7 +192,7 @@ const HandwritingCanvas = forwardRef<HandwritingCanvasRef, HandwritingCanvasProp
           variant="outline"
           size="sm"
           onClick={clearCanvasContent}
-          className="mt-2"
+          className="mt-3" // Added a bit more margin
         >
           <Eraser className="mr-2 h-4 w-4" />
           Clear
@@ -190,3 +204,4 @@ const HandwritingCanvas = forwardRef<HandwritingCanvasRef, HandwritingCanvasProp
 
 HandwritingCanvas.displayName = 'HandwritingCanvas';
 export default HandwritingCanvas;
+
