@@ -2,7 +2,7 @@
 'use client';
 
 import './globals.css';
-import React, { useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useTheme } from 'next-themes';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
@@ -93,7 +93,7 @@ export default function RootLayout({
     } else {
       setIsPersonalizationActive(false);
     }
-  }, [showNameInputDialog]); // Re-check when dialog closes
+  }, [showNameInputDialog]); // Re-check when dialog closes, e.g. after name is set
 
   const isLightTheme = isClient && resolvedTheme === 'light';
   const isDarkTheme = isClient && resolvedTheme === 'dark';
@@ -129,7 +129,7 @@ export default function RootLayout({
                   toggleSoundEnabled={toggleSoundEnabled}
                   isPersonalizationActive={isPersonalizationActive}
                   toggleNameInputDialog={toggleNameInputDialog}
-                  showNameInputDialog={showNameInputDialog}
+                  showNameInputDialog={showNameInputDialog} // Pass state to Header for Dialog
                   isLightTheme={isLightTheme}
                   isPencilModeActive={isPencilModeActive}
                   togglePencilMode={togglePencilMode}

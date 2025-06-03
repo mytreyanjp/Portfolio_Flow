@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import ProjectCard from '@/components/portfolio/ProjectCard';
+import ProjectCard from '@/components/portfolio/ProjectCard'; // Default import
 import ProjectFilter, { type Filters } from '@/components/portfolio/ProjectFilter';
 import type { Project } from '@/data/projects';
 import { getProjects, getUniqueCategoriesFromProjects } from '@/services/projectsService';
@@ -13,6 +13,8 @@ import { useName } from '@/contexts/NameContext';
 import { translateText } from '@/ai/flows/translate-text-flow'; 
 
 const INITIAL_FILTERS: Filters = { category: '' };
+const ORIGINAL_MAIN_TITLE = "Mytreyan Here";
+const ORIGINAL_SUBTITLE = "Explore My Creations. A collection of my projects, showcasing a blend of creativity and technical skill. Use the filters to navigate through different categories.";
 
 export default function PortfolioPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -25,11 +27,8 @@ export default function PortfolioPage() {
   const { userName, detectedLanguage } = useName();
 
   const [greetingPart, setGreetingPart] = useState("");
-  const [mainTitlePart, setMainTitlePart] = useState("Mytreyan Here");
-  const [pageSubtitle, setPageSubtitle] = useState("Explore My Creations. A collection of my projects, showcasing a blend of creativity and technical skill. Use the filters to navigate through different categories.");
-  const originalSubtitle = "Explore My Creations. A collection of my projects, showcasing a blend of creativity and technical skill. Use the filters to navigate through different categories.";
-  const originalMainTitle = "Mytreyan Here";
-
+  const [mainTitlePart, setMainTitlePart] = useState(ORIGINAL_MAIN_TITLE);
+  const [pageSubtitle, setPageSubtitle] = useState(ORIGINAL_SUBTITLE);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -83,17 +82,17 @@ export default function PortfolioPage() {
 
     if (detectedLanguage && detectedLanguage !== 'en') { 
       Promise.all([
-        translateContent(originalMainTitle, detectedLanguage),
-        translateContent(originalSubtitle, detectedLanguage),
+        translateContent(ORIGINAL_MAIN_TITLE, detectedLanguage),
+        translateContent(ORIGINAL_SUBTITLE, detectedLanguage),
       ]).then(([translatedMain, translatedSub]) => {
         setMainTitlePart(translatedMain);
         setPageSubtitle(translatedSub);
       });
     } else {
-      setMainTitlePart(originalMainTitle);
-      setPageSubtitle(originalSubtitle);
+      setMainTitlePart(ORIGINAL_MAIN_TITLE);
+      setPageSubtitle(ORIGINAL_SUBTITLE);
     }
-  }, [detectedLanguage, originalMainTitle, originalSubtitle]);
+  }, [detectedLanguage]);
 
 
   const filteredProjects = useMemo(() => {
@@ -120,7 +119,7 @@ export default function PortfolioPage() {
       observer.observe(pageRef.current);
     }
     return () => {
-      if (pageRef.current) observer.unobserve(pageRef.current);
+      if (pageRef.current && observer) observer.unobserve(pageRef.current);
     };
   }, []);
 
@@ -157,7 +156,6 @@ export default function PortfolioPage() {
     >
       <header className="mb-12 text-center">
         <div className="inline-block mb-4 p-3 bg-primary/10 rounded-full">
-           {/* Using Sailboat as a general "explore/journey" icon, Sparkles for "creations" could also fit */}
           <Sparkles className="h-12 w-12 text-primary" />
         </div>
         <h1 className="text-4xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent mb-3">

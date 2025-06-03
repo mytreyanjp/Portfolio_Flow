@@ -7,7 +7,7 @@ import ThemeSwitcher from './ThemeSwitcher';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Briefcase, MessageSquare, FileText, Bot, LockKeyhole, Eye, EyeOff, Volume2, VolumeX, Pencil, AlertTriangle, Save, Loader2, Edit3 } from 'lucide-react';
+import { Briefcase, MessageSquare, FileText, Bot, LockKeyhole, Eye, EyeOff, Volume2, VolumeX, Pencil, Edit3, AlertTriangle, Save, Loader2 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   AlertDialog,
@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Label } from "@/components/ui/label"; // Not strictly needed for password, but good practice
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from 'next-themes';
 import { useName } from '@/contexts/NameContext';
@@ -38,7 +38,7 @@ const navItems = [
 
 const SECRET_PASSWORD = "tinku@197";
 const CLICKS_TO_ACTIVATE = 5;
-const MAX_CLICK_DELAY_MS = 1000;
+const MAX_CLICK_DELAY_MS = 1000; // 1 second between clicks
 const MAX_FAILED_ATTEMPTS = 6;
 const LOCKOUT_DURATION_MS = 1 * 60 * 60 * 1000; // 1 hour
 
@@ -50,7 +50,7 @@ interface HeaderProps {
   toggleSoundEnabled: () => void;
   isPersonalizationActive: boolean;
   toggleNameInputDialog: () => void;
-  showNameInputDialog: boolean;
+  showNameInputDialog: boolean; // To control the Dialog's open state
   isLightTheme: boolean;
   isPencilModeActive: boolean;
   togglePencilMode: () => void;
@@ -61,7 +61,7 @@ export default function Header({
   toggleSoundEnabled,
   isPersonalizationActive,
   toggleNameInputDialog,
-  showNameInputDialog,
+  showNameInputDialog, // Use this prop
   isLightTheme,
   isPencilModeActive,
   togglePencilMode,
@@ -70,11 +70,14 @@ export default function Header({
   const pathname = usePathname();
   const router = useRouter();
   const { toast } = useToast();
-  const { resolvedTheme } = useTheme();
+  // useTheme is not directly needed here as isLightTheme is passed, but good for context
+  const { resolvedTheme } = useTheme(); 
   const { setUserName, setDetectedLanguage } = useName();
   const handwritingCanvasRef = useRef<HandwritingCanvasRef>(null);
   const [isRecognizingName, setIsRecognizingName] = useState(false);
 
+
+  // Secret Lair state
   const [logoClickCount, setLogoClickCount] = useState(0);
   const [lastClickTime, setLastClickTime] = useState(0);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
@@ -84,6 +87,7 @@ export default function Header({
   const [failedAttempts, setFailedAttemptsState] = useState(0);
   const [lockoutEndTime, setLockoutEndTimeState] = useState<number | null>(null);
   const [showLockedUI, setShowLockedUI] = useState(false);
+
 
   const updateLockoutStateFromStorage = useCallback(() => {
     const storedAttempts = localStorage.getItem(FAILED_ATTEMPTS_KEY);
@@ -109,26 +113,34 @@ export default function Header({
 
   useEffect(() => {
     setMounted(true);
-    updateLockoutStateFromStorage();
+    updateLockoutStateFromStorage(); // Check lockout on mount
   }, [updateLockoutStateFromStorage]);
 
   const handleLogoClick = () => {
     const currentTime = Date.now();
     let newClickCount = (currentTime - lastClickTime > MAX_CLICK_DELAY_MS || logoClickCount === 0) ? 1 : logoClickCount + 1;
+    
     setLogoClickCount(newClickCount);
     setLastClickTime(currentTime);
+
     if (newClickCount >= CLICKS_TO_ACTIVATE) {
-      updateLockoutStateFromStorage();
+      // Before showing dialog, check if currently locked out
+      if (updateLockoutStateFromStorage()) {
+         toast({ title: "Access Temporarily Disabled", description: `Please try again later. Locked until ${new Date(lockoutEndTime!).toLocaleTimeString()}`, variant: "destructive", duration: 7000 });
+         return; // Don't show password dialog if locked
+      }
       setShowPasswordDialog(true);
-      setPasswordAttempt('');
-      setShowPasswordAttemptVisual(false);
+      setPasswordAttempt(''); // Reset attempt
+      setShowPasswordAttemptVisual(false); // Reset visual
     }
   };
 
   const handlePasswordCheck = () => {
-    if (showLockedUI) return;
+    if (showLockedUI) return; // Double check, though dialog shouldn't show if locked.
+
     if (passwordAttempt === SECRET_PASSWORD) {
       toast({ title: "Password Correct!", description: "Proceed to verify your identity for Secret Lair access." });
+      // Reset lockout mechanism on success
       localStorage.removeItem(FAILED_ATTEMPTS_KEY);
       localStorage.removeItem(LOCKOUT_END_TIME_KEY);
       setFailedAttemptsState(0); setLockoutEndTimeState(null); setShowLockedUI(false);
@@ -138,16 +150,18 @@ export default function Header({
       const newAttempts = failedAttempts + 1;
       setFailedAttemptsState(newAttempts);
       localStorage.setItem(FAILED_ATTEMPTS_KEY, newAttempts.toString());
+
       if (newAttempts >= MAX_FAILED_ATTEMPTS) {
         const newLockoutEndTime = Date.now() + LOCKOUT_DURATION_MS;
         setLockoutEndTimeState(newLockoutEndTime);
         localStorage.setItem(LOCKOUT_END_TIME_KEY, newLockoutEndTime.toString());
-        setShowLockedUI(true);
+        setShowLockedUI(true); // Update UI immediately
         toast({ title: "Access Denied", description: "This feature has been temporarily disabled due to multiple incorrect attempts.", variant: "destructive", duration: 10 * 60 * 1000 });
+        setShowPasswordDialog(false); // Close dialog on lockout start
       } else {
         toast({ title: "Incorrect Password", description: `Please try again. Attempts remaining: ${MAX_FAILED_ATTEMPTS - newAttempts}`, variant: "destructive" });
       }
-      setPasswordAttempt('');
+      setPasswordAttempt(''); // Clear input after attempt
     }
   };
 
@@ -157,9 +171,11 @@ export default function Header({
   };
 
   const toggleShowPasswordAttemptVisual = () => setShowPasswordAttemptVisual(prev => !prev);
-
+  
   const handlePasswordDialogClose = () => {
+    // Reset password related states, but not click count/time for immediate re-trigger if needed
     setPasswordAttempt(''); setShowPasswordAttemptVisual(false);
+    // Optionally reset logo click counters if dialog should only appear once per click sequence
     setLogoClickCount(0); setLastClickTime(0);
   };
 
@@ -178,17 +194,21 @@ export default function Header({
 
         if (result.detectedLanguage) {
           setDetectedLanguage(result.detectedLanguage);
+          toast({
+            title: "Name Saved!",
+            description: `Personalized with name: "${result.recognizedText.trim()}". Language detected: ${result.detectedLanguage}.`,
+          });
         } else {
-          setDetectedLanguage(null);
+          setDetectedLanguage(null); // Explicitly set to null if not detected
           toast({
             title: "Name Saved, Language Unclear",
             description: `We've saved your name as "${result.recognizedText.trim()}", but the language of the script was not clear. The site will remain in English.`,
-            variant: "default",
+            variant: "default", // Use default variant for informational messages
           });
         }
-        toggleNameInputDialog(); 
+        toggleNameInputDialog(); // Close dialog on success
       } else {
-        setDetectedLanguage(null); 
+        setDetectedLanguage(null); // Clear language if recognition fails
         toast({
           title: "Recognition Failed",
           description: "Could not recognize a name from the drawing. Please try writing more clearly.",
@@ -198,20 +218,9 @@ export default function Header({
     } catch (error) {
       console.error("Handwriting recognition error:", error);
       toast({ title: "Recognition Error", description: "An error occurred while trying to recognize your name. Please try again.", variant: "destructive" });
-      setDetectedLanguage(null);
+      setDetectedLanguage(null); // Clear language on error
     } finally {
       setIsRecognizingName(false);
-    }
-  };
-
-  // This function is not directly used but kept for consistency if Dialog onOpenChange needs manual closing
-  const handleCloseNameDialog = () => {
-    if (handwritingCanvasRef.current) {
-      handwritingCanvasRef.current.clearCanvas();
-    }
-    // Ensure the dialog state in RootLayout is updated if it's not already handled by Dialog's onOpenChange
-    if (showNameInputDialog) {
-        toggleNameInputDialog();
     }
   };
 
@@ -225,6 +234,7 @@ export default function Header({
               <Image src="/favicon22.png" alt="Myth Logo" width={28} height={28} className="h-7 w-7" />
             </div>
           </Link>
+
           {mounted && (
             <nav className="hidden md:flex items-center space-x-1">
               {navItems.map((item) => {
@@ -239,14 +249,16 @@ export default function Header({
             </nav>
           )}
           <div className="flex items-center space-x-1">
-             {mounted && isLightTheme && (
+             {mounted && (
               <>
                 <Button variant="ghost" size="icon" onClick={toggleNameInputDialog} aria-label={isPersonalizationActive ? "Change personalized name" : "Personalize greeting"} className={cn(isPersonalizationActive && "text-primary")}>
                   <Pencil className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={togglePencilMode} aria-label={isPencilModeActive ? "Disable Screen Drawing" : "Enable Screen Drawing"} className={cn(isPencilModeActive && "text-primary")}>
-                  <Edit3 className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out" />
-                </Button>
+                {isLightTheme && ( // Only show pencil drawing toggle in light theme
+                  <Button variant="ghost" size="icon" onClick={togglePencilMode} aria-label={isPencilModeActive ? "Disable Screen Drawing" : "Enable Screen Drawing"} className={cn(isPencilModeActive && "text-primary")}>
+                    <Edit3 className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out" />
+                  </Button>
+                )}
               </>
             )}
             {mounted && (
@@ -259,41 +271,44 @@ export default function Header({
         </div>
       </header>
 
+      {/* Password Dialog for Secret Lair */}
       <AlertDialog open={showPasswordDialog} onOpenChange={(isOpen) => { setShowPasswordDialog(isOpen); if (isOpen) updateLockoutStateFromStorage(); if (!isOpen) handlePasswordDialogClose(); }}>
         <AlertDialogContent>
-          <form onSubmit={handlePasswordSubmitFormEvent}>
+          <form onSubmit={handlePasswordSubmitFormEvent}> {/* Use form for Enter key submission */}
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center">
                 {showLockedUI ? <AlertTriangle className="mr-2 h-5 w-5 text-destructive" /> : <LockKeyhole className="mr-2 h-5 w-5 text-primary" />}
                 {showLockedUI ? "Access Temporarily Disabled" : "Enter Secret Code"}
               </AlertDialogTitle>
               <AlertDialogDescription>
-                {showLockedUI ? "Access to this feature has been temporarily disabled due to multiple incorrect attempts. Please try again later." : "You've discovered a hidden path. Enter the password to proceed."}
+                {showLockedUI ? `Access to this feature has been temporarily disabled due to multiple incorrect attempts. Please try again after ${lockoutEndTime ? new Date(lockoutEndTime).toLocaleTimeString() : 'some time'}.` : "You've discovered a hidden path. Enter the password to proceed."}
               </AlertDialogDescription>
             </AlertDialogHeader>
             {!showLockedUI && (
               <div className="py-4 relative">
-                <Input type={showPasswordAttemptVisual ? "text" : "password"} placeholder="Password" value={passwordAttempt} onChange={(e) => setPasswordAttempt(e.target.value)} autoFocus className="pr-10" disabled={showLockedUI} />
-                <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-foreground" onClick={toggleShowPasswordAttemptVisual} aria-label={showPasswordAttemptVisual ? "Hide password" : "Show password"} disabled={showLockedUI}>
+                <Input type={showPasswordAttemptVisual ? "text" : "password"} placeholder="Password" value={passwordAttempt} onChange={(e) => setPasswordAttempt(e.target.value)} autoFocus className="pr-10" />
+                <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-foreground" onClick={toggleShowPasswordAttemptVisual} aria-label={showPasswordAttemptVisual ? "Hide password" : "Show password"}>
                   {showPasswordAttemptVisual ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </Button>
               </div>
             )}
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => setShowPasswordDialog(false)} disabled={showLockedUI && lockoutEndTime !== null && Date.now() < lockoutEndTime}>{showLockedUI ? "Close" : "Cancel"}</AlertDialogCancel>
-              {!showLockedUI && <Button type="submit" disabled={showLockedUI}>Unlock</Button>}
+              {!showLockedUI && <Button type="submit">Unlock</Button>}
             </AlertDialogFooter>
           </form>
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Name Input Dialog */}
       <Dialog open={showNameInputDialog} onOpenChange={(isOpen) => {
-        if (!isOpen) { // When dialog is closing
+        if (!isOpen) {
             if (handwritingCanvasRef.current) {
                 handwritingCanvasRef.current.clearCanvas();
             }
         }
-        // This ensures the state in RootLayout is always in sync with ShadCN's dialog state
+        // Ensure parent state (in RootLayout) is updated
+        // This check prevents an infinite loop if toggleNameInputDialog itself calls this
         if (isOpen !== showNameInputDialog) { 
             toggleNameInputDialog();
         }
@@ -302,22 +317,32 @@ export default function Header({
           <DialogHeader>
             <DialogTitle>Draw Your Name</DialogTitle>
             <DialogDescription>
-              Use your mouse or finger to write your name on the canvas below.
+              Use your mouse or finger to write your name on the canvas below. 
+              The AI will try to recognize it and detect the language.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 flex justify-center">
-            <HandwritingCanvas ref={handwritingCanvasRef} width={260} height={104} />
+            <HandwritingCanvas ref={handwritingCanvasRef} width={280} height={110} />
           </div>
-          <DialogFooter className="sm:justify-end">
+          <DialogFooter className="sm:justify-between items-center">
+             <Button 
+              type="button" 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handwritingCanvasRef.current?.clearCanvas()}
+              className="mt-2 sm:mt-0"
+            >
+              Clear Canvas
+            </Button>
             <Button
               type="button"
               size="sm"
               onClick={handleSaveDrawnName}
               disabled={isRecognizingName}
-              className="w-full sm:w-auto" 
+              className="w-full sm:w-auto mt-2 sm:mt-0" 
             >
               {isRecognizingName ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              {isRecognizingName ? 'Recognizing...' : 'Save Name'}
+              {isRecognizingName ? 'Recognizing...' : 'Save Drawn Name'}
             </Button>
           </DialogFooter>
         </DialogContent>
