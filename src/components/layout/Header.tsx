@@ -139,7 +139,7 @@ export default function Header({
         setLockoutEndTimeState(newLockoutEndTime);
         localStorage.setItem(LOCKOUT_END_TIME_KEY, newLockoutEndTime.toString());
         setShowLockedUI(true);
-        toast({ title: "Access Denied", description: "Too many failed attempts. This feature has been temporarily disabled.", variant: "destructive", duration: 10 * 60 * 1000 });
+        toast({ title: "Access Denied", description: "This feature has been temporarily disabled due to multiple incorrect attempts.", variant: "destructive", duration: 10 * 60 * 1000 });
       } else {
         toast({ title: "Incorrect Password", description: `Please try again. Attempts remaining: ${MAX_FAILED_ATTEMPTS - newAttempts}`, variant: "destructive" });
       }
@@ -171,7 +171,6 @@ export default function Header({
       const result = await recognizeHandwriting({ imageDataUri });
       if (result.recognizedText && result.recognizedText.trim() !== "") {
         setUserName(result.recognizedText.trim());
-        // Toast removed from here
         toggleNameInputDialog(); // Close dialog
       } else {
         toast({ title: "Recognition Failed", description: "Could not recognize a name. Please try drawing more clearly.", variant: "destructive" });
@@ -259,7 +258,7 @@ export default function Header({
           <DialogHeader>
             <DialogTitle>Draw Your Name</DialogTitle>
             <DialogDescription>
-              Write your name on the canvas below. We'll try to recognize it to personalize your greeting.
+              {/* Description removed as per user request */}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 flex justify-center">
@@ -279,3 +278,4 @@ export default function Header({
     </>
   );
 }
+
