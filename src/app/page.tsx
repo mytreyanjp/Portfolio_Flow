@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef, CSSProperties } from 'react';
 import ProjectCard from '@/components/portfolio/ProjectCard';
 import ProjectFilter, { type Filters } from '@/components/portfolio/ProjectFilter';
 import type { Project } from '@/data/projects';
@@ -21,6 +21,11 @@ const ORIGINAL_NAME_FALLBACK = "Mytreyan here";
 const ORIGINAL_MOTTO = "can create light outta a blackhole";
 
 const FLASHLIGHT_RADIUS = 150; // Must match CURSOR_TAIL_RADIUS from CursorTail.tsx for consistent effect
+
+// Define a type that allows CSS custom properties
+interface CSSWithCustomProps extends CSSProperties {
+  [key: `--${string}`]: string | number;
+}
 
 export default function PortfolioPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -42,7 +47,7 @@ export default function PortfolioPage() {
 
   const [isViewProjectsButtonClicked, setIsViewProjectsButtonClicked] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const [buttonDynamicStyles, setButtonDynamicStyles] = useState<React.CSSProperties>({});
+  const [buttonDynamicStyles, setButtonDynamicStyles] = useState<CSSWithCustomProps>({});
 
   useEffect(() => {
     setIsClient(true);
