@@ -14,6 +14,7 @@ import { getProjects } from '@/services/projectsService';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { useName } from '@/contexts/NameContext'; // Import useName
 
 interface Message {
   id: string;
@@ -31,6 +32,7 @@ export default function MrMChatInterface() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { userName } = useName(); // Get userName from context
 
   const [projectsList, setProjectsList] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -98,10 +100,11 @@ export default function MrMChatInterface() {
 
   const handleSelectProject = (project: Project) => {
     setSelectedProject(project);
+    const greetingName = userName ? `${userName}, ` : '';
     setMessages([
       {
         id: `mrm-greeting-${Date.now()}`,
-        text: `Okay, we're now discussing "${project.title}". How can I help you with this project?`,
+        text: `Hello ${greetingName}I'm Mr.M. We're now discussing "${project.title}". How can I help you with this project?`,
         sender: 'mrm',
         timestamp: new Date(),
       }
@@ -132,11 +135,18 @@ export default function MrMChatInterface() {
     setIsLoadingAnswer(true);
 
     const chatHistoryForAI = messages
-      .filter(msg => msg.sender !== 'mrm' || !msg.text.startsWith("Okay, we're now discussing"))
+      // Filter out the initial contextual greeting if it contains the project selection part
+      .filter(msg => msg.sender !== 'mrm' || !msg.text.includes(`We're now discussing "${selectedProject.title}"`))
       .map(msg => ({
         role: msg.sender === 'user' ? 'user' : 'model',
         parts: [{ text: msg.text }]
     }));
+    
+    // Add the current user's question to history if it's not already there through setMessages
+    if (!chatHistoryForAI.some(m => m.parts[0].text === question && m.role === 'user')) {
+        chatHistoryForAI.push({ role: 'user', parts: [{ text: question }]});
+    }
+
 
     const projectContextForAI: ProjectZod = {
         id: selectedProject.id,
