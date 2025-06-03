@@ -4,22 +4,22 @@
 import React, { useRef, useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Eraser, Pen } from 'lucide-react'; // Added Pen icon for clarity
+import { Eraser, Pen } from 'lucide-react';
 
 interface HandwritingCanvasProps {
   width?: number;
   height?: number;
   lineWidth?: number;
   eraserLineWidthMultiplier?: number;
-  lineColor?: string; // Base HSL string for foreground
-  backgroundColor?: string; // Base HSL string for background
-  ruledLineColor?: string; // Base HSL string for border
+  lineColor?: string; 
+  backgroundColor?: string; 
+  ruledLineColor?: string; 
   className?: string;
 }
 
 export interface HandwritingCanvasRef {
   getImageDataUrl: () => string | undefined;
-  clearCanvas: () => void; // Full clear, not just erase mode
+  clearCanvas: () => void;
 }
 
 const HandwritingCanvas = forwardRef<HandwritingCanvasRef, HandwritingCanvasProps>(
@@ -28,9 +28,8 @@ const HandwritingCanvas = forwardRef<HandwritingCanvasRef, HandwritingCanvasProp
       width = 300,
       height = 120,
       lineWidth = 3,
-      eraserLineWidthMultiplier = 4, // Eraser is thicker
-      // Default HSL values (actual color is fetched from CSS vars at runtime)
-      lineColor = 'var(--foreground)', 
+      eraserLineWidthMultiplier = 4,
+      lineColor = 'var(--foreground)',
       backgroundColor = 'var(--background)',
       ruledLineColor = 'var(--border)',
       className,
@@ -47,12 +46,12 @@ const HandwritingCanvas = forwardRef<HandwritingCanvasRef, HandwritingCanvasProp
       setIsClient(true);
     }, []);
     
-    const getDynamicColors = () => {
-      if (!isClient) { // Fallback if not client-side yet (shouldn't happen for drawing)
+    const getDynamicColors = useCallback(() => {
+      if (!isClient || typeof document === 'undefined') { 
         return {
-          currentBackgroundColor: `hsl(${backgroundColor})`,
-          currentLineColor: `hsl(${lineColor})`,
-          currentRuledLineColor: `hsl(${ruledLineColor})`,
+          currentBackgroundColor: `hsl(${backgroundColor})`, // Fallback
+          currentLineColor: `hsl(${lineColor})`, // Fallback
+          currentRuledLineColor: `hsl(${ruledLineColor})`, // Fallback
         };
       }
       const rootStyle = getComputedStyle(document.documentElement);
@@ -61,42 +60,47 @@ const HandwritingCanvas = forwardRef<HandwritingCanvasRef, HandwritingCanvasProp
         currentLineColor: `hsl(${rootStyle.getPropertyValue('--foreground').trim()})`,
         currentRuledLineColor: `hsl(${rootStyle.getPropertyValue('--border').trim()})`,
       };
-    };
+    }, [isClient, backgroundColor, lineColor, ruledLineColor]);
 
-    const drawRuledLines = (currentContext: CanvasRenderingContext2D, canvasWidth: number, canvasHeight: number) => {
+    const drawRuledLines = useCallback((currentContext: CanvasRenderingContext2D, canvasWidth: number, canvasHeight: number) => {
       const { currentRuledLineColor } = getDynamicColors();
       const numLines = 4; 
       const lineSpacing = canvasHeight / (numLines + 1);
       
       currentContext.save();
+      currentContext.globalCompositeOperation = 'source-over'; // Ensure lines draw normally
       currentContext.strokeStyle = currentRuledLineColor;
       currentContext.lineWidth = 0.5; 
       currentContext.beginPath();
       for (let i = 1; i <= numLines; i++) {
         const yPosition = lineSpacing * i;
-        currentContext.moveTo(10, yPosition); // Keep small margin for lines
+        currentContext.moveTo(10, yPosition);
         currentContext.lineTo(canvasWidth - 10, yPosition);
       }
       currentContext.stroke();
       currentContext.restore();
-    };
+    }, [getDynamicColors]);
 
-    const fullClearCanvas = () => {
+    const fullClearCanvas = useCallback(() => {
       const context = contextRef.current;
       const canvas = canvasRef.current;
       if (context && canvas) {
         const { currentBackgroundColor } = getDynamicColors();
         const dpr = window.devicePixelRatio || 1;
-        const currentCanvasWidth = canvas.width / dpr; 
-        const currentCanvasHeight = canvas.height / dpr;
+        // Use logical width/height for clearing and drawing rules
+        const logicalWidth = canvas.width / dpr; 
+        const logicalHeight = canvas.height / dpr;
         
+        context.save();
+        context.globalCompositeOperation = 'source-over'; // Reset composite operation
         context.fillStyle = currentBackgroundColor;
-        context.fillRect(0, 0, currentCanvasWidth, currentCanvasHeight);
+        context.fillRect(0, 0, logicalWidth, logicalHeight); // Use logical dimensions
+        context.restore();
         
-        drawRuledLines(context, currentCanvasWidth, currentCanvasHeight);
+        drawRuledLines(context, logicalWidth, logicalHeight);
         setIsErasing(false); // Reset to pen mode on full clear
       }
-    };
+    }, [getDynamicColors, drawRuledLines]);
 
     useEffect(() => {
       if (!isClient || !canvasRef.current) return;
@@ -110,21 +114,18 @@ const HandwritingCanvas = forwardRef<HandwritingCanvasRef, HandwritingCanvasProp
       
       const context = canvas.getContext('2d');
       if (context) {
-        context.scale(dpr, dpr);
+        context.scale(dpr, dpr); // Scale once for all drawing operations
         context.lineCap = 'round';
         context.lineJoin = 'round';
         contextRef.current = context;
         fullClearCanvas(); 
       }
-    }, [isClient, width, height]);
+    }, [isClient, width, height, fullClearCanvas]); // fullClearCanvas is now a dependency
 
     useEffect(() => {
       if (!isClient || !contextRef.current) return;
-      // This effect ensures that if theme changes, the canvas background/lines can be redrawn
-      // It's called when the base color HSL strings change, but more importantly,
-      // `fullClearCanvas` inside it uses `getDynamicColors` to get current theme values.
       fullClearCanvas();
-    }, [isClient, backgroundColor, lineColor, ruledLineColor]); // Dependencies on base HSL strings
+    }, [isClient, getDynamicColors, fullClearCanvas]); // Depends on getDynamicColors because it affects fullClearCanvas
 
 
     useImperativeHandle(ref, () => ({
@@ -154,12 +155,18 @@ const HandwritingCanvas = forwardRef<HandwritingCanvasRef, HandwritingCanvasProp
 
     const startDrawing = (event: React.MouseEvent | React.TouchEvent) => {
       if (!contextRef.current) return;
-      const { currentLineColor, currentBackgroundColor } = getDynamicColors();
+      const { currentLineColor } = getDynamicColors();
       
-      contextRef.current.strokeStyle = isErasing ? currentBackgroundColor : currentLineColor;
+      if (isErasing) {
+        contextRef.current.globalCompositeOperation = 'destination-out';
+        // For destination-out, strokeStyle's color channels don't matter for erasing, only alpha.
+        // Using an opaque color is important.
+        contextRef.current.strokeStyle = 'rgba(0,0,0,1)'; 
+      } else {
+        contextRef.current.globalCompositeOperation = 'source-over';
+        contextRef.current.strokeStyle = currentLineColor;
+      }
       contextRef.current.lineWidth = isErasing ? lineWidth * eraserLineWidthMultiplier : lineWidth;
-      // For true erasing to transparent, use:
-      // contextRef.current.globalCompositeOperation = isErasing ? 'destination-out' : 'source-over';
 
       const { x, y } = getCoordinates(event);
       contextRef.current.beginPath();
@@ -169,11 +176,7 @@ const HandwritingCanvas = forwardRef<HandwritingCanvasRef, HandwritingCanvasProp
 
     const draw = (event: React.MouseEvent | React.TouchEvent) => {
       if (!isDrawing || !contextRef.current) return;
-      // Ensure mode is set before drawing (e.g., if toggled mid-drag, though unlikely with mouseup)
-      const { currentLineColor, currentBackgroundColor } = getDynamicColors();
-      contextRef.current.strokeStyle = isErasing ? currentBackgroundColor : currentLineColor;
-      contextRef.current.lineWidth = isErasing ? lineWidth * eraserLineWidthMultiplier : lineWidth;
-
+      // globalCompositeOperation, strokeStyle, and lineWidth are set in startDrawing and persist.
       const { x, y } = getCoordinates(event);
       contextRef.current.lineTo(x, y);
       contextRef.current.stroke();
@@ -183,6 +186,7 @@ const HandwritingCanvas = forwardRef<HandwritingCanvasRef, HandwritingCanvasProp
       if (!contextRef.current) return;
       contextRef.current.closePath();
       setIsDrawing(false);
+      // No need to redraw ruled lines here if destination-out works correctly
     };
 
     if (!isClient) {
@@ -193,10 +197,10 @@ const HandwritingCanvas = forwardRef<HandwritingCanvasRef, HandwritingCanvasProp
       <div className={cn("relative flex flex-col items-center", className)} style={{ width, height }}>
         <Button
           type="button"
-          variant={isErasing ? "secondary" : "outline"} // Change variant to show active state
+          variant={isErasing ? "secondary" : "outline"}
           size="icon"
           onClick={() => setIsErasing(prev => !prev)}
-          className="absolute top-1 right-1 z-10 h-7 w-7" // Smaller icon button
+          className="absolute top-1 right-1 z-10 h-7 w-7"
           aria-label={isErasing ? "Switch to Pen" : "Switch to Eraser"}
         >
           {isErasing ? <Pen className="h-4 w-4" /> : <Eraser className="h-4 w-4" />}
@@ -211,9 +215,8 @@ const HandwritingCanvas = forwardRef<HandwritingCanvasRef, HandwritingCanvasProp
           onTouchMove={draw}
           onTouchEnd={finishDrawing}
           className={cn(
-            "border border-input rounded-md cursor-crosshair touch-none shadow-inner" // Removed bg-background, fillRect handles it
+            "border border-input rounded-md cursor-crosshair touch-none shadow-inner"
           )} 
-          // Canvas style width/height is set by JS to match props
         />
       </div>
     );
@@ -222,3 +225,4 @@ const HandwritingCanvas = forwardRef<HandwritingCanvasRef, HandwritingCanvasProp
 
 HandwritingCanvas.displayName = 'HandwritingCanvas';
 export default HandwritingCanvas;
+
