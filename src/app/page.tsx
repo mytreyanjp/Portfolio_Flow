@@ -7,7 +7,7 @@ import ProjectFilter, { type Filters } from '@/components/portfolio/ProjectFilte
 import type { Project } from '@/data/projects';
 import { getProjects, getUniqueCategoriesFromProjects } from '@/services/projectsService';
 import { Button } from '@/components/ui/button';
-import { Loader2, AlertTriangle, Palette, Code2, Sparkles, MessageSquare, FileTextIcon } from 'lucide-react';
+import { Loader2, AlertTriangle, Palette, Code2, Sparkles, MessageSquare, FileTextIcon, Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useName } from '@/contexts/NameContext';
 import { translateText } from '@/ai/flows/translate-text-flow';
@@ -178,8 +178,8 @@ export default function PortfolioPage() {
             </Link>
           </Button>
           <Button asChild size="lg" variant="secondary" className="hover:scale-105 transition-transform duration-200 ease-out hover:bg-accent hover:text-accent-foreground w-full sm:w-auto">
-            <Link href="/ai-intro">
-              <Sparkles className="mr-2 h-5 w-5" /> AI Tools
+            <Link href="/mr-m">
+              <Bot className="mr-2 h-5 w-5" /> Meet Mr.M
             </Link>
           </Button>
         </div>
@@ -220,3 +220,4 @@ export default function PortfolioPage() {
     </div>
   );
 }
+
