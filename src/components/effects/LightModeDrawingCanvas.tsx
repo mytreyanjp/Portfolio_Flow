@@ -3,10 +3,10 @@
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 
-const LINE_COLOR_RGB = '50, 50, 50'; // Dark gray for pencil line
-const LINE_WIDTH = 3;
-const BASE_LINE_OPACITY = 0.5; // Max opacity of a fresh line
-const BLUR_AMOUNT_PX = 2; // Blur intensity in pixels
+const LINE_COLOR_RGB = '50, 50, 50'; // Dark gray for paint strip
+const LINE_WIDTH = 12; // Increased for paint strip effect
+const BASE_LINE_OPACITY = 0.5; 
+const BLUR_AMOUNT_PX = 2; 
 
 const FADE_START_DELAY_MS = 1000;
 const FADE_DURATION_MS = 2000;
@@ -32,12 +32,12 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
   const drawnPointsListRef = useRef<Point[]>([]);
   
   const isDrawingActiveRef = useRef(isDrawingActive);
+  const lastRawMousePositionRef = useRef<Point | null>(null);
+  const [hasPointsToRender, setHasPointsToRender] = useState(false);
+  
   useEffect(() => {
     isDrawingActiveRef.current = isDrawingActive;
   }, [isDrawingActive]);
-
-  const lastRawMousePositionRef = useRef<Point | null>(null);
-  const [hasPointsToRender, setHasPointsToRender] = useState(false);
 
   const animatePoints = useCallback(() => {
     const canvas = canvasRef.current;
@@ -122,7 +122,7 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
         ctx.stroke();
       }
       if (BLUR_AMOUNT_PX > 0) {
-        ctx.filter = 'none'; // Reset filter
+        ctx.filter = 'none'; 
       }
     }
 
@@ -174,12 +174,20 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
     const needsAnimation = isDrawingActiveRef.current || drawnPointsListRef.current.length > 0;
     if (needsAnimation && !animationFrameIdRef.current) {
       animationFrameIdRef.current = requestAnimationFrame(animatePoints);
+    } else if (!needsAnimation && animationFrameIdRef.current) {
+        // If drawing is not active and no points are left, ensure animation stops
+        cancelAnimationFrame(animationFrameIdRef.current);
+        animationFrameIdRef.current = null;
+        const ctx = canvasRef.current?.getContext('2d');
+        if (ctx && canvasRef.current) {
+             ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+        }
     }
-  }, [isDrawingActive, animatePoints]);
+  }, [isDrawingActive, hasPointsToRender, animatePoints]); // hasPointsToRender helps manage stopping the animation
 
   const shouldRenderCanvas = isDrawingActiveRef.current || hasPointsToRender;
 
-  if (!shouldRenderCanvas) {
+  if (!shouldRenderCanvas && !isDrawingActiveRef.current) { // More explicit condition
     return null;
   }
 
@@ -203,3 +211,4 @@ const LightModeDrawingCanvas: React.FC<LightModeDrawingCanvasProps> = ({ isDrawi
 };
 
 export default LightModeDrawingCanvas;
+
