@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
@@ -6,16 +7,16 @@ import ProjectFilter, { type Filters } from '@/components/portfolio/ProjectFilte
 import type { Project } from '@/data/projects';
 import { getProjects, getUniqueCategoriesFromProjects } from '@/services/projectsService';
 import { Button } from '@/components/ui/button';
-import { Loader2, AlertTriangle, Palette, Code2, Sparkles, MessageSquare, FileTextIcon } from 'lucide-react'; 
+import { Loader2, AlertTriangle, Palette, Code2, Sparkles, MessageSquare, FileTextIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useName } from '@/contexts/NameContext'; 
-import { translateText } from '@/ai/flows/translate-text-flow'; 
+import { useName } from '@/contexts/NameContext';
+import { translateText } from '@/ai/flows/translate-text-flow';
 import Link from 'next/link';
 
 const INITIAL_FILTERS: Filters = { category: '' };
-const ORIGINAL_GREETING_PREFIX = "Hello there, ";
-const ORIGINAL_GREETING_NO_NAME = "Hello there, "; // Fallback if no user name
-const ORIGINAL_NAME_FALLBACK = "Mytreyan here"; // Used if userName is null
+const ORIGINAL_GREETING_PREFIX = "Hello "; // Adjusted for "{userName}, "
+const ORIGINAL_GREETING_NO_NAME = "Hello there, "; // Used when no userName
+const ORIGINAL_NAME_FALLBACK = "Mytreyan here";
 const ORIGINAL_MOTTO = "Crafting digital experiences, one line of code at a time.";
 
 export default function PortfolioPage() {
@@ -26,13 +27,13 @@ export default function PortfolioPage() {
   const [error, setError] = useState<string | null>(null);
   const pageRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const { userName, detectedLanguage } = useName();
+  const { userName, detectedLanguage, isLoadingName } = useName(); // Added isLoadingName
 
   const [greetingPrefixText, setGreetingPrefixText] = useState(ORIGINAL_GREETING_PREFIX);
   const [greetingNoNameText, setGreetingNoNameText] = useState(ORIGINAL_GREETING_NO_NAME);
   const [nameFallbackText, setNameFallbackText] = useState(ORIGINAL_NAME_FALLBACK);
   const [mottoText, setMottoText] = useState(ORIGINAL_MOTTO);
-  
+
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -41,13 +42,13 @@ export default function PortfolioPage() {
         getProjects(),
         getUniqueCategoriesFromProjects(),
       ]);
-      
+
       setProjects(fetchedProjects);
       setAllCategories(fetchedCategories);
     } catch (err) {
       console.error('Error fetching portfolio data:', err);
       setError(err instanceof Error ? err.message : 'Failed to load portfolio data.');
-      setProjects([]); 
+      setProjects([]);
       setAllCategories([]);
     } finally {
       setIsLoading(false);
@@ -57,20 +58,29 @@ export default function PortfolioPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
-  
+
   useEffect(() => {
+    if (isLoadingName) { // Don't run translation if context is still loading
+        // Optionally set to placeholders if desired, or just wait
+        // setGreetingPrefixText("...");
+        // setGreetingNoNameText("...");
+        // setNameFallbackText("...");
+        // setMottoText("...");
+        return;
+    }
+
     const translateContent = async (text: string, targetLang: string) => {
-      if (!text || !targetLang || targetLang === 'en') return text; // Skip translation for English
+      if (!text || !targetLang || targetLang === 'en') return text;
       try {
         const result = await translateText({ textToTranslate: text, targetLanguage: targetLang });
         return result.translatedText;
       } catch (e) {
         console.warn(`Translation failed for "${text}" to ${targetLang}:`, e);
-        return text; 
+        return text;
       }
     };
 
-    if (detectedLanguage && detectedLanguage !== 'en') { 
+    if (detectedLanguage && detectedLanguage !== 'en') {
       Promise.all([
         translateContent(ORIGINAL_GREETING_PREFIX, detectedLanguage),
         translateContent(ORIGINAL_GREETING_NO_NAME, detectedLanguage),
@@ -83,17 +93,20 @@ export default function PortfolioPage() {
         setMottoText(translatedMotto);
       });
     } else {
-      // Reset to original English if language is English or not detected
       setGreetingPrefixText(ORIGINAL_GREETING_PREFIX);
       setGreetingNoNameText(ORIGINAL_GREETING_NO_NAME);
       setNameFallbackText(ORIGINAL_NAME_FALLBACK);
       setMottoText(ORIGINAL_MOTTO);
     }
-  }, [detectedLanguage]);
+  }, [detectedLanguage, isLoadingName]); // Added isLoadingName dependency
 
-  const displayGreeting = userName 
-    ? `${greetingPrefixText}${userName}, ${nameFallbackText}` 
-    : `${greetingNoNameText}${nameFallbackText}`;
+  const displayGreeting = isLoadingName
+    ? "..." // Placeholder while name context is loading
+    : userName
+      ? `${greetingPrefixText}${userName}, ${nameFallbackText}`
+      : `${greetingNoNameText}${nameFallbackText}`;
+
+  const displayMotto = isLoadingName ? "..." : mottoText; // Placeholder for motto
 
 
   const filteredProjects = useMemo(() => {
@@ -106,7 +119,7 @@ export default function PortfolioPage() {
   const handleFilterChange = (newFilters: Filters) => {
     setFilters(newFilters);
   };
-  
+
   const handleResetFilters = () => {
     setFilters(INITIAL_FILTERS);
   };
@@ -151,8 +164,8 @@ export default function PortfolioPage() {
   }
 
   return (
-    <div 
-      ref={pageRef} 
+    <div
+      ref={pageRef}
       className={cn(
         "container mx-auto px-4 py-8 transition-opacity duration-700 ease-in-out",
         isVisible ? "opacity-100" : "opacity-0"
@@ -166,7 +179,7 @@ export default function PortfolioPage() {
           {displayGreeting}
         </h1>
         <p className="text-lg text-muted-foreground font-subtext italic max-w-2xl mx-auto mb-8">
-          {mottoText}
+          {displayMotto}
         </p>
       </header>
 
@@ -189,11 +202,11 @@ export default function PortfolioPage() {
         </div>
       </section>
 
-      <ProjectFilter 
-        filters={filters} 
-        onFilterChange={handleFilterChange} 
+      <ProjectFilter
+        filters={filters}
+        onFilterChange={handleFilterChange}
         onResetFilters={handleResetFilters}
-        availableCategories={allCategories} 
+        availableCategories={allCategories}
       />
 
       {filteredProjects.length === 0 ? (
@@ -209,12 +222,12 @@ export default function PortfolioPage() {
           ))}
         </div>
       )}
-      
+
       {projects.length > 0 && filteredProjects.length > 0 && (
          <div className="mt-16 text-center">
           <Code2 className="h-10 w-10 text-primary/70 mx-auto mb-3"/>
           <p className="text-muted-foreground text-sm">
-            Found {filteredProjects.length} project{filteredProjects.length === 1 ? '' : 's'}. 
+            Found {filteredProjects.length} project{filteredProjects.length === 1 ? '' : 's'}.
             {filters.category ? ` (Filtered by: ${filters.category})` : ''}
           </p>
         </div>
