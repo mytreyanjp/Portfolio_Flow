@@ -1,18 +1,19 @@
 
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bot, User, Send, Loader2, ListCollapse,ChevronLeft, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Bot, User, Send, Loader2, ChevronLeft, RefreshCw, AlertTriangle, Search, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { askMrMAboutProject, ProjectQnaInput, ProjectZodSchema, ProjectZod } from '@/ai/flows/project-qna-flow'; // Updated import
+import { askMrMAboutProject, ProjectQnaInput, ProjectZod } from '@/ai/flows/project-qna-flow';
 import { useToast } from '@/hooks/use-toast';
 import type { Project } from '@/data/projects';
 import { getProjects } from '@/services/projectsService';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 
 interface Message {
   id: string;
@@ -34,22 +35,28 @@ export default function MrMChatInterface() {
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
   const [projectFetchError, setProjectFetchError] = useState<string | null>(null);
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('');
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+
   const fetchProjectsList = useCallback(async () => {
     setIsLoadingProjects(true);
     setProjectFetchError(null);
     try {
       const fetched = await getProjects();
-       // Filter out the default project if other projects exist
+      let processedProjects = fetched;
       if (fetched.length > 1) {
-        setProjectsList(fetched.filter(p => p.id !== 'default-project-1'));
+        processedProjects = fetched.filter(p => p.id !== 'default-project-1');
       } else if (fetched.length === 1 && fetched[0].id === 'default-project-1' && fetched[0].title.includes('Sample Project')) {
-        // If only the default project is there, show a message or keep it
-        // For now, let's show it if it's the only one.
-        setProjectsList(fetched);
+        processedProjects = fetched;
       }
-      else {
-        setProjectsList(fetched);
-      }
+      setProjectsList(processedProjects.sort((a,b) => a.title.localeCompare(b.title)));
+
+      const categories = Array.from(
+        new Set(processedProjects.flatMap(p => p.categories || []).filter(Boolean))
+      ).sort();
+      setAvailableCategories(categories);
+
     } catch (error) {
       console.error("Failed to fetch projects for Mr.M:", error);
       setProjectFetchError("Could not load projects. Please try again.");
@@ -62,6 +69,17 @@ export default function MrMChatInterface() {
   useEffect(() => {
     fetchProjectsList();
   }, [fetchProjectsList]);
+
+  const filteredProjects = useMemo(() => {
+    if (!projectsList) return [];
+    return projectsList.filter(project => {
+      const titleMatch = project.title.toLowerCase().includes(searchTerm.toLowerCase());
+      const categoryMatch = selectedCategoryFilter
+        ? project.categories && project.categories.some(cat => cat.toLowerCase() === selectedCategoryFilter.toLowerCase())
+        : true;
+      return titleMatch && categoryMatch;
+    });
+  }, [projectsList, searchTerm, selectedCategoryFilter]);
 
   const scrollToBottom = () => {
     if (scrollAreaRef.current) {
@@ -87,13 +105,12 @@ export default function MrMChatInterface() {
       }
     ]);
     setInputValue('');
-    // Focus input after project selection might be good UX
     setTimeout(() => inputRef.current?.focus(), 0);
   };
 
   const handleChangeProject = () => {
     setSelectedProject(null);
-    setMessages([]); // Clear chat history for the new project session
+    setMessages([]);
     setInputValue('');
   };
 
@@ -113,18 +130,17 @@ export default function MrMChatInterface() {
     setIsLoadingAnswer(true);
 
     const chatHistoryForAI = messages
-      .filter(msg => msg.sender !== 'mrm' || !msg.text.startsWith("Okay, we're now discussing")) // Exclude initial project selection greeting
+      .filter(msg => msg.sender !== 'mrm' || !msg.text.startsWith("Okay, we're now discussing"))
       .map(msg => ({
         role: msg.sender === 'user' ? 'user' : 'model',
         parts: [{ text: msg.text }]
     }));
 
-    // Map selectedProject to ProjectZod type, ensuring all fields are correctly passed
     const projectContextForAI: ProjectZod = {
         id: selectedProject.id,
         title: selectedProject.title,
         description: selectedProject.description,
-        longDescription: selectedProject.longDescription || undefined, // Ensure optional fields are handled
+        longDescription: selectedProject.longDescription || undefined,
         categories: selectedProject.categories,
         technologies: selectedProject.technologies,
         liveLink: selectedProject.liveLink || '',
@@ -196,28 +212,57 @@ export default function MrMChatInterface() {
   if (!selectedProject) {
     return (
       <div className="h-[60vh] max-h-[700px] flex flex-col">
-        <CardHeader className="text-center pb-4 pt-2">
+        <CardHeader className="text-center pb-2 pt-2">
           <CardTitle className="text-xl">Select a Project</CardTitle>
-          <CardDescription>Choose a project to discuss with Mr.M.</CardDescription>
+          <CardDescription>Choose a project to discuss. Use search or filter by category.</CardDescription>
         </CardHeader>
-        <ScrollArea className="flex-grow p-4 rounded-lg">
+        <div className="p-3 border-b border-border space-y-3 sm:space-y-0 sm:flex sm:space-x-3">
+            <div className="relative flex-grow">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                    type="search"
+                    placeholder="Search projects by title..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9 w-full"
+                />
+            </div>
+            <div className="flex-shrink-0 sm:w-56">
+                <Select value={selectedCategoryFilter} onValueChange={setSelectedCategoryFilter}>
+                    <SelectTrigger className="w-full">
+                        <Filter className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <SelectValue placeholder="All Categories" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="">All Categories</SelectItem>
+                        {availableCategories.map(category => (
+                            <SelectItem key={category} value={category}>{category}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
+        <ScrollArea className="flex-grow p-3 rounded-lg">
           {projectsList.length === 0 && !isLoadingProjects && (
             <p className="text-muted-foreground text-center py-10">No projects available to discuss.</p>
           )}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {projectsList.map(project => (
+           {filteredProjects.length === 0 && (searchTerm || selectedCategoryFilter) && projectsList.length > 0 && (
+             <p className="text-muted-foreground text-center py-10">No projects found matching your criteria.</p>
+           )}
+          <div className="grid grid-cols-1 gap-2.5">
+            {filteredProjects.map(project => (
               <Button
                 key={project.id}
                 variant="outline"
-                className="w-full h-auto py-3 px-4 text-left justify-start hover:bg-accent/50 transition-all duration-150 ease-in-out"
+                className="w-full h-auto py-2.5 px-3 text-left justify-between items-center hover:bg-accent/60 transition-all duration-150 ease-in-out flex"
                 onClick={() => handleSelectProject(project)}
               >
-                <div className="flex flex-col">
-                  <span className="font-semibold text-sm text-foreground">{project.title}</span>
-                  <span className="text-xs text-muted-foreground truncate block max-w-xs">
-                    {project.description.length > 70 ? project.description.substring(0, 70) + "..." : project.description}
-                  </span>
-                </div>
+                <span className="font-medium text-sm text-foreground flex-grow truncate mr-2">{project.title}</span>
+                {project.categories && project.categories.length > 0 && (
+                    <Badge variant="secondary" className="text-xs ml-auto shrink-0 whitespace-nowrap">
+                        {project.categories[0]}
+                    </Badge>
+                )}
               </Button>
             ))}
           </div>
@@ -229,7 +274,7 @@ export default function MrMChatInterface() {
   return (
     <div className="flex flex-col h-[60vh] max-h-[700px] bg-background rounded-lg">
       <div className="p-3 border-b border-border bg-muted/30 flex items-center justify-between rounded-t-lg">
-        <div className="flex items-center">
+        <div className="flex items-center min-w-0"> {/* Ensure parent can shrink */}
             <Button variant="ghost" size="sm" onClick={handleChangeProject} className="mr-2 text-muted-foreground hover:text-foreground">
                 <ChevronLeft className="h-4 w-4 mr-1" /> Back
             </Button>
@@ -302,3 +347,4 @@ export default function MrMChatInterface() {
     </div>
   );
 }
+
