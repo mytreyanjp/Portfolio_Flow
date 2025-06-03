@@ -170,9 +170,7 @@ export default function Header({
     if (!handwritingCanvasRef.current) return;
     const imageDataUri = handwritingCanvasRef.current.getImageDataUrl();
     if (!imageDataUri) {
-      // Optionally, you could show a toast here if the canvas is empty,
-      // but based on the request, we're removing all notifications from this flow.
-      // toast({ title: "Empty Canvas", description: "Please draw your name first.", variant: "destructive" });
+      toast({ title: "Empty Canvas", description: "Please draw your name first.", variant: "destructive" });
       return;
     }
     setIsRecognizingName(true);
@@ -183,31 +181,31 @@ export default function Header({
 
         if (result.detectedLanguage && result.detectedLanguage.trim() !== "") {
           setDetectedLanguage(result.detectedLanguage);
-          // toast({
-          //   title: "Name Saved!",
-          //   description: `Personalized with name: "${result.recognizedText.trim()}". Language detected: ${result.detectedLanguage}.`,
-          // });
+          toast({
+            title: "Name Saved!",
+            description: `Personalized with name: "${result.recognizedText.trim()}". Language detected: ${result.detectedLanguage}.`,
+          });
         } else {
           setDetectedLanguage(null);
-          // toast({
-          //   title: "Name Saved, Language Unclear",
-          //   description: `We've saved your name as "${result.recognizedText.trim()}", but the language of the script was not clear. The site will remain in English.`,
-          // });
+          toast({
+            title: "Name Saved, Language Unclear",
+            description: `We've saved your name as "${result.recognizedText.trim()}", but the language of the script was not clear. The site will remain in English.`,
+          });
         }
         setTimeout(() => {
           toggleNameInputDialog();
         }, 100); 
       } else {
         setDetectedLanguage(null);
-        // toast({
-        //   title: "Recognition Failed",
-        //   description: "Could not recognize a name from the drawing. Please try writing more clearly.",
-        //   variant: "destructive",
-        // });
+        toast({
+          title: "Recognition Failed",
+          description: "Could not recognize a name from the drawing. Please try writing more clearly or try again later.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error("Handwriting recognition error:", error);
-      // toast({ title: "Recognition Error", description: "An error occurred while trying to recognize your name. Please try again.", variant: "destructive" });
+      toast({ title: "Recognition Error", description: "An error occurred while trying to recognize your name. Please try again.", variant: "destructive" });
       setDetectedLanguage(null);
     } finally {
       setIsRecognizingName(false);
@@ -330,3 +328,4 @@ export default function Header({
     </>
   );
 }
+
