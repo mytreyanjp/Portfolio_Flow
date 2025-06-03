@@ -290,7 +290,7 @@ export default function EditResumeForm() {
                 <FormField control={form.control} name={`education.${index}.institution`} render={({ field: f }) => ( <FormItem><FormLabel>Institution</FormLabel><FormControl><Input placeholder="Example University" {...f} /></FormControl><FormMessage /></FormItem> )}/>
                 <FormField control={form.control} name={`education.${index}.dates`} render={({ field: f }) => ( <FormItem><FormLabel>Dates</FormLabel><FormControl><Input placeholder="2020 - 2024" {...f} /></FormControl><FormMessage /></FormItem> )}/>
                 <FormField control={form.control} name={`education.${index}.description`} render={({ field: f }) => ( <FormItem><FormLabel>Description (Optional)</FormLabel><FormControl><Textarea placeholder="Relevant coursework, achievements..." {...f} value={f.value || ''} /></FormControl><FormMessage /></FormItem> )}/>
-                <Button type="button" variant="destructive" size="sm" onClick={() => removeEdu(index)}><Trash2 className="mr-1 h-4 w-4" /> Remove Education Entry</Button>
+                <Button type="button" variant="destructive" size="sm" onClick={() => removeEdu(index)} className="w-full sm:w-auto"><Trash2 className="mr-1 h-4 w-4" /> Remove Education Entry</Button>
               </div>
             ))}
           </CardContent>
@@ -310,7 +310,7 @@ export default function EditResumeForm() {
                 <FormField control={form.control} name={`experience.${index}.company`} render={({ field: f }) => ( <FormItem><FormLabel>Company</FormLabel><FormControl><Input placeholder="Tech Corp" {...f} /></FormControl><FormMessage /></FormItem> )}/>
                 <FormField control={form.control} name={`experience.${index}.dates`} render={({ field: f }) => ( <FormItem><FormLabel>Dates</FormLabel><FormControl><Input placeholder="Jan 2022 - Present" {...f} /></FormControl><FormMessage /></FormItem> )}/>
                 <FormField control={form.control} name={`experience.${index}.responsibilities`} render={({ field: f }) => ( <FormItem><FormLabel>Responsibilities</FormLabel><FormControl><Textarea placeholder="Developed feature X...\nManaged project Y..." {...f} rows={4} /></FormControl><FormDescription>Each new line is a bullet point.</FormDescription><FormMessage /></FormItem> )}/>
-                <Button type="button" variant="destructive" size="sm" onClick={() => removeExp(index)}><Trash2 className="mr-1 h-4 w-4" /> Remove Experience Entry</Button>
+                <Button type="button" variant="destructive" size="sm" onClick={() => removeExp(index)} className="w-full sm:w-auto"><Trash2 className="mr-1 h-4 w-4" /> Remove Experience Entry</Button>
               </div>
             ))}
           </CardContent>
@@ -330,7 +330,7 @@ export default function EditResumeForm() {
                 <FormField control={form.control} name={`awards.${index}.issuer`} render={({ field: f }) => ( <FormItem><FormLabel>Issuer (Optional)</FormLabel><FormControl><Input placeholder="AWS" {...f} value={f.value || ''}/></FormControl><FormMessage /></FormItem> )}/>
                 <FormField control={form.control} name={`awards.${index}.date`} render={({ field: f }) => ( <FormItem><FormLabel>Date (Optional)</FormLabel><FormControl><Input placeholder="2023" {...f} value={f.value || ''}/></FormControl><FormMessage /></FormItem> )}/>
                 <FormField control={form.control} name={`awards.${index}.url`} render={({ field: f }) => ( <FormItem><FormLabel>Link (Optional)</FormLabel><FormControl><Input type="url" placeholder="https://example.com/certificate" {...f} value={f.value || ''}/></FormControl><FormMessage /></FormItem> )}/>
-                <Button type="button" variant="destructive" size="sm" onClick={() => removeAward(index)}><Trash2 className="mr-1 h-4 w-4" /> Remove Award/Cert.</Button>
+                <Button type="button" variant="destructive" size="sm" onClick={() => removeAward(index)} className="w-full sm:w-auto"><Trash2 className="mr-1 h-4 w-4" /> Remove Award/Cert.</Button>
               </div>
             ))}
           </CardContent>
