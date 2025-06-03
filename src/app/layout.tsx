@@ -4,8 +4,8 @@ import React from 'react';
 
 // Minimal metadata for debugging
 export const metadata = {
-  title: 'PortfolioFlow Debug',
-  description: 'Debugging Internal Server Error for PortfolioFlow',
+  title: 'PortfolioFlow Debug ISE',
+  description: 'Debugging Internal Server Error for PortfolioFlow - Min Layout',
 };
 
 export default function RootLayout({
@@ -13,11 +13,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  console.log("layout.tsx: Simplified RootLayout rendering now.");
   return (
     <html lang="en">
       <body>
-        {/* Removed ThemeProvider, AuthProvider, NameProvider, Header, Footer, MainContentWithTheme */}
         {children}
       </body>
     </html>
