@@ -208,7 +208,7 @@ export default function SecretLairPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <Tabs defaultValue="projects" className="w-full">
-            <TabsList className="flex w-full items-center justify-around mb-6">
+            <TabsList className="flex items-center justify-center sm:justify-around flex-wrap gap-2 mb-6">
               <TabsTrigger value="projects" aria-label="Manage Projects">
                 <PlusCircle className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Manage Projects</span>
               </TabsTrigger>
@@ -262,14 +262,14 @@ export default function SecretLairPage() {
                   {!isLoadingProjects && !errorLoadingProjects && projects.length > 0 && (
                     <div className="space-y-3">
                       {projects.map((project) => (
-                        <Card key={project.id} className="flex items-center justify-between p-3 bg-muted/30">
+                        <Card key={project.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-muted/30 gap-3 sm:gap-2">
                           <span className="font-medium text-foreground truncate mr-2 flex-1">{project.title}</span>
-                          <div className="flex items-center space-x-2">
+                          <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 mt-2 sm:mt-0 sm:ml-auto w-full sm:w-auto">
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => handleOpenEditDialog(project)}
-                              className="hover:bg-accent/80"
+                              className="hover:bg-accent/80 w-full xs:w-auto justify-center"
                             >
                               <Pencil className="mr-1 h-4 w-4" /> Edit
                             </Button>
@@ -278,6 +278,7 @@ export default function SecretLairPage() {
                               size="sm"
                               onClick={() => handleOpenDeleteDialog(project)}
                               disabled={isDeleting && projectToDelete?.id === project.id}
+                              className="w-full xs:w-auto justify-center"
                             >
                               {isDeleting && projectToDelete?.id === project.id ? (
                                 <Loader2 className="mr-1 h-4 w-4 animate-spin" />
@@ -360,14 +361,14 @@ export default function SecretLairPage() {
           setShowEditDialog(isOpen);
           if (!isOpen) setProjectToEdit(null); 
         }}>
-          <DialogContent className="sm:max-w-[625px]">
+          <DialogContent className="sm:max-w-[625px]"> {/* Max width for the dialog content */}
             <DialogHeader>
               <DialogTitle>Edit Project: {projectToEdit.title}</DialogTitle>
               <DialogDescription>
                 Make changes to your project details below. Click save when you're done.
               </DialogDescription>
             </DialogHeader>
-            <div className="py-4 max-h-[70vh] overflow-y-auto pr-2">
+            <div className="py-4 max-h-[70vh] overflow-y-auto pr-2"> {/* Scrollable area for form */}
               <AddProjectForm 
                   editingProject={projectToEdit} 
                   onProjectUpdated={(updatedProject) => {
