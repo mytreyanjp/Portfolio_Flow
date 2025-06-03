@@ -34,9 +34,9 @@ const wastedVindey = localFont({
   fallback: ['sans-serif'], 
 });
 
-const CursorTail = dynamic(() => import('@/components/effects/CursorTail'), { ssr: false });
-const FirefliesEffect = dynamic(() => import('@/components/effects/FirefliesEffect'), { ssr: false });
-const LightModeDrawingCanvas = dynamic(() => import('@/components/effects/LightModeDrawingCanvas'), { ssr: false });
+// const CursorTail = dynamic(() => import('@/components/effects/CursorTail'), { ssr: false });
+// const FirefliesEffect = dynamic(() => import('@/components/effects/FirefliesEffect'), { ssr: false });
+// const LightModeDrawingCanvas = dynamic(() => import('@/components/effects/LightModeDrawingCanvas'), { ssr: false });
 
 
 function MainContentWithTheme({ children }: { children: React.ReactNode }) {
@@ -128,16 +128,16 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
 
   const currentIsDarkTheme = resolvedTheme === 'dark';
   const currentIsLightTheme = resolvedTheme === 'light';
-  const showDarkThemeEffects = isClient && currentIsDarkTheme;
-  const showLightThemeEffects = isClient && currentIsLightTheme;
+  // const showDarkThemeEffects = isClient && currentIsDarkTheme;
+  // const showLightThemeEffects = isClient && currentIsLightTheme;
   const isPersonalizationActive = !!userName;
 
 
   return (
     <>
-      {showDarkThemeEffects && <CursorTail isDarkTheme={currentIsDarkTheme} />}
-      {showDarkThemeEffects && <FirefliesEffect isDarkTheme={currentIsDarkTheme} />}
-      {showLightThemeEffects && <LightModeDrawingCanvas isDrawingActive={false} />}
+      {/* {showDarkThemeEffects && <CursorTail isDarkTheme={currentIsDarkTheme} />} */}
+      {/* {showDarkThemeEffects && <FirefliesEffect isDarkTheme={currentIsDarkTheme} />} */}
+      {/* {showLightThemeEffects && <LightModeDrawingCanvas isDrawingActive={false} />} */}
       
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header 
@@ -208,3 +208,4 @@ export default function RootLayout({
     </html>
   );
 }
+    
