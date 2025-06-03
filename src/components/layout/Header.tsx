@@ -66,11 +66,11 @@ export default function Header({
   isPencilModeActive,
   togglePencilMode,
 }: HeaderProps) {
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(false); // Keep for ThemeSwitcher and other internal logic if needed
   const pathname = usePathname();
   const router = useRouter();
   const { toast } = useToast();
-  const { resolvedTheme } = useTheme();
+  // useTheme hook is not needed here as isLightTheme comes from props
   const { setUserName, setDetectedLanguage } = useName();
   const handwritingCanvasRef = useRef<HandwritingCanvasRef>(null);
   const [isRecognizingName, setIsRecognizingName] = useState(false);
@@ -107,12 +107,13 @@ export default function Header({
     }
     setShowLockedUI(isCurrentlyLocked);
     return isCurrentlyLocked;
-  }, [lockoutEndTime]); // Added lockoutEndTime as dependency
+  }, [lockoutEndTime]);
 
   useEffect(() => {
-    setMounted(true);
+    setMounted(true); // General mounted flag for client-side only operations
     updateLockoutStateFromStorage();
   }, [updateLockoutStateFromStorage]);
+
 
   const handleLogoClick = () => {
     const currentTime = Date.now();
@@ -229,7 +230,7 @@ export default function Header({
             </div>
           </Link>
 
-          {mounted && (
+          {mounted && ( // Keep for desktop nav items
             <nav className="hidden md:flex items-center space-x-1">
               {navItems.map((item) => {
                 const isDisabled = !!(item as any).disabled;
@@ -243,24 +244,22 @@ export default function Header({
             </nav>
           )}
           <div className="flex items-center space-x-1">
-             {mounted && (
-              <>
-                <Button variant="ghost" size="icon" onClick={toggleNameInputDialog} aria-label={isPersonalizationActive ? "Change personalized name" : "Personalize greeting"} className={cn(isPersonalizationActive && "text-primary")}>
-                  <Pencil className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out" />
-                </Button>
-                {isLightTheme && (
-                  <Button variant="ghost" size="icon" onClick={togglePencilMode} aria-label={isPencilModeActive ? "Disable Screen Drawing" : "Enable Screen Drawing"} className={cn(isPencilModeActive && "text-primary")}>
-                    <Edit3 className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out" />
-                  </Button>
-                )}
-              </>
-            )}
-            {mounted && (
-              <Button variant="ghost" size="icon" onClick={toggleSoundEnabled} aria-label={isSoundEnabled ? "Mute sounds" : "Unmute sounds"}>
-                {isSoundEnabled ? <Volume2 className="h-[1.2rem] w-[1.2rem]" /> : <VolumeX className="h-[1.2rem] w-[1.2rem]" />}
+            {/* Removed the outer `mounted &&` wrapper here, relying on props from RootLayout */}
+            <Button variant="ghost" size="icon" onClick={toggleNameInputDialog} aria-label={isPersonalizationActive ? "Change personalized name" : "Personalize greeting"} className={cn(isPersonalizationActive && "text-primary")}>
+              <Pencil className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out" />
+            </Button>
+            
+            {isLightTheme && ( // This is the key condition for the screen drawing pencil
+              <Button variant="ghost" size="icon" onClick={togglePencilMode} aria-label={isPencilModeActive ? "Disable Screen Drawing" : "Enable Screen Drawing"} className={cn(isPencilModeActive && "text-primary")}>
+                <Edit3 className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out" />
               </Button>
             )}
-            {mounted && <ThemeSwitcher />}
+            
+            <Button variant="ghost" size="icon" onClick={toggleSoundEnabled} aria-label={isSoundEnabled ? "Mute sounds" : "Unmute sounds"}>
+              {isSoundEnabled ? <Volume2 className="h-[1.2rem] w-[1.2rem]" /> : <VolumeX className="h-[1.2rem] w-[1.2rem]" />}
+            </Button>
+            
+            {mounted && <ThemeSwitcher />} {/* ThemeSwitcher handles its own mounted state */}
           </div>
         </div>
       </header>
