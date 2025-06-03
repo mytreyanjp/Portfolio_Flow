@@ -83,8 +83,8 @@ const HandwritingCanvas = forwardRef<HandwritingCanvasRef, HandwritingCanvasProp
         context.beginPath();
         for (let i = 1; i <= numLines; i++) {
           const y = lineSpacing * i;
-          ctx.moveTo(10, y);
-          ctx.lineTo(width - 10, y);
+          context.moveTo(10, y);
+          context.lineTo(width - 10, y);
         }
         context.stroke();
         context.restore();
