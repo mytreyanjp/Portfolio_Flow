@@ -70,15 +70,23 @@ const recognizeHandwritingFlow = ai.defineFlow(
     outputSchema: RecognizeHandwritingOutputSchema,
   },
   async (input) => {
-    const {output} = await handwritingPrompt(input);
-    
-    if (!output) {
-      // This case can happen if the entire response is blocked by safety or other reasons
+    try {
+      const {output} = await handwritingPrompt(input);
+      
+      if (!output) {
+        // This case can happen if the entire response is blocked by safety or other reasons
+        console.warn('Handwriting recognition: No output from prompt, possibly due to safety filters or other model issues.');
+        return { recognizedText: '', detectedLanguage: undefined };
+      }
+      return {
+        recognizedText: output.recognizedText || '', // Ensure empty string if undefined/null
+        detectedLanguage: output.detectedLanguage,
+      };
+    } catch (error) {
+      console.error('Error during handwriting recognition flow (handwritingPrompt call):', error);
+      // For 503 or other errors, return a default/empty response.
+      // The calling UI (Header.tsx) already handles empty results by showing a generic "Recognition Failed/Error" toast.
       return { recognizedText: '', detectedLanguage: undefined };
     }
-    return {
-      recognizedText: output.recognizedText || '', // Ensure empty string if undefined/null
-      detectedLanguage: output.detectedLanguage,
-    };
   }
 );
