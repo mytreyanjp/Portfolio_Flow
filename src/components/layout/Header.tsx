@@ -174,6 +174,7 @@ export default function Header({
 
         if (result.detectedLanguage) {
           setDetectedLanguage(result.detectedLanguage);
+          // No toast for successful full recognition
         } else {
           setDetectedLanguage(null);
           toast({
@@ -279,8 +280,14 @@ export default function Header({
           if (handwritingCanvasRef.current) {
             handwritingCanvasRef.current.clearCanvas();
           }
-        }
-        if (isOpen !== showNameInputDialog) { 
+          // Ensure toggleNameInputDialog is only called if the state actually needs to change
+          // This check prevents potential infinite loops if toggleNameInputDialog itself has side effects
+          // that might re-trigger onOpenChange.
+          if (isOpen !== showNameInputDialog) {
+            toggleNameInputDialog();
+          }
+        } else if (isOpen && !showNameInputDialog) {
+            // If trying to open and it's not already marked as open, call toggle.
             toggleNameInputDialog();
         }
       }}>
@@ -292,7 +299,7 @@ export default function Header({
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 flex justify-center">
-            <HandwritingCanvas ref={handwritingCanvasRef} />
+            <HandwritingCanvas ref={handwritingCanvasRef} width={260} height={104} />
           </div>
           <DialogFooter className="sm:justify-end">
             <Button
@@ -300,6 +307,7 @@ export default function Header({
               size="sm"
               onClick={handleSaveDrawnName}
               disabled={isRecognizingName}
+              className="w-full sm:w-auto" 
             >
               {isRecognizingName ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
               {isRecognizingName ? 'Recognizing...' : 'Save Name'}
@@ -310,4 +318,3 @@ export default function Header({
     </>
   );
 }
-

@@ -40,6 +40,27 @@ Your tasks are:
 2. Identify the primary language of the script used for the handwritten name. Return this as a BCP-47 language code (e.g., "en" for English, "ta" for Tamil, "hi" for Hindi) for the 'detectedLanguage' field. If the language is ambiguous or cannot be determined, you may omit the 'detectedLanguage' field or return undefined.
 
 Image: {{media url=imageDataUri}}`,
+  config: {
+    safetySettings: [
+      {
+        category: 'HARM_CATEGORY_HATE_SPEECH',
+        threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+      },
+      {
+        category: 'HARM_CATEGORY_HARASSMENT',
+        threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+      },
+      {
+        category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+        threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+      },
+      // Keeping DANGEROUS_CONTENT less restrictive as it's unlikely for names
+      {
+        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+        threshold: 'BLOCK_NONE', 
+      },
+    ],
+  },
 });
 
 const recognizeHandwritingFlow = ai.defineFlow(
@@ -52,12 +73,12 @@ const recognizeHandwritingFlow = ai.defineFlow(
     const {output} = await handwritingPrompt(input);
     
     if (!output) {
+      // This case can happen if the entire response is blocked by safety or other reasons
       return { recognizedText: '', detectedLanguage: undefined };
     }
     return {
-      recognizedText: output.recognizedText || '',
+      recognizedText: output.recognizedText || '', // Ensure empty string if undefined/null
       detectedLanguage: output.detectedLanguage,
     };
   }
 );
-
