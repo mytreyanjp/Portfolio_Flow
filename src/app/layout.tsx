@@ -11,11 +11,12 @@ import { NameProvider } from '@/contexts/NameContext';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import localFont from 'next/font/local';
-import { cn } from '@/lib/utils'; // Ensure this import is present
+import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
-// import CursorTail from '@/components/effects/CursorTail';
-// import FirefliesEffect from '@/components/effects/FirefliesEffect';
-// import LightModeDrawingCanvas from '@/components/effects/LightModeDrawingCanvas';
+import CursorTail from '@/components/effects/CursorTail';
+import FirefliesEffect from '@/components/effects/FirefliesEffect';
+import LightModeDrawingCanvas from '@/components/effects/LightModeDrawingCanvas';
 
 const greaterTheory = localFont({
   src: '../../public/fonts/GreaterTheory.otf',
@@ -38,9 +39,12 @@ export default function RootLayout({
 }>) {
   const [isClient, setIsClient] = useState(false);
   const { resolvedTheme } = useTheme();
+  const { toast } = useToast();
+
   const [isSoundEnabled, setIsSoundEnabled] = useState(false);
   const [isPersonalizationActive, setIsPersonalizationActive] = useState(false);
   const [showNameInputDialog, setShowNameInputDialog] = useState(false);
+  const [isPencilModeActive, setIsPencilModeActive] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -66,6 +70,22 @@ export default function RootLayout({
     setShowNameInputDialog(prev => !prev);
   }, []);
 
+  const togglePencilMode = useCallback(() => {
+    if (resolvedTheme === 'light') {
+      setIsPencilModeActive(prev => !prev);
+    } else {
+      setIsPencilModeActive(false); 
+      toast({ title: "Pencil Mode", description: "Pencil drawing is only available in light mode."});
+    }
+  }, [resolvedTheme, toast]);
+
+  useEffect(() => {
+    // Automatically turn off pencil mode if theme changes away from light
+    if (resolvedTheme !== 'light' && isPencilModeActive) {
+      setIsPencilModeActive(false);
+    }
+  }, [resolvedTheme, isPencilModeActive]);
+
   useEffect(() => {
     const storedName = localStorage.getItem('portfolioUserName');
     if (storedName) {
@@ -73,9 +93,10 @@ export default function RootLayout({
     } else {
       setIsPersonalizationActive(false);
     }
-  }, [showNameInputDialog]);
+  }, [showNameInputDialog]); // Re-check when dialog closes
 
   const isLightTheme = isClient && resolvedTheme === 'light';
+  const isDarkTheme = isClient && resolvedTheme === 'dark';
 
   if (!isClient) {
     return (
@@ -110,6 +131,8 @@ export default function RootLayout({
                   toggleNameInputDialog={toggleNameInputDialog}
                   showNameInputDialog={showNameInputDialog}
                   isLightTheme={isLightTheme}
+                  isPencilModeActive={isPencilModeActive}
+                  togglePencilMode={togglePencilMode}
                 />
                 <main className="flex-1 container mx-auto px-4 py-8 md:py-12 mt-16 mb-16 md:mt-0 md:mb-0">
                   {children}
@@ -117,9 +140,9 @@ export default function RootLayout({
                 <Footer />
               </div>
               <Toaster />
-              {/* <CursorTail isDarkTheme={resolvedTheme === 'dark'} /> */}
-              {/* <FirefliesEffect isDarkTheme={resolvedTheme === 'dark'} /> */}
-              {/* <LightModeDrawingCanvas isDrawingActive={isPencilModeActive} /> */}
+              <CursorTail isDarkTheme={isDarkTheme} />
+              <FirefliesEffect isDarkTheme={isDarkTheme} />
+              <LightModeDrawingCanvas isDrawingActive={isPencilModeActive && isLightTheme} />
             </NameProvider>
           </AuthProvider>
         </ThemeProvider>

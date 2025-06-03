@@ -7,7 +7,7 @@ import ThemeSwitcher from './ThemeSwitcher';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Briefcase, MessageSquare, FileText, Bot, LockKeyhole, Eye, EyeOff, Volume2, VolumeX, Pencil, AlertTriangle, Save, Loader2 } from 'lucide-react';
+import { Briefcase, MessageSquare, FileText, Bot, LockKeyhole, Eye, EyeOff, Volume2, VolumeX, Pencil, AlertTriangle, Save, Loader2, Edit3 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   AlertDialog,
@@ -52,6 +52,8 @@ interface HeaderProps {
   toggleNameInputDialog: () => void;
   showNameInputDialog: boolean;
   isLightTheme: boolean;
+  isPencilModeActive: boolean;
+  togglePencilMode: () => void;
 }
 
 export default function Header({
@@ -60,7 +62,9 @@ export default function Header({
   isPersonalizationActive,
   toggleNameInputDialog,
   showNameInputDialog,
-  isLightTheme
+  isLightTheme,
+  isPencilModeActive,
+  togglePencilMode,
 }: HeaderProps) {
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
@@ -174,7 +178,6 @@ export default function Header({
 
         if (result.detectedLanguage) {
           setDetectedLanguage(result.detectedLanguage);
-          // No toast for successful full recognition
         } else {
           setDetectedLanguage(null);
           toast({
@@ -201,11 +204,15 @@ export default function Header({
     }
   };
 
+  // This function is not directly used but kept for consistency if Dialog onOpenChange needs manual closing
   const handleCloseNameDialog = () => {
     if (handwritingCanvasRef.current) {
       handwritingCanvasRef.current.clearCanvas();
     }
-    toggleNameInputDialog();
+    // Ensure the dialog state in RootLayout is updated if it's not already handled by Dialog's onOpenChange
+    if (showNameInputDialog) {
+        toggleNameInputDialog();
+    }
   };
 
 
@@ -233,9 +240,14 @@ export default function Header({
           )}
           <div className="flex items-center space-x-1">
              {mounted && isLightTheme && (
-              <Button variant="ghost" size="icon" onClick={toggleNameInputDialog} aria-label={isPersonalizationActive ? "Change personalized name" : "Personalize greeting"} className={cn(isPersonalizationActive && "text-primary")}>
-                <Pencil className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out" />
-              </Button>
+              <>
+                <Button variant="ghost" size="icon" onClick={toggleNameInputDialog} aria-label={isPersonalizationActive ? "Change personalized name" : "Personalize greeting"} className={cn(isPersonalizationActive && "text-primary")}>
+                  <Pencil className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={togglePencilMode} aria-label={isPencilModeActive ? "Disable Screen Drawing" : "Enable Screen Drawing"} className={cn(isPencilModeActive && "text-primary")}>
+                  <Edit3 className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out" />
+                </Button>
+              </>
             )}
             {mounted && (
               <Button variant="ghost" size="icon" onClick={toggleSoundEnabled} aria-label={isSoundEnabled ? "Mute sounds" : "Unmute sounds"}>
@@ -276,14 +288,13 @@ export default function Header({
       </AlertDialog>
 
       <Dialog open={showNameInputDialog} onOpenChange={(isOpen) => {
-        if (!isOpen) {
-          if (handwritingCanvasRef.current) {
-            handwritingCanvasRef.current.clearCanvas();
-          }
-          if (isOpen !== showNameInputDialog) {
-            toggleNameInputDialog();
-          }
-        } else if (isOpen && !showNameInputDialog) {
+        if (!isOpen) { // When dialog is closing
+            if (handwritingCanvasRef.current) {
+                handwritingCanvasRef.current.clearCanvas();
+            }
+        }
+        // This ensures the state in RootLayout is always in sync with ShadCN's dialog state
+        if (isOpen !== showNameInputDialog) { 
             toggleNameInputDialog();
         }
       }}>
@@ -291,6 +302,7 @@ export default function Header({
           <DialogHeader>
             <DialogTitle>Draw Your Name</DialogTitle>
             <DialogDescription>
+              Use your mouse or finger to write your name on the canvas below.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 flex justify-center">

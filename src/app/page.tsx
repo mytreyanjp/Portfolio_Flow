@@ -2,12 +2,12 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import ProjectCard from '@/components/portfolio/ProjectCard'; // Corrected import
+import ProjectCard from '@/components/portfolio/ProjectCard';
 import ProjectFilter, { type Filters } from '@/components/portfolio/ProjectFilter';
 import type { Project } from '@/data/projects';
 import { getProjects, getUniqueCategoriesFromProjects } from '@/services/projectsService';
 import { Button } from '@/components/ui/button';
-import { Loader2, AlertTriangle, Sailboat, Palette, Code2 } from 'lucide-react'; 
+import { Loader2, AlertTriangle, Sailboat, Palette, Code2, Sparkles } from 'lucide-react'; 
 import { cn } from '@/lib/utils';
 import { useName } from '@/contexts/NameContext'; 
 import { translateText } from '@/ai/flows/translate-text-flow'; 
@@ -24,8 +24,11 @@ export default function PortfolioPage() {
   const [isVisible, setIsVisible] = useState(false);
   const { userName, detectedLanguage } = useName();
 
-  const [pageTitle, setPageTitle] = useState("Explore My Creations");
-  const [pageSubtitle, setPageSubtitle] = useState("A collection of my projects, showcasing a blend of creativity and technical skill. Use the filters to navigate through different categories.");
+  const [greetingPart, setGreetingPart] = useState("");
+  const [mainTitlePart, setMainTitlePart] = useState("Mytreyan Here");
+  const [pageSubtitle, setPageSubtitle] = useState("Explore My Creations. A collection of my projects, showcasing a blend of creativity and technical skill. Use the filters to navigate through different categories.");
+  const originalSubtitle = "Explore My Creations. A collection of my projects, showcasing a blend of creativity and technical skill. Use the filters to navigate through different categories.";
+  const originalMainTitle = "Mytreyan Here";
 
 
   const fetchData = useCallback(async () => {
@@ -57,6 +60,15 @@ export default function PortfolioPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+  
+  useEffect(() => {
+    if (userName) {
+        setGreetingPart(`Hello ${userName}, `);
+    } else {
+        setGreetingPart("");
+    }
+  }, [userName]);
+
 
   useEffect(() => {
     const translateContent = async (text: string, targetLang: string) => {
@@ -71,17 +83,17 @@ export default function PortfolioPage() {
 
     if (detectedLanguage && detectedLanguage !== 'en') { 
       Promise.all([
-        translateContent("Explore My Creations", detectedLanguage),
-        translateContent("A collection of my projects, showcasing a blend of creativity and technical skill. Use the filters to navigate through different categories.", detectedLanguage),
-      ]).then(([translatedTitle, translatedSubtitle]) => {
-        setPageTitle(translatedTitle);
-        setPageSubtitle(translatedSubtitle);
+        translateContent(originalMainTitle, detectedLanguage),
+        translateContent(originalSubtitle, detectedLanguage),
+      ]).then(([translatedMain, translatedSub]) => {
+        setMainTitlePart(translatedMain);
+        setPageSubtitle(translatedSub);
       });
     } else {
-      setPageTitle("Explore My Creations");
-      setPageSubtitle("A collection of my projects, showcasing a blend of creativity and technical skill. Use the filters to navigate through different categories.");
+      setMainTitlePart(originalMainTitle);
+      setPageSubtitle(originalSubtitle);
     }
-  }, [detectedLanguage]);
+  }, [detectedLanguage, originalMainTitle, originalSubtitle]);
 
 
   const filteredProjects = useMemo(() => {
@@ -145,10 +157,11 @@ export default function PortfolioPage() {
     >
       <header className="mb-12 text-center">
         <div className="inline-block mb-4 p-3 bg-primary/10 rounded-full">
-          <Sailboat className="h-12 w-12 text-primary" />
+           {/* Using Sailboat as a general "explore/journey" icon, Sparkles for "creations" could also fit */}
+          <Sparkles className="h-12 w-12 text-primary" />
         </div>
         <h1 className="text-4xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent mb-3">
-          {userName ? `${userName}, ${pageTitle}` : pageTitle}
+          {greetingPart}{mainTitlePart}
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
           {pageSubtitle}
@@ -188,4 +201,3 @@ export default function PortfolioPage() {
     </div>
   );
 }
-    
