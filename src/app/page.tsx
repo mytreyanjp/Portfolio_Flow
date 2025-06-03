@@ -66,15 +66,11 @@ export default function PortfolioPage() {
   }, []);
 
   useEffect(() => {
-    // If not client-side, or not in dark theme, or button already permanently visible via click,
-    // then we don't need to listen for mouse moves for collision detection.
-    // Also, if in light theme or button clicked, ensure intersection is false.
     if (!isClient || resolvedTheme !== 'dark' || isViewProjectsButtonClicked) {
-      setIsButtonIntersectingCursor(false); // Ensure it's false if not in the active "flashlight" mode
+      setIsButtonIntersectingCursor(false); 
       return;
     }
 
-    // This effect is for dark theme and button not yet clicked
     const handleMouseMove = (event: MouseEvent) => {
       if (viewProjectsButtonRef.current) {
         const intersecting = checkCollision(
@@ -282,7 +278,7 @@ export default function PortfolioPage() {
 
       <div 
         className={cn(
-            "flex justify-center mb-12", // This div is now always rendered with opacity 1
+            "flex justify-center mb-12", 
             "transition-opacity duration-500 ease-in-out opacity-100" 
         )}
       >
