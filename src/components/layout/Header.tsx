@@ -67,7 +67,7 @@ export default function Header({
   const router = useRouter();
   const { toast } = useToast();
   const { resolvedTheme } = useTheme();
-  const { setUserName, setDetectedLanguage } = useName(); // Added setDetectedLanguage
+  const { setUserName, setDetectedLanguage } = useName();
   const handwritingCanvasRef = useRef<HandwritingCanvasRef>(null);
   const [isRecognizingName, setIsRecognizingName] = useState(false);
 
@@ -170,24 +170,31 @@ export default function Header({
     try {
       const result = await recognizeHandwriting({ imageDataUri });
       if (result.recognizedText && result.recognizedText.trim() !== "") {
+        // Name recognized
         setUserName(result.recognizedText.trim());
+
         if (result.detectedLanguage) {
+          // Language also detected
           setDetectedLanguage(result.detectedLanguage);
-          toast({
-            title: "Name & Language Saved!",
-            description: `Name: ${result.recognizedText.trim()}, Language: ${result.detectedLanguage}`,
-          });
+          // No toast needed here as per new requirement
         } else {
-          setDetectedLanguage(null); // Clear if not detected
-           toast({
-            title: "Name Saved!",
-            description: `Name: ${result.recognizedText.trim()}. Language not detected.`,
+          // Name recognized, but language NOT detected
+          setDetectedLanguage(null);
+          toast({
+            title: "Name Saved, Language Unclear",
+            description: `We've saved your name as "${result.recognizedText.trim()}", but the language of the script was not clear. The site will remain in English.`,
+            variant: "default",
           });
         }
-        toggleNameInputDialog();
+        toggleNameInputDialog(); // Close dialog in both successful name cases
       } else {
-        toast({ title: "Recognition Failed", description: "Could not recognize a name. Please try drawing more clearly.", variant: "destructive" });
-        setDetectedLanguage(null);
+        // Name NOT recognized (text is empty or unclear)
+        setDetectedLanguage(null); // Ensure language is cleared
+        toast({
+          title: "Recognition Failed",
+          description: "Could not recognize a name from the drawing. Please try writing more clearly.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error("Handwriting recognition error:", error);
