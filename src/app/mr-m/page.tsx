@@ -12,7 +12,10 @@ export default function MrMPage() {
       <header className="text-center mb-12">
         <Bot className="h-16 w-16 text-primary mx-auto mb-4 animate-bounce" />
         <h1
-          className="text-4xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent"
+          className="text-4xl font-display font-bold text-transparent bg-clip-text"
+          style={{
+            backgroundImage: 'radial-gradient(circle at center, hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
+          }}
         >
           Chat with Mr.M
         </h1>
