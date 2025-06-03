@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Label } from "@/components/ui/label"; // Not used directly, but Dialog might need it
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from 'next-themes';
 import { useName } from '@/contexts/NameContext';
@@ -51,7 +51,6 @@ interface HeaderProps {
   isPersonalizationActive: boolean;
   toggleNameInputDialog: () => void;
   showNameInputDialog: boolean;
-  // isPencilModeActive and togglePencilMode are removed
 }
 
 export default function Header({
@@ -180,7 +179,7 @@ export default function Header({
       if (result.recognizedText && result.recognizedText.trim() !== "") {
         setUserName(result.recognizedText.trim());
 
-        if (result.detectedLanguage) {
+        if (result.detectedLanguage && result.detectedLanguage.trim() !== "") {
           setDetectedLanguage(result.detectedLanguage);
           toast({
             title: "Name Saved!",
@@ -191,10 +190,11 @@ export default function Header({
           toast({
             title: "Name Saved, Language Unclear",
             description: `We've saved your name as "${result.recognizedText.trim()}", but the language of the script was not clear. The site will remain in English.`,
-            variant: "default",
           });
         }
-        toggleNameInputDialog();
+        setTimeout(() => {
+          toggleNameInputDialog();
+        }, 100); // Delay closing dialog
       } else {
         setDetectedLanguage(null);
         toast({
@@ -212,6 +212,7 @@ export default function Header({
     }
   };
 
+  const showNamePersonalizationPencilButton = mounted && resolvedTheme === 'light';
 
   return (
     <>
@@ -237,8 +238,7 @@ export default function Header({
             </nav>
           )}
           <div className="flex items-center space-x-1">
-            {/* Name Personalization Pencil Button - Visible only in light theme */}
-            {mounted && resolvedTheme === 'light' && (
+            {showNamePersonalizationPencilButton && (
               <Button variant="ghost" size="icon" onClick={toggleNameInputDialog} aria-label={isPersonalizationActive ? "Change personalized name" : "Personalize greeting"} className={cn(isPersonalizationActive && "text-primary")}>
                 <Pencil className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out" />
               </Button>
