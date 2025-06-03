@@ -19,7 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"; // DialogClose removed
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input"; 
 import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
@@ -33,7 +33,7 @@ const navItems = [
   { href: '/', label: 'Portfolio', icon: Briefcase },
   { href: '/contact', label: 'Contact', icon: MessageSquare },
   { href: '/resume', label: 'Resume', icon: FileText },
-  { href: '/ai-intro', label: 'AI Intro', icon: Brain, disabled: true },
+  { href: '/ai-intro', label: 'AI Intro', icon: Brain },
 ];
 
 const SECRET_PASSWORD = "tinku@197";
@@ -171,8 +171,7 @@ export default function Header({
       const result = await recognizeHandwriting({ imageDataUri });
       if (result.recognizedText && result.recognizedText.trim() !== "") {
         setUserName(result.recognizedText.trim());
-        // No toast here as per request
-        toggleNameInputDialog(); // Close dialog
+        toggleNameInputDialog(); 
       } else {
         toast({ title: "Recognition Failed", description: "Could not recognize a name. Please try drawing more clearly.", variant: "destructive" });
       }
@@ -185,12 +184,10 @@ export default function Header({
   };
 
   const handleCloseNameDialog = () => {
-    // Call clearCanvas when dialog is about to be closed by any means
-    // (X button, clicking outside, or programmatically)
     if (handwritingCanvasRef.current) {
       handwritingCanvasRef.current.clearCanvas();
     }
-    toggleNameInputDialog(); // Actual toggle from props
+    toggleNameInputDialog(); 
   };
 
 
@@ -206,7 +203,8 @@ export default function Header({
           {mounted && (
             <nav className="hidden md:flex items-center space-x-1">
               {navItems.map((item) => {
-                const isDisabled = !!item.disabled; const isActive = pathname === item.href;
+                const isDisabled = !!(item as any).disabled; 
+                const isActive = pathname === item.href;
                 return (
                   <Button key={item.href} asChild variant="ghost" className={cn('text-sm font-medium', isDisabled ? 'cursor-not-allowed opacity-50' : isActive ? 'text-primary hover:bg-transparent' : 'text-muted-foreground hover:text-primary hover:bg-transparent')} disabled={isDisabled} tabIndex={isDisabled ? -1 : undefined}>
                     <Link href={isDisabled ? '#' : item.href} onClick={(e) => { if (isDisabled) e.preventDefault(); }} aria-disabled={isDisabled} aria-current={isActive ? 'page' : undefined}>{item.label}</Link>
@@ -260,28 +258,27 @@ export default function Header({
       </AlertDialog>
 
       <Dialog open={showNameInputDialog} onOpenChange={(isOpen) => {
-        if (!isOpen) { // If dialog is closing
+        if (!isOpen) { 
           if (handwritingCanvasRef.current) {
-            handwritingCanvasRef.current.clearCanvas(); // Clear canvas on close
+            handwritingCanvasRef.current.clearCanvas(); 
           }
         }
-        toggleNameInputDialog(); // Propagate state change
+        toggleNameInputDialog(); 
       }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Draw Your Name</DialogTitle>
             <DialogDescription>
-              {/* Empty as per user request */}
+              
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 flex justify-center">
             <HandwritingCanvas ref={handwritingCanvasRef} />
           </div>
           <DialogFooter className="sm:justify-end"> 
-            {/* Cancel button removed as per user request */}
             <Button 
               type="button" 
-              size="sm" // Made save button smaller
+              size="sm" 
               onClick={handleSaveDrawnName} 
               disabled={isRecognizingName}
             >
