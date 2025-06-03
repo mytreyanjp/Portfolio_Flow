@@ -7,12 +7,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Mail, Phone, MapPin } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
+import { useName } from '@/contexts/NameContext'; // Import useName
 
 export default function ContactPage() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const { userName } = useName(); // Get userName from context
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
@@ -143,7 +145,7 @@ export default function ContactPage() {
           </Card>
           <div className="text-center md:text-left">
             <p className="text-muted-foreground">
-              I'm always open to discussing new projects, creative ideas or opportunities to be part of your visions.
+              {userName ? `Hey ${userName}, I'm` : "I'm"} always open to discussing new projects, creative ideas or opportunities to be part of your visions.
             </p>
           </div>
         </section>
@@ -151,3 +153,4 @@ export default function ContactPage() {
     </div>
   );
 }
+
