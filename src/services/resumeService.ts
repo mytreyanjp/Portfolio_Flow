@@ -63,7 +63,6 @@ export async function getResumeData(): Promise<ResumeData> {
       };
     } else {
       // Document doesn't exist in Firestore, return DEFAULT_RESUME_DATA from memory.
-      // The document will be created by updateResumeData on the first admin save.
       console.log(`Resume document ${RESUME_DOC_ID} not found in Firestore. Returning in-memory default data.`);
       return { 
         ...DEFAULT_RESUME_DATA,
@@ -76,7 +75,6 @@ export async function getResumeData(): Promise<ResumeData> {
   } catch (error) {
     console.error("Error fetching resume data: ", error);
     console.warn("Falling back to default resume data due to fetch error.");
-    // Return default from memory on error too
     return {
         ...DEFAULT_RESUME_DATA,
         skills: DEFAULT_RESUME_DATA.skills.map((s, i) => ensureId(s, i)),
@@ -88,6 +86,7 @@ export async function getResumeData(): Promise<ResumeData> {
 }
 
 export async function updateResumeData(data: Partial<ResumeData>): Promise<void> {
+  console.log("[resumeService] Attempting to update resume data with payload:", JSON.stringify(data, null, 2));
   try {
     const resumeDocRef = doc(db, RESUME_COLLECTION_NAME, RESUME_DOC_ID);
     const updatePayload: any = { updatedAt: serverTimestamp() };
@@ -103,30 +102,37 @@ export async function updateResumeData(data: Partial<ResumeData>): Promise<void>
     if (data.githubUrl !== undefined) updatePayload.githubUrl = data.githubUrl;
     if (data.linkedinUrl !== undefined) updatePayload.linkedinUrl = data.linkedinUrl;
     
+    console.log("[resumeService] Firestore update/set payload (excluding timestamps):", JSON.stringify(updatePayload, null, 2));
+
     const docSnap = await getDoc(resumeDocRef);
     if (docSnap.exists()) {
+        console.log("[resumeService] Document exists, attempting updateDoc.");
         await updateDoc(resumeDocRef, updatePayload);
     } else {
-        // Document doesn't exist, so create it with full data.
-        // Merge incoming 'data' with defaults for any fields not provided.
+        console.log("[resumeService] Document does not exist, attempting setDoc to create.");
         const fullDataForCreation = {
           summaryItems: data.summaryItems || DEFAULT_RESUME_DATA.summaryItems,
-          skillsList: data.skills ? data.skills.map(({id, ...rest}) => rest) : DEFAULT_RESUME_DATA.skills.map(({id, ...rest}) => rest),
-          educationList: data.education ? data.education.map(({id, ...rest}) => rest) : DEFAULT_RESUME_DATA.education.map(({id, ...rest}) => rest),
-          experienceList: data.experience ? data.experience.map(({id, ...rest}) => rest) : DEFAULT_RESUME_DATA.experience.map(({id, ...rest}) => rest),
-          awardsList: data.awards ? data.awards.map(({id, ...rest}) => rest) : DEFAULT_RESUME_DATA.awards.map(({id, ...rest}) => rest),
+          skillsList: data.skills ? data.skills.map(({id, ...rest}) => rest) : DEFAULT_RESUME_DATA.skills.map(({id, ...rest}) => ({ name: rest.name, level: rest.level })),
+          educationList: data.education ? data.education.map(({id, ...rest}) => rest) : DEFAULT_RESUME_DATA.education.map(({id, ...rest}) => ({ degree: rest.degree, institution: rest.institution, dates: rest.dates, description: rest.description })),
+          experienceList: data.experience ? data.experience.map(({id, ...rest}) => rest) : DEFAULT_RESUME_DATA.experience.map(({id, ...rest}) => ({ jobTitle: rest.jobTitle, company: rest.company, dates: rest.dates, responsibilities: rest.responsibilities })),
+          awardsList: data.awards ? data.awards.map(({id, ...rest}) => rest) : DEFAULT_RESUME_DATA.awards.map(({id, ...rest}) => ({ title: rest.title, issuer: rest.issuer, date: rest.date, url: rest.url })),
           instagramUrl: data.instagramUrl !== undefined ? data.instagramUrl : DEFAULT_RESUME_DATA.instagramUrl,
           githubUrl: data.githubUrl !== undefined ? data.githubUrl : DEFAULT_RESUME_DATA.githubUrl,
           linkedinUrl: data.linkedinUrl !== undefined ? data.linkedinUrl : DEFAULT_RESUME_DATA.linkedinUrl,
-          createdAt: serverTimestamp(), // Add createdAt for the new document
-          updatedAt: serverTimestamp(), // Also set updatedAt for new document
+          createdAt: serverTimestamp(), 
+          updatedAt: serverTimestamp(), 
         };
+        console.log("[resumeService] Payload for new document creation:", JSON.stringify(fullDataForCreation, null, 2));
         await setDoc(resumeDocRef, fullDataForCreation);
-        console.log(`Resume document ${RESUME_DOC_ID} did not exist, created with provided/default data.`);
+        console.log(`[resumeService] Resume document ${RESUME_DOC_ID} did not exist, created with provided/default data.`);
     }
-    console.log("Resume data updated/created successfully.");
+    console.log("[resumeService] Resume data updated/created successfully in Firestore.");
   } catch (error) {
-    console.error("Error updating resume data: ", error);
-    throw new Error(`Failed to update resume data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    console.error("[resumeService] Error updating resume data in Firestore: ", error);
+    // The error object from Firestore often contains a code property (e.g., 'permission-denied')
+    // and a more detailed message.
+    const firestoreError = error as any;
+    throw new Error(`Failed to update resume data: ${firestoreError.code || ''} ${firestoreError.message || 'Unknown Firestore error'}`);
   }
 }
+
