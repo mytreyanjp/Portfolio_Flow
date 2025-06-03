@@ -4,13 +4,14 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import ThemeSwitcher from './ThemeSwitcher';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Briefcase, MessageSquare, FileText, Brain, LockKeyhole, Eye, EyeOff, Volume2, VolumeX, Pencil } from 'lucide-react';
+import { Briefcase, MessageSquare, FileText, Brain, LockKeyhole, Eye, EyeOff, Volume2, VolumeX, Pencil, AlertTriangle } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   AlertDialog,
+  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -32,6 +33,12 @@ const navItems = [
 const SECRET_PASSWORD = "tinku@197";
 const CLICKS_TO_ACTIVATE = 5;
 const MAX_CLICK_DELAY_MS = 1000; // 1 second
+const MAX_FAILED_ATTEMPTS = 6;
+const LOCKOUT_DURATION_MS = 5 * 60 * 60 * 1000; // 5 hours
+
+const FAILED_ATTEMPTS_KEY = 'portfolioSecretLairFailedAttempts';
+const LOCKOUT_END_TIME_KEY = 'portfolioSecretLairLockoutEndTime';
+
 
 interface HeaderProps {
   isSoundEnabled: boolean;
@@ -52,7 +59,7 @@ export default function Header({
   const pathname = usePathname();
   const router = useRouter();
   const { toast } = useToast();
-  const { resolvedTheme } = useTheme(); // Keep this for general theme checks if needed elsewhere
+  const { resolvedTheme } = useTheme();
 
   const [logoClickCount, setLogoClickCount] = useState(0);
   const [lastClickTime, setLastClickTime] = useState(0);
@@ -60,9 +67,41 @@ export default function Header({
   const [passwordAttempt, setPasswordAttempt] = useState('');
   const [showPasswordAttemptVisual, setShowPasswordAttemptVisual] = useState(false);
 
+  const [failedAttempts, setFailedAttemptsState] = useState(0);
+  const [lockoutEndTime, setLockoutEndTimeState] = useState<number | null>(null);
+  const [showLockedUI, setShowLockedUI] = useState(false);
+
+  const updateLockoutStateFromStorage = useCallback(() => {
+    const storedAttempts = localStorage.getItem(FAILED_ATTEMPTS_KEY);
+    const storedLockoutTime = localStorage.getItem(LOCKOUT_END_TIME_KEY);
+
+    const currentAttempts = storedAttempts ? parseInt(storedAttempts, 10) : 0;
+    setFailedAttemptsState(currentAttempts);
+
+    let isCurrentlyLocked = false;
+    if (storedLockoutTime) {
+      const lockoutEnd = parseInt(storedLockoutTime, 10);
+      if (Date.now() < lockoutEnd) {
+        setLockoutEndTimeState(lockoutEnd);
+        if (currentAttempts >= MAX_FAILED_ATTEMPTS) {
+          isCurrentlyLocked = true;
+        }
+      } else {
+        // Lockout expired
+        localStorage.removeItem(FAILED_ATTEMPTS_KEY);
+        localStorage.removeItem(LOCKOUT_END_TIME_KEY);
+        setFailedAttemptsState(0); // Reset state too
+        setLockoutEndTimeState(null);
+      }
+    }
+    setShowLockedUI(isCurrentlyLocked);
+    return isCurrentlyLocked;
+  }, []);
+
   useEffect(() => {
     setMounted(true);
-  }, []);
+    updateLockoutStateFromStorage();
+  }, [updateLockoutStateFromStorage]);
 
   const handleLogoClick = () => {
     const currentTime = Date.now();
@@ -78,6 +117,7 @@ export default function Header({
     setLastClickTime(currentTime);
 
     if (newClickCount >= CLICKS_TO_ACTIVATE) {
+      updateLockoutStateFromStorage(); // Refresh lockout state before showing dialog
       setShowPasswordDialog(true);
       setPasswordAttempt(''); 
       setShowPasswordAttemptVisual(false); 
@@ -85,20 +125,44 @@ export default function Header({
   };
 
   const handlePasswordCheck = () => {
+    if (showLockedUI) return; // Already showing locked UI, no further checks
+
     if (passwordAttempt === SECRET_PASSWORD) {
       toast({
         title: "Access Granted!",
         description: "Welcome to the Secret Lair.",
       });
+      localStorage.removeItem(FAILED_ATTEMPTS_KEY);
+      localStorage.removeItem(LOCKOUT_END_TIME_KEY);
+      setFailedAttemptsState(0);
+      setLockoutEndTimeState(null);
+      setShowLockedUI(false);
       router.push('/secret-lair');
       setShowPasswordDialog(false); 
     } else {
-      toast({
-        title: "Incorrect Password",
-        description: "Please try again.",
-        variant: "destructive",
-      });
-      setPasswordAttempt(''); 
+      const newAttempts = failedAttempts + 1;
+      setFailedAttemptsState(newAttempts);
+      localStorage.setItem(FAILED_ATTEMPTS_KEY, newAttempts.toString());
+
+      if (newAttempts >= MAX_FAILED_ATTEMPTS) {
+        const newLockoutEndTime = Date.now() + LOCKOUT_DURATION_MS;
+        setLockoutEndTimeState(newLockoutEndTime);
+        localStorage.setItem(LOCKOUT_END_TIME_KEY, newLockoutEndTime.toString());
+        setShowLockedUI(true);
+        toast({
+          title: "Access Denied",
+          description: "Too many failed attempts. This feature has been permanently disabled.",
+          variant: "destructive",
+          duration: 10 * 60 * 1000, // 10 minutes for visibility
+        });
+      } else {
+        toast({
+          title: "Incorrect Password",
+          description: `Please try again. Attempts remaining: ${MAX_FAILED_ATTEMPTS - newAttempts}`,
+          variant: "destructive",
+        });
+      }
+      setPasswordAttempt('');
     }
   };
   
@@ -116,7 +180,8 @@ export default function Header({
     setShowPasswordAttemptVisual(false);
     setLogoClickCount(0); 
     setLastClickTime(0);
-  }
+    // Lockout state persists, no reset here unless explicitly done
+  };
 
   return (
     <>
@@ -216,6 +281,9 @@ export default function Header({
 
       <AlertDialog open={showPasswordDialog} onOpenChange={(isOpen) => {
         setShowPasswordDialog(isOpen); 
+        if (isOpen) {
+          updateLockoutStateFromStorage(); // Re-check on open
+        }
         if (!isOpen) {
           handleDialogClose(); 
         }
@@ -224,36 +292,45 @@ export default function Header({
           <form onSubmit={handlePasswordSubmitFormEvent}> 
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center">
-                <LockKeyhole className="mr-2 h-5 w-5 text-primary" />
-                Enter Secret Code
+                {showLockedUI ? <AlertTriangle className="mr-2 h-5 w-5 text-destructive" /> : <LockKeyhole className="mr-2 h-5 w-5 text-primary" />}
+                {showLockedUI ? "Access Disabled" : "Enter Secret Code"}
               </AlertDialogTitle>
               <AlertDialogDescription>
-                You've discovered a hidden path. Enter the password to proceed.
+                {showLockedUI 
+                  ? "Access to this feature has been permanently disabled due to multiple incorrect attempts."
+                  : "You've discovered a hidden path. Enter the password to proceed."
+                }
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <div className="py-4 relative">
-              <Input
-                type={showPasswordAttemptVisual ? "text" : "password"}
-                placeholder="Password"
-                value={passwordAttempt}
-                onChange={(e) => setPasswordAttempt(e.target.value)}
-                autoFocus
-                className="pr-10"
-              />
-              <Button
-                type="button" 
-                variant="ghost"
-                size="icon"
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-foreground"
-                onClick={toggleShowPasswordAttemptVisual}
-                aria-label={showPasswordAttemptVisual ? "Hide password" : "Show password"}
-              >
-                {showPasswordAttemptVisual ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-              </Button>
-            </div>
+            {!showLockedUI && (
+              <div className="py-4 relative">
+                <Input
+                  type={showPasswordAttemptVisual ? "text" : "password"}
+                  placeholder="Password"
+                  value={passwordAttempt}
+                  onChange={(e) => setPasswordAttempt(e.target.value)}
+                  autoFocus
+                  className="pr-10"
+                  disabled={showLockedUI}
+                />
+                <Button
+                  type="button" 
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-foreground"
+                  onClick={toggleShowPasswordAttemptVisual}
+                  aria-label={showPasswordAttemptVisual ? "Hide password" : "Show password"}
+                  disabled={showLockedUI}
+                >
+                  {showPasswordAttemptVisual ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </Button>
+              </div>
+            )}
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel> 
-              <Button type="submit">Unlock</Button>
+              <AlertDialogCancel disabled={showLockedUI && lockoutEndTime !== null && Date.now() < lockoutEndTime}>
+                {showLockedUI ? "Close" : "Cancel"}
+              </AlertDialogCancel> 
+              {!showLockedUI && <Button type="submit" disabled={showLockedUI}>Unlock</Button>}
             </AlertDialogFooter>
           </form>
         </AlertDialogContent>
