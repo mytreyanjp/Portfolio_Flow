@@ -50,7 +50,7 @@ export default function CursorTail() {
   }, []);
 
   const fillColor = useMemo(() => {
-    if (!isClient) return 'transparent'; // Default to transparent if not client or theme not resolved
+    if (!isClient) return 'transparent'; 
 
     const isActuallyDark = resolvedTheme === 'dark';
     const baseRgb = BASE_FILL_COLOR_RGB_DARK_THEME;
@@ -61,13 +61,11 @@ export default function CursorTail() {
   }, [isClient, resolvedTheme]);
 
   const blurFilterId = `cursorBlurFilter`;
-
-  // Don't render the SVG if it's light theme and meant to be completely invisible
+  
   if (!isClient || (resolvedTheme === 'light' && FILL_COLOR_LIGHT_THEME_INVISIBLE_OPACITY === 0 && BLUR_STD_DEVIATION === 0)) {
     return null;
   }
   
-  // If not dark theme, and opacity is 0, we might not need to render it to save resources
   if (isClient && resolvedTheme !== 'dark' && FILL_COLOR_LIGHT_THEME_INVISIBLE_OPACITY === 0) {
     return null;
   }
@@ -82,9 +80,9 @@ export default function CursorTail() {
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none',
-        zIndex: 0, 
-        opacity: isClient && resolvedTheme === 'dark' ? 1 : 0, // Control overall visibility
-        transition: 'opacity 0.3s ease-in-out', // Smooth transition if theme changes
+        zIndex: 5, // Updated z-index
+        opacity: isClient && resolvedTheme === 'dark' ? 1 : 0, 
+        transition: 'opacity 0.3s ease-in-out', 
       }}
       aria-hidden="true"
     >
@@ -97,7 +95,7 @@ export default function CursorTail() {
         cx={position.x}
         cy={position.y}
         r={CIRCLE_RADIUS}
-        fill={fillColor} // fillColor will be transparent in light mode if opacity is 0
+        fill={fillColor} 
         filter={BLUR_STD_DEVIATION > 0 ? `url(#${blurFilterId})` : undefined}
       />
     </svg>

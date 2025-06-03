@@ -72,10 +72,10 @@ const FirefliesEffect: React.FC = () => {
       }
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       firefliesRef.current = [];
-      canvas.style.display = 'none'; // Hide canvas element
+      canvas.style.display = 'none'; 
       return;
     } else {
-      canvas.style.display = 'block'; // Show canvas element
+      canvas.style.display = 'block'; 
     }
 
     let isMounted = true;
@@ -93,10 +93,10 @@ const FirefliesEffect: React.FC = () => {
       initializeFireflies(canvas.width, canvas.height);
     };
 
-    resizeCanvas(); // Initialize on mount or if theme becomes dark
+    resizeCanvas(); 
 
     const animate = () => {
-      if (!isMounted || !ctx || !canvasRef.current || resolvedTheme !== 'dark') { // Added theme check here
+      if (!isMounted || !ctx || !canvasRef.current || resolvedTheme !== 'dark') { 
          if (animationFrameIdRef.current) cancelAnimationFrame(animationFrameIdRef.current);
          return;
       }
@@ -145,7 +145,7 @@ const FirefliesEffect: React.FC = () => {
           firefly.opacity = Math.max(MIN_OPACITY, Math.min(MAX_OPACITY, firefly.opacity));
         }
 
-        if (canvasRef.current) { // Check if canvasRef.current is not null
+        if (canvasRef.current) { 
           if (firefly.x < -firefly.radius) firefly.x = canvasRef.current.width + firefly.radius;
           if (firefly.x > canvasRef.current.width + firefly.radius) firefly.x = -firefly.radius;
           if (firefly.y < -firefly.radius) firefly.y = canvasRef.current.height + firefly.radius;
@@ -204,9 +204,9 @@ const FirefliesEffect: React.FC = () => {
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none',
-        zIndex: 0, 
+        zIndex: 5, // Updated z-index
         display: isClient && resolvedTheme === 'dark' ? 'block' : 'none',
-        transition: 'opacity 0.3s ease-in-out', // For smooth appearance/disappearance if display is not enough
+        transition: 'opacity 0.3s ease-in-out', 
         opacity: isClient && resolvedTheme === 'dark' ? 1 : 0,
       }}
       aria-hidden="true"

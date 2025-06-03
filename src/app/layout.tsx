@@ -38,13 +38,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const [isClient, setIsClient] = useState(false);
-  const { resolvedTheme } = useTheme(); // Keep this to log theme if needed elsewhere
-  const { toast } = useToast(); // Keep toast if used
+  const { resolvedTheme } = useTheme(); 
+  const { toast } = useToast(); 
 
   const [isSoundEnabled, setIsSoundEnabled] = useState(false);
   const [isPersonalizationActive, setIsPersonalizationActive] = useState(false);
   const [showNameInputDialog, setShowNameInputDialog] = useState(false);
-  // isPencilModeActive state is removed
+  
 
   useEffect(() => {
     setIsClient(true);
@@ -70,7 +70,7 @@ export default function RootLayout({
     setShowNameInputDialog(prev => !prev);
   }, []);
 
-  // togglePencilMode function is removed
+  
 
   useEffect(() => {
     if (isClient) {
@@ -85,7 +85,7 @@ export default function RootLayout({
     } else {
       setIsPersonalizationActive(false);
     }
-  }, [showNameInputDialog]); // Re-check personalization when dialog closes
+  }, [showNameInputDialog]); 
 
 
   if (!isClient) {
@@ -113,14 +113,14 @@ export default function RootLayout({
         >
           <AuthProvider>
             <NameProvider>
-              <div className="relative flex min-h-screen flex-col">
+              <div className="relative flex min-h-screen flex-col z-[10]"> {/* Added z-[10] */}
                 <Header
                   isSoundEnabled={isSoundEnabled}
                   toggleSoundEnabled={toggleSoundEnabled}
                   isPersonalizationActive={isPersonalizationActive}
                   toggleNameInputDialog={toggleNameInputDialog}
                   showNameInputDialog={showNameInputDialog}
-                  // isPencilModeActive and togglePencilMode props removed
+                  
                 />
                 <main className="flex-1 container mx-auto px-4 py-8 md:py-12 mt-16 mb-16 md:mt-0 md:mb-0">
                   {children}
@@ -130,7 +130,7 @@ export default function RootLayout({
               <Toaster />
               <CursorTail />
               <FirefliesEffect />
-              {/* LightModeDrawingCanvas component removed */}
+              
             </NameProvider>
           </AuthProvider>
         </ThemeProvider>
