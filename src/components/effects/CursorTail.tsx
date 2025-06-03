@@ -2,35 +2,36 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useTheme } from 'next-themes';
 
 // Appearance settings:
 const CIRCLE_RADIUS = 150;
 const FILL_COLOR_DARK_THEME_VISIBLE_OPACITY = 0.3;
-// const FILL_COLOR_LIGHT_THEME_INVISIBLE_OPACITY = 0.0; // Debug: Keep light theme opacity same as dark for testing
+const FILL_COLOR_LIGHT_THEME_INVISIBLE_OPACITY = 0.0; 
 const BASE_FILL_COLOR_RGB_DARK_THEME = '107, 28, 117'; // Purple for dark theme
-// const BASE_FILL_COLOR_RGB_LIGHT_THEME = '107, 28, 117'; // Base color for light theme (opacity will make it invisible)
 
 const BLUR_STD_DEVIATION = 15;
-const DEBUG_Z_INDEX = 1000; // Debug: High z-index
 
 interface Position {
   x: number;
   y: number;
 }
 
-interface CursorTailProps {
-  isDarkTheme: boolean; // Prop still received, but temporarily ignored for visibility
-}
-
-export default function CursorTail({ isDarkTheme }: CursorTailProps) {
+export default function CursorTail() {
   const [position, setPosition] = useState<Position>(() => {
-    if (typeof window !== 'undefined') { // Always try to set initial sensible position
+    if (typeof window !== 'undefined') {
       return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
     }
     return { x: -CIRCLE_RADIUS * 2, y: -CIRCLE_RADIUS * 2 };
   });
 
   const isMountedRef = useRef(true);
+  const [isClient, setIsClient] = useState(false);
+  const { resolvedTheme } = useTheme();
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -49,14 +50,28 @@ export default function CursorTail({ isDarkTheme }: CursorTailProps) {
   }, []);
 
   const fillColor = useMemo(() => {
-    const baseRgb = BASE_FILL_COLOR_RGB_DARK_THEME;
-    // Debug: Force visibility by always using the dark theme opacity
-    const opacity = FILL_COLOR_DARK_THEME_VISIBLE_OPACITY;
-    const color = `rgba(${baseRgb}, ${opacity})`;
-    return color;
-  }, []); // Removed isDarkTheme from dependency array for debugging
+    if (!isClient) return 'transparent'; // Default to transparent if not client or theme not resolved
 
-  const blurFilterId = `cursorBlurFilter-debug`; // Make ID unique for debugging if needed
+    const isActuallyDark = resolvedTheme === 'dark';
+    const baseRgb = BASE_FILL_COLOR_RGB_DARK_THEME;
+    const opacity = isActuallyDark
+      ? FILL_COLOR_DARK_THEME_VISIBLE_OPACITY
+      : FILL_COLOR_LIGHT_THEME_INVISIBLE_OPACITY;
+    return `rgba(${baseRgb}, ${opacity})`;
+  }, [isClient, resolvedTheme]);
+
+  const blurFilterId = `cursorBlurFilter`;
+
+  // Don't render the SVG if it's light theme and meant to be completely invisible
+  if (!isClient || (resolvedTheme === 'light' && FILL_COLOR_LIGHT_THEME_INVISIBLE_OPACITY === 0 && BLUR_STD_DEVIATION === 0)) {
+    return null;
+  }
+  
+  // If not dark theme, and opacity is 0, we might not need to render it to save resources
+  if (isClient && resolvedTheme !== 'dark' && FILL_COLOR_LIGHT_THEME_INVISIBLE_OPACITY === 0) {
+    return null;
+  }
+
 
   return (
     <svg
@@ -67,7 +82,9 @@ export default function CursorTail({ isDarkTheme }: CursorTailProps) {
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none',
-        zIndex: DEBUG_Z_INDEX, // Debug: Use high z-index
+        zIndex: 0, 
+        opacity: isClient && resolvedTheme === 'dark' ? 1 : 0, // Control overall visibility
+        transition: 'opacity 0.3s ease-in-out', // Smooth transition if theme changes
       }}
       aria-hidden="true"
     >
@@ -80,7 +97,7 @@ export default function CursorTail({ isDarkTheme }: CursorTailProps) {
         cx={position.x}
         cy={position.y}
         r={CIRCLE_RADIUS}
-        fill={fillColor} // Debug: fillColor is now always visible
+        fill={fillColor} // fillColor will be transparent in light mode if opacity is 0
         filter={BLUR_STD_DEVIATION > 0 ? `url(#${blurFilterId})` : undefined}
       />
     </svg>

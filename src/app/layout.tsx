@@ -38,7 +38,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const [isClient, setIsClient] = useState(false);
-  const { resolvedTheme } = useTheme();
+  const { resolvedTheme } = useTheme(); // resolvedTheme is still useful here for other logic
   const { toast } = useToast();
 
   const [isSoundEnabled, setIsSoundEnabled] = useState(false);
@@ -80,13 +80,11 @@ export default function RootLayout({
   }, [resolvedTheme, toast]);
 
   useEffect(() => {
-    // Automatically turn off pencil mode if theme changes away from light
     if (resolvedTheme !== 'light' && isPencilModeActive) {
       setIsPencilModeActive(false);
     }
-    // Console log the theme when it changes or on initial load (after client mount)
     if (isClient) {
-      console.log('Current resolved theme:', resolvedTheme);
+      console.log('RootLayout: Current resolved theme:', resolvedTheme);
     }
   }, [resolvedTheme, isPencilModeActive, isClient]);
 
@@ -97,10 +95,10 @@ export default function RootLayout({
     } else {
       setIsPersonalizationActive(false);
     }
-  }, [showNameInputDialog]); // Re-check when dialog closes, e.g. after name is set
+  }, [showNameInputDialog]);
 
   const isLightTheme = isClient && resolvedTheme === 'light';
-  const isDarkTheme = isClient && resolvedTheme === 'dark';
+  // isDarkTheme variable is no longer needed here for CursorTail/FirefliesEffect
 
   if (!isClient) {
     return (
@@ -133,7 +131,7 @@ export default function RootLayout({
                   toggleSoundEnabled={toggleSoundEnabled}
                   isPersonalizationActive={isPersonalizationActive}
                   toggleNameInputDialog={toggleNameInputDialog}
-                  showNameInputDialog={showNameInputDialog} // Pass state to Header for Dialog
+                  showNameInputDialog={showNameInputDialog}
                   isLightTheme={isLightTheme}
                   isPencilModeActive={isPencilModeActive}
                   togglePencilMode={togglePencilMode}
@@ -144,8 +142,9 @@ export default function RootLayout({
                 <Footer />
               </div>
               <Toaster />
-              <CursorTail isDarkTheme={isDarkTheme} />
-              <FirefliesEffect isDarkTheme={isDarkTheme} />
+              {/* CursorTail and FirefliesEffect no longer take isDarkTheme prop */}
+              <CursorTail />
+              <FirefliesEffect />
               <LightModeDrawingCanvas isDrawingActive={isPencilModeActive && isLightTheme} />
             </NameProvider>
           </AuthProvider>
