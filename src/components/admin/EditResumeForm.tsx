@@ -13,9 +13,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Loader2, Save, Trash2, PlusCircle, Link as LinkIcon, BookOpen, Briefcase, Award as AwardIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ResumeData, Skill, EducationEntry, WorkExperienceEntry, AwardEntry } from '@/data/resumeData';
-import { getResumeData, updateResumeData } from '@/services/resumeService';
+import { getResumeData } from '@/services/resumeService'; // getResumeData is still used for fetching
 import { DEFAULT_RESUME_DATA } from '@/data/resumeData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+// Firebase imports for client-side update
+import { db, auth } from '@/lib/firebase/firebase';
+import { doc, setDoc, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 
 const skillSchema = z.object({
   id: z.string().optional(),
@@ -63,6 +67,9 @@ type EditResumeFormValues = z.infer<typeof editResumeSchema>;
 function generateId(prefix: string = 'item') {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2,9)}`;
 }
+
+// This should be consistent with the value in src/app/secret-lair/page.tsx
+const ADMIN_EMAIL_FOR_VERIFICATION = "mytreyan197@gmail.com";
 
 export default function EditResumeForm() {
   const { toast } = useToast();
@@ -127,32 +134,72 @@ export default function EditResumeForm() {
 
   async function onSubmit(data: EditResumeFormValues) {
     setIsSubmitting(true);
+
+    if (!auth || !auth.currentUser) {
+      toast({
+        title: 'Authentication Error',
+        description: 'You are not signed in. Please sign in as admin.',
+        variant: 'destructive',
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (auth.currentUser.email !== ADMIN_EMAIL_FOR_VERIFICATION) {
+      toast({
+        title: 'Authorization Error',
+        description: 'You are not authorized to perform this action.',
+        variant: 'destructive',
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
-      const resumeDataToSave: ResumeData = {
+      const resumeDataToSave: any = { // Using 'any' for Firestore payload flexibility. Be cautious.
         summaryItems: data.summary.split('\n').map(line => line.trim()).filter(line => line.length > 0),
-        skills: (data.skills || []).map(skill => ({ name: skill.name, level: skill.level })),
-        education: (data.education || []).map(edu => ({ degree: edu.degree, institution: edu.institution, dates: edu.dates, description: edu.description })),
-        experience: (data.experience || []).map(exp => ({
+        skillsList: (data.skills || []).map(skill => ({ name: skill.name, level: skill.level })), // Note: 'skillsList'
+        educationList: (data.education || []).map(edu => ({ degree: edu.degree, institution: edu.institution, dates: edu.dates, description: edu.description })),
+        experienceList: (data.experience || []).map(exp => ({
           jobTitle: exp.jobTitle,
           company: exp.company,
           dates: exp.dates,
           responsibilities: exp.responsibilities.split('\n').map(line => line.trim()).filter(line => line.length > 0),
         })),
-        awards: (data.awards || []).map(award => ({ title: award.title, issuer: award.issuer, date: award.date, url: award.url })),
+        awardsList: (data.awards || []).map(award => ({ title: award.title, issuer: award.issuer, date: award.date, url: award.url })),
         instagramUrl: data.instagramUrl,
         githubUrl: data.githubUrl,
         linkedinUrl: data.linkedinUrl,
+        // Timestamps
+        updatedAt: serverTimestamp(),
       };
-      await updateResumeData(resumeDataToSave);
+      
+      const RESUME_COLLECTION_NAME = 'resumeContent';
+      const RESUME_DOC_ID = 'mainProfile';
+      const resumeDocRef = doc(db, RESUME_COLLECTION_NAME, RESUME_DOC_ID);
+
+      console.log("[EditResumeForm] Attempting to update/set resume data with payload:", JSON.stringify(resumeDataToSave, null, 2));
+
+      const docSnap = await getDoc(resumeDocRef);
+      if (docSnap.exists()) {
+        console.log("[EditResumeForm] Document exists, attempting updateDoc.");
+        await updateDoc(resumeDocRef, resumeDataToSave);
+      } else {
+        console.log("[EditResumeForm] Document does not exist, attempting setDoc to create.");
+        await setDoc(resumeDocRef, { ...resumeDataToSave, createdAt: serverTimestamp() });
+      }
+      
       toast({
         title: 'Resume Updated!',
-        description: 'Your resume has been successfully updated.',
+        description: 'Your resume has been successfully updated in Firestore.',
       });
-      fetchResume(); // Refetch to ensure form and data are in sync, including any server-side transformations
+      fetchResume(); // Refetch to ensure form and data are in sync
     } catch (error) {
+      console.error("[EditResumeForm] Client-side resume update error: ", error);
+      const firestoreError = error as any;
       toast({
         title: 'Error Updating Resume',
-        description: error instanceof Error ? error.message : 'Failed to update resume.',
+        description: `Failed to update resume. ${firestoreError.code ? `(${firestoreError.code})` : ''} ${firestoreError.message || 'Unknown Firestore error'}`,
         variant: 'destructive',
       });
     } finally {
@@ -289,3 +336,4 @@ export default function EditResumeForm() {
     </Form>
   );
 }
+
