@@ -23,7 +23,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
-import { useTheme } from 'next-themes'; // Added useTheme
+import { useTheme } from 'next-themes';
 import { useName } from '@/contexts/NameContext';
 import HandwritingCanvas, { type HandwritingCanvasRef } from '@/components/effects/HandwritingCanvas';
 import { recognizeHandwriting } from '@/ai/flows/recognize-handwriting-flow';
@@ -51,7 +51,6 @@ interface HeaderProps {
   isPersonalizationActive: boolean;
   toggleNameInputDialog: () => void;
   showNameInputDialog: boolean;
-  // isLightTheme: boolean; // Removed from props
   isPencilModeActive: boolean;
   togglePencilMode: () => void;
 }
@@ -62,7 +61,6 @@ export default function Header({
   isPersonalizationActive,
   toggleNameInputDialog,
   showNameInputDialog,
-  // isLightTheme, // Removed
   isPencilModeActive,
   togglePencilMode,
 }: HeaderProps) {
@@ -70,7 +68,7 @@ export default function Header({
   const pathname = usePathname();
   const router = useRouter();
   const { toast } = useToast();
-  const { resolvedTheme } = useTheme(); // Use theme hook directly
+  const { resolvedTheme } = useTheme();
   const { setUserName, setDetectedLanguage } = useName();
   const handwritingCanvasRef = useRef<HandwritingCanvasRef>(null);
   const [isRecognizingName, setIsRecognizingName] = useState(false);
@@ -85,8 +83,6 @@ export default function Header({
   const [failedAttempts, setFailedAttemptsState] = useState(0);
   const [lockoutEndTime, setLockoutEndTimeState] = useState<number | null>(null);
   const [showLockedUI, setShowLockedUI] = useState(false);
-
-  const actualIsLightTheme = resolvedTheme === 'light'; // Determine theme status directly
 
   const updateLockoutStateFromStorage = useCallback(() => {
     const storedAttempts = localStorage.getItem(FAILED_ATTEMPTS_KEY);
@@ -108,13 +104,21 @@ export default function Header({
     }
     setShowLockedUI(isCurrentlyLocked);
     return isCurrentlyLocked;
-  }, [lockoutEndTime]); // lockoutEndTime dependency was missing, added.
+  }, [lockoutEndTime]); 
 
   useEffect(() => {
     setMounted(true);
     updateLockoutStateFromStorage();
   }, [updateLockoutStateFromStorage]);
 
+
+  // This variable determines if the "Screen Drawing" pencil (Edit3 icon) should be visible.
+  // It should only be true if the component is mounted AND the resolved theme is 'light'.
+  const showScreenDrawingPencilButton = mounted && resolvedTheme === 'light';
+  // For debugging, you can add a log here:
+  // if (mounted) {
+  //   console.log('[Header.tsx] resolvedTheme:', resolvedTheme, 'showScreenDrawingPencilButton:', showScreenDrawingPencilButton);
+  // }
 
   const handleLogoClick = () => {
     const currentTime = Date.now();
@@ -245,11 +249,13 @@ export default function Header({
             </nav>
           )}
           <div className="flex items-center space-x-1">
+            {/* Name Personalization Pencil Button (uses Pencil icon) */}
             <Button variant="ghost" size="icon" onClick={toggleNameInputDialog} aria-label={isPersonalizationActive ? "Change personalized name" : "Personalize greeting"} className={cn(isPersonalizationActive && "text-primary")}>
               <Pencil className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out" />
             </Button>
             
-            {actualIsLightTheme && ( // Use actualIsLightTheme derived from useTheme()
+            {/* Screen Drawing Pencil Button (uses Edit3 icon) - Should only show in light theme */}
+            {showScreenDrawingPencilButton && (
               <Button variant="ghost" size="icon" onClick={togglePencilMode} aria-label={isPencilModeActive ? "Disable Screen Drawing" : "Enable Screen Drawing"} className={cn(isPencilModeActive && "text-primary")}>
                 <Edit3 className="h-[1.2rem] w-[1.2rem] transition-all duration-300 ease-in-out" />
               </Button>
