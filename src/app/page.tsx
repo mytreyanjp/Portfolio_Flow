@@ -254,11 +254,11 @@ export default function PortfolioPage() {
       >
         <div className="max-w-3xl mx-auto" ref={introContentRef}>
           {isLoadingName ? (
-            <Skeleton className="h-12 sm:h-14 md:h-16 w-3/4 mx-auto mb-2" /> 
+            <Skeleton className="h-10 sm:h-12 md:h-14 w-3/4 mx-auto mb-2" /> 
           ) : (
             <h1
               id="portfolio-page-main-heading"
-              className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-transparent bg-clip-text relative overflow-hidden mb-2"
+              className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-transparent bg-clip-text relative overflow-hidden mb-2"
               style={{
                 backgroundImage:
                   'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)',
@@ -268,7 +268,7 @@ export default function PortfolioPage() {
             </h1>
           )}
           <p
-            className="font-display text-xl sm:text-2xl md:text-3xl lg:text-4xl text-transparent bg-clip-text relative overflow-hidden mb-2"
+            className="font-display text-lg sm:text-xl md:text-2xl lg:text-3xl text-transparent bg-clip-text relative overflow-hidden mb-2"
              style={{
               backgroundImage:
                 'radial-gradient(circle at calc(100% - var(--gradient-center-x, 50%)) calc(100% - var(--gradient-center-y, 50%)), hsl(var(--primary)) 5%, hsl(var(--accent)) 75%)',
@@ -278,7 +278,7 @@ export default function PortfolioPage() {
               Mytreyan
             </Link> here
           </p>
-          <p className="font-subtext text-base sm:text-lg md:text-xl text-foreground mb-4">
+          <p className="font-subtext text-sm sm:text-base md:text-lg text-foreground mb-4">
             Can create light outta a blackhole
           </p>
           <Button
@@ -422,3 +422,5 @@ export default function PortfolioPage() {
     </div>
   );
 }
+
+    

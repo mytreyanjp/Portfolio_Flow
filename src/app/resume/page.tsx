@@ -99,7 +99,7 @@ export default function ResumePage() {
         <h1
           id="resume-page-main-heading"
           ref={headingRef}
-          className="font-display text-3xl md:text-4xl font-bold text-transparent bg-clip-text relative overflow-hidden"
+          className="font-display text-2xl md:text-3xl lg:text-4xl font-bold text-transparent bg-clip-text relative overflow-hidden"
           style={{ backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)' }}
         >
           My Professional Profile
@@ -249,3 +249,5 @@ export default function ResumePage() {
   );
 }
 
+
+    
