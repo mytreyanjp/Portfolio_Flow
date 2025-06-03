@@ -4,9 +4,9 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ShieldCheck, Zap, Edit3, PlusCircle, Trash2, Loader2, AlertTriangle, Pencil, MessageSquareText } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ShieldCheck, Zap, Edit3, PlusCircle, Trash2, Loader2, AlertTriangle, Pencil, MessageSquareText, LogIn, LogOut, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 import React, { useState, useEffect, useCallback } from 'react';
 import AddProjectForm from '@/components/admin/AddProjectForm';
@@ -18,9 +18,16 @@ import { db } from '@/lib/firebase/firebase';
 import { doc, deleteDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext'; // Import useAuth
+
+// IMPORTANT: Replace this with your actual admin email.
+// For production, this should ideally be managed via environment variables or a secure config.
+const ADMIN_EMAIL = "your-admin-email@example.com"; 
 
 export default function SecretLairPage() {
   const { toast } = useToast();
+  const { user, isLoading: isAuthLoading, error: authError, signInWithGoogle, signOutUser } = useAuth();
+
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
   const [errorLoadingProjects, setErrorLoadingProjects] = useState<string | null>(null);
@@ -34,6 +41,10 @@ export default function SecretLairPage() {
 
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+  
+  const [isGoogleSignInLoading, setIsGoogleSignInLoading] = useState(false);
+
+  const isUserAdmin = user && user.email === ADMIN_EMAIL;
 
   const fetchProjectData = useCallback(async () => {
     setIsLoadingProjects(true);
@@ -63,9 +74,20 @@ export default function SecretLairPage() {
   }, [toast]);
 
   useEffect(() => {
-    fetchProjectData();
-  }, [fetchProjectData]);
+    if (isUserAdmin) {
+      fetchProjectData();
+    }
+  }, [isUserAdmin, fetchProjectData]);
 
+  const handleGoogleSignIn = async () => {
+    setIsGoogleSignInLoading(true);
+    await signInWithGoogle();
+    setIsGoogleSignInLoading(false);
+  };
+
+  const handleSignOut = async () => {
+    await signOutUser();
+  };
 
   const handleOpenDeleteDialog = (project: Project) => {
     setProjectToDelete(project);
@@ -105,6 +127,73 @@ export default function SecretLairPage() {
     setShowEditDialog(true);
   };
 
+  if (isAuthLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] py-12 px-2 sm:px-6 lg:px-8">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="mt-4 text-muted-foreground">Verifying access...</p>
+      </div>
+    );
+  }
+  
+  if (ADMIN_EMAIL === "your-admin-email@example.com") {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] py-12 px-4 text-center">
+        <ShieldAlert className="h-16 w-16 text-destructive mx-auto mb-4" />
+        <h1 className="text-2xl font-bold text-destructive mb-2">Configuration Required</h1>
+        <p className="text-muted-foreground mb-4 max-w-md">
+          Please set the `ADMIN_EMAIL` constant in `src/app/secret-lair/page.tsx` to your Google account email to enable admin access.
+        </p>
+        <Button asChild variant="outline">
+          <Link href="/">Return to Portfolio</Link>
+        </Button>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] py-12 px-4 text-center">
+        <ShieldCheck className="h-16 w-16 text-primary mx-auto mb-4" />
+        <h1 className="text-2xl font-bold text-primary mb-2">Admin Verification Required</h1>
+        <p className="text-muted-foreground mb-6 max-w-md">
+          To access the Secret Lair, please sign in with the authorized Google account.
+        </p>
+        <Button onClick={handleGoogleSignIn} size="lg" disabled={isGoogleSignInLoading}>
+          {isGoogleSignInLoading ? (
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+          ) : (
+            <LogIn className="mr-2 h-5 w-5" />
+          )}
+          Sign in with Google
+        </Button>
+        {authError && <p className="mt-4 text-sm text-destructive">{authError.message}</p>}
+         <Button asChild variant="link" className="mt-8">
+          <Link href="/">Return to Portfolio</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  if (!isUserAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] py-12 px-4 text-center">
+        <ShieldAlert className="h-16 w-16 text-destructive mx-auto mb-4" />
+        <h1 className="text-2xl font-bold text-destructive mb-2">Unauthorized Access</h1>
+        <p className="text-muted-foreground mb-2">
+          The account <span className="font-medium text-foreground">{user.email}</span> is not authorized to access this area.
+        </p>
+        <Button onClick={handleSignOut} variant="destructive" size="lg">
+          <LogOut className="mr-2 h-5 w-5" /> Sign Out
+        </Button>
+         <Button asChild variant="link" className="mt-8">
+          <Link href="/">Return to Portfolio</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  // User is Admin
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] py-12 px-2 sm:px-6 lg:px-8">
       <Card className="w-full max-w-3xl shadow-2xl animate-fadeInUpScale">
@@ -112,7 +201,7 @@ export default function SecretLairPage() {
           <Zap className="h-16 w-16 text-primary mx-auto mb-4 animate-pulse" />
           <CardTitle className="text-3xl font-bold text-primary">Secret Lair Control Panel</CardTitle>
           <CardDescription className="text-lg text-muted-foreground">
-            Welcome, Agent M. Manage your portfolio content.
+            Welcome, Agent M ({user.displayName || user.email}). Manage your portfolio content.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -233,7 +322,10 @@ export default function SecretLairPage() {
             </TabsContent>
           </Tabs>
 
-          <div className="mt-8 border-t pt-6 text-center">
+          <div className="mt-8 border-t pt-6 text-center space-y-3">
+            <Button onClick={handleSignOut} variant="outline" className="w-full max-w-xs mx-auto hover:bg-destructive/10 hover:text-destructive">
+              <LogOut className="mr-2 h-4 w-4" /> Sign Out Admin
+            </Button>
             <Button asChild variant="outline" className="w-full max-w-xs mx-auto hover:bg-primary/10 hover:text-primary">
               <Link href="/">Return to Portfolio</Link>
             </Button>
@@ -291,5 +383,3 @@ export default function SecretLairPage() {
     </div>
   );
 }
-
-    

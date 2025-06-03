@@ -16,6 +16,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal, X as XIcon, Laptop } from 'lucide-react';
 import { NameProvider, useName } from '@/contexts/NameContext';
+import { AuthProvider } from '@/contexts/AuthContext'; // Added AuthProvider
 
 const greaterTheory = localFont({
   src: '../../public/fonts/GreaterTheory.otf',
@@ -136,16 +137,15 @@ function MainContentWithTheme({ children }: { children: React.ReactNode }) {
     <>
       {showDarkThemeEffects && <CursorTail isDarkTheme={currentIsDarkTheme} />}
       {showDarkThemeEffects && <FirefliesEffect isDarkTheme={currentIsDarkTheme} />}
-      {/* LightModeDrawingCanvas functionality is removed, but kept for potential future use */}
       {showLightThemeEffects && <LightModeDrawingCanvas isDrawingActive={false} />}
       
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header 
           isSoundEnabled={isSoundEnabled} 
           toggleSoundEnabled={toggleSoundEnabled}
-          isPersonalizationActive={isPersonalizationActive} // Changed prop name
-          toggleNameInputDialog={toggleNameInputDialog}    // Changed prop name
-          showNameInputDialog={showNameInputDialog}         // Pass dialog state
+          isPersonalizationActive={isPersonalizationActive} 
+          toggleNameInputDialog={toggleNameInputDialog}    
+          showNameInputDialog={showNameInputDialog}         
           isLightTheme={currentIsLightTheme}
         />
         <main className={cn(
@@ -198,9 +198,11 @@ export default function RootLayout({
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-          <NameProvider> {/* Wrap with NameProvider */}
-            <MainContentWithTheme>{children}</MainContentWithTheme>
-          </NameProvider>
+          <AuthProvider> {/* Added AuthProvider */}
+            <NameProvider>
+              <MainContentWithTheme>{children}</MainContentWithTheme>
+            </NameProvider>
+          </AuthProvider> {/* Added AuthProvider */}
         </ThemeProvider>
       </body>
     </html>

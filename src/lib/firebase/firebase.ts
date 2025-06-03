@@ -2,6 +2,8 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth"; // Added getAuth
+
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -44,13 +46,21 @@ if (!getApps().length) {
 }
 
 let db;
+let auth; // Added auth variable
+
 try {
-  db = getFirestore(app);
+  db = getFirestore(app!); // Added non-null assertion assuming app initializes
   console.log("Firestore instance obtained successfully.");
 } catch (error) {
   console.error("Error obtaining Firestore instance:", error);
 }
 
+try {
+  auth = getAuth(app!); // Added non-null assertion
+  console.log("Firebase Auth instance obtained successfully.");
+} catch (error) {
+  console.error("Error obtaining Firebase Auth instance:", error);
+}
 
-export { app, db };
 
+export { app, db, auth }; // Export auth

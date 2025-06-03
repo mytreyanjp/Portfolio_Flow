@@ -7,7 +7,7 @@ import ThemeSwitcher from './ThemeSwitcher';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Briefcase, MessageSquare, FileText, Bot, LockKeyhole, Eye, EyeOff, Volume2, VolumeX, Pencil, AlertTriangle, Save, Loader2 } from 'lucide-react'; // Changed Brain to Bot
+import { Briefcase, MessageSquare, FileText, Bot, LockKeyhole, Eye, EyeOff, Volume2, VolumeX, Pencil, AlertTriangle, Save, Loader2 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   AlertDialog,
@@ -33,7 +33,7 @@ const navItems = [
   { href: '/', label: 'Portfolio', icon: Briefcase },
   { href: '/contact', label: 'Contact', icon: MessageSquare },
   { href: '/resume', label: 'Resume', icon: FileText },
-  { href: '/mr-m', label: 'Mr.M', icon: Bot }, // Changed from AI Intro to Mr.M
+  { href: '/mr-m', label: 'Mr.M', icon: Bot },
 ];
 
 const SECRET_PASSWORD = "tinku@197";
@@ -124,7 +124,7 @@ export default function Header({
   const handlePasswordCheck = () => {
     if (showLockedUI) return;
     if (passwordAttempt === SECRET_PASSWORD) {
-      toast({ title: "Access Granted!", description: "Welcome to the Secret Lair." });
+      toast({ title: "Password Correct!", description: "Proceed to verify your identity for Secret Lair access." });
       localStorage.removeItem(FAILED_ATTEMPTS_KEY);
       localStorage.removeItem(LOCKOUT_END_TIME_KEY);
       setFailedAttemptsState(0); setLockoutEndTimeState(null); setShowLockedUI(false);
@@ -280,14 +280,10 @@ export default function Header({
           if (handwritingCanvasRef.current) {
             handwritingCanvasRef.current.clearCanvas();
           }
-          // Ensure toggleNameInputDialog is only called if the state actually needs to change
-          // This check prevents potential infinite loops if toggleNameInputDialog itself has side effects
-          // that might re-trigger onOpenChange.
           if (isOpen !== showNameInputDialog) {
             toggleNameInputDialog();
           }
         } else if (isOpen && !showNameInputDialog) {
-            // If trying to open and it's not already marked as open, call toggle.
             toggleNameInputDialog();
         }
       }}>
@@ -295,7 +291,6 @@ export default function Header({
           <DialogHeader>
             <DialogTitle>Draw Your Name</DialogTitle>
             <DialogDescription>
-              {/* Removed description text */}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 flex justify-center">
