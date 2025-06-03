@@ -62,22 +62,10 @@ export async function getResumeData(): Promise<ResumeData> {
         linkedinUrl: data.linkedinUrl || DEFAULT_RESUME_DATA.linkedinUrl,
       };
     } else {
-      console.log(`Resume document ${RESUME_DOC_ID} not found. Creating with default data.`);
-      const defaultDataToSave = {
-        summaryItems: DEFAULT_RESUME_DATA.summaryItems,
-        skillsList: DEFAULT_RESUME_DATA.skills.map(({id, ...rest}) => rest), // Remove temp IDs
-        educationList: DEFAULT_RESUME_DATA.education.map(({id, ...rest}) => rest),
-        experienceList: DEFAULT_RESUME_DATA.experience.map(({id, ...rest}) => rest),
-        awardsList: DEFAULT_RESUME_DATA.awards.map(({id, ...rest}) => rest),
-        instagramUrl: DEFAULT_RESUME_DATA.instagramUrl,
-        githubUrl: DEFAULT_RESUME_DATA.githubUrl,
-        linkedinUrl: DEFAULT_RESUME_DATA.linkedinUrl,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      };
-      await setDoc(resumeDocRef, defaultDataToSave);
-      // Return with client-side IDs for consistency
-      return {
+      // Document doesn't exist in Firestore, return DEFAULT_RESUME_DATA from memory.
+      // The document will be created by updateResumeData on the first admin save.
+      console.log(`Resume document ${RESUME_DOC_ID} not found in Firestore. Returning in-memory default data.`);
+      return { 
         ...DEFAULT_RESUME_DATA,
          skills: DEFAULT_RESUME_DATA.skills.map((s, i) => ensureId(s, i)),
          education: DEFAULT_RESUME_DATA.education.map((e,i) => ensureId(e,i)),
@@ -88,12 +76,13 @@ export async function getResumeData(): Promise<ResumeData> {
   } catch (error) {
     console.error("Error fetching resume data: ", error);
     console.warn("Falling back to default resume data due to fetch error.");
+    // Return default from memory on error too
     return {
-      ...DEFAULT_RESUME_DATA,
-      skills: DEFAULT_RESUME_DATA.skills.map((s, i) => ensureId(s, i)),
-      education: DEFAULT_RESUME_DATA.education.map((e,i) => ensureId(e,i)),
-      experience: DEFAULT_RESUME_DATA.experience.map((e,i) => ensureId(e,i)),
-      awards: DEFAULT_RESUME_DATA.awards.map((a,i) => ensureId(a,i)),
+        ...DEFAULT_RESUME_DATA,
+        skills: DEFAULT_RESUME_DATA.skills.map((s, i) => ensureId(s, i)),
+        education: DEFAULT_RESUME_DATA.education.map((e,i) => ensureId(e,i)),
+        experience: DEFAULT_RESUME_DATA.experience.map((e,i) => ensureId(e,i)),
+        awards: DEFAULT_RESUME_DATA.awards.map((a,i) => ensureId(a,i)),
     };
   }
 }
@@ -103,8 +92,9 @@ export async function updateResumeData(data: Partial<ResumeData>): Promise<void>
     const resumeDocRef = doc(db, RESUME_COLLECTION_NAME, RESUME_DOC_ID);
     const updatePayload: any = { updatedAt: serverTimestamp() };
 
+    // Prepare the fields to be saved, removing client-side IDs from array items
     if (data.summaryItems) updatePayload.summaryItems = data.summaryItems;
-    if (data.skills) updatePayload.skillsList = data.skills.map(({ id, ...rest }) => rest); // Store without client ID
+    if (data.skills) updatePayload.skillsList = data.skills.map(({ id, ...rest }) => rest);
     if (data.education) updatePayload.educationList = data.education.map(({ id, ...rest }) => rest);
     if (data.experience) updatePayload.experienceList = data.experience.map(({ id, ...rest }) => rest);
     if (data.awards) updatePayload.awardsList = data.awards.map(({ id, ...rest }) => rest);
@@ -117,7 +107,9 @@ export async function updateResumeData(data: Partial<ResumeData>): Promise<void>
     if (docSnap.exists()) {
         await updateDoc(resumeDocRef, updatePayload);
     } else {
-        const fullData = {
+        // Document doesn't exist, so create it with full data.
+        // Merge incoming 'data' with defaults for any fields not provided.
+        const fullDataForCreation = {
           summaryItems: data.summaryItems || DEFAULT_RESUME_DATA.summaryItems,
           skillsList: data.skills ? data.skills.map(({id, ...rest}) => rest) : DEFAULT_RESUME_DATA.skills.map(({id, ...rest}) => rest),
           educationList: data.education ? data.education.map(({id, ...rest}) => rest) : DEFAULT_RESUME_DATA.education.map(({id, ...rest}) => rest),
@@ -126,12 +118,13 @@ export async function updateResumeData(data: Partial<ResumeData>): Promise<void>
           instagramUrl: data.instagramUrl !== undefined ? data.instagramUrl : DEFAULT_RESUME_DATA.instagramUrl,
           githubUrl: data.githubUrl !== undefined ? data.githubUrl : DEFAULT_RESUME_DATA.githubUrl,
           linkedinUrl: data.linkedinUrl !== undefined ? data.linkedinUrl : DEFAULT_RESUME_DATA.linkedinUrl,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
+          createdAt: serverTimestamp(), // Add createdAt for the new document
+          updatedAt: serverTimestamp(), // Also set updatedAt for new document
         };
-        await setDoc(resumeDocRef, fullData);
+        await setDoc(resumeDocRef, fullDataForCreation);
+        console.log(`Resume document ${RESUME_DOC_ID} did not exist, created with provided/default data.`);
     }
-    console.log("Resume data updated successfully.");
+    console.log("Resume data updated/created successfully.");
   } catch (error) {
     console.error("Error updating resume data: ", error);
     throw new Error(`Failed to update resume data: ${error instanceof Error ? error.message : 'Unknown error'}`);
