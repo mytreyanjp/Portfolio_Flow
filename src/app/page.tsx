@@ -153,9 +153,7 @@ export default function PortfolioPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <header className="mb-12 text-center">
-        <div className="inline-block mb-4 p-3 bg-primary/10 rounded-full">
-          <Sparkles className="h-12 w-12 text-primary" />
-        </div>
+        {/* Sparkles icon removed from here */}
         <h1 className="text-4xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent mb-2">
           {displayGreeting}
         </h1>
@@ -165,7 +163,7 @@ export default function PortfolioPage() {
       </header>
 
       <section className="mb-16 p-6 bg-card border border-border rounded-xl shadow-lg">
-        <h2 className="text-2xl font-semibold text-center text-foreground mb-6">Explore &amp; Connect</h2>
+        <h2 className="text-2xl font-semibold text-center text-foreground mb-6">Explore & Connect</h2>
         <div className="flex flex-col sm:flex-row flex-wrap justify-center items-center gap-4">
           <Button asChild size="lg" className="hover:scale-105 transition-transform duration-200 ease-out hover:bg-primary w-full sm:w-auto">
             <Link href="/contact">
