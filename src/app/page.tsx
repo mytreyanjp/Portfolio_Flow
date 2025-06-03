@@ -1,22 +1,26 @@
+
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'; // Added useRef
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import ProjectCard from '@/components/portfolio/ProjectCard';
 import ProjectFilter, { type Filters } from '@/components/portfolio/ProjectFilter';
 import type { Project } from '@/data/projects';
 import { getProjects, getUniqueCategoriesFromProjects } from '@/services/projectsService';
 import { Button } from '@/components/ui/button';
-import { Loader2, AlertTriangle, Palette, Code2, MessageSquare, FileTextIcon, Bot } from 'lucide-react';
+import { Loader2, AlertTriangle, Palette, Code2, MessageSquare, FileTextIcon, Bot, Eye as ViewIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useName } from '@/contexts/NameContext';
 import { translateText } from '@/ai/flows/translate-text-flow';
 import Link from 'next/link';
+import { useTheme } from 'next-themes';
 
 const INITIAL_FILTERS: Filters = { category: '' };
 const ORIGINAL_GREETING_PREFIX = "Hello ";
 const ORIGINAL_GREETING_NO_NAME = "Hello there, ";
 const ORIGINAL_NAME_FALLBACK = "Mytreyan here";
 const ORIGINAL_MOTTO = "can create light outta a blackhole";
+
+const CURSOR_TAIL_RADIUS = 150; // Matching CursorTail.tsx
 
 export default function PortfolioPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -25,6 +29,7 @@ export default function PortfolioPage() {
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { userName, detectedLanguage, isLoadingName } = useName();
+  const { resolvedTheme } = useTheme();
 
   const [greetingPrefixText, setGreetingPrefixText] = useState(ORIGINAL_GREETING_PREFIX);
   const [greetingNoNameText, setGreetingNoNameText] = useState(ORIGINAL_GREETING_NO_NAME);
@@ -32,10 +37,70 @@ export default function PortfolioPage() {
   const [mottoText, setMottoText] = useState(ORIGINAL_MOTTO);
   const [isTextProcessed, setIsTextProcessed] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
-  const headingRef = useRef<HTMLHeadingElement>(null); // Ref for the main heading
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const viewProjectsButtonRef = useRef<HTMLButtonElement>(null);
+
+  const [isButtonIntersectingCursor, setIsButtonIntersectingCursor] = useState(false);
+  const [isViewProjectsButtonClicked, setIsViewProjectsButtonClicked] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
+    if (typeof window !== 'undefined') {
+      const clicked = localStorage.getItem('viewProjectsButtonClicked');
+      if (clicked === 'true') {
+        setIsViewProjectsButtonClicked(true);
+      }
+    }
+  }, []);
+
+  const checkCollision = useCallback((circleX: number, circleY: number, circleR: number, buttonElement: HTMLElement | null) => {
+    if (!buttonElement) return false;
+    const rect = buttonElement.getBoundingClientRect();
+    // Find the closest point to the circle within the rectangle
+    const closestX = Math.max(rect.left, Math.min(circleX, rect.right));
+    const closestY = Math.max(rect.top, Math.min(circleY, rect.bottom));
+
+    // Calculate the distance between the circle's center and this closest point
+    const distanceX = circleX - closestX;
+    const distanceY = circleY - closestY;
+    const distanceSquared = (distanceX * distanceX) + (distanceY * distanceY);
+
+    return distanceSquared < (circleR * circleR);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient || resolvedTheme !== 'dark' || isViewProjectsButtonClicked || !hasScrolled) {
+      // If not dark theme, button already clicked, or section not scrolled into view,
+      // intersection logic is not active or not needed for visibility trigger.
+      // We can ensure isButtonIntersectingCursor is false if conditions aren't met.
+      if (resolvedTheme !== 'dark' || isViewProjectsButtonClicked) {
+        setIsButtonIntersectingCursor(false);
+      }
+      return;
+    }
+
     const handleMouseMove = (event: MouseEvent) => {
+      if (viewProjectsButtonRef.current) {
+        const intersecting = checkCollision(
+          event.clientX,
+          event.clientY,
+          CURSOR_TAIL_RADIUS,
+          viewProjectsButtonRef.current
+        );
+        setIsButtonIntersectingCursor(intersecting);
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [isClient, resolvedTheme, isViewProjectsButtonClicked, checkCollision, hasScrolled]);
+
+
+  useEffect(() => {
+    const handleMouseMoveHeading = (event: MouseEvent) => {
       if (headingRef.current) {
         const gradientX = (event.clientX / window.innerWidth) * 100;
         const gradientY = (event.clientY / window.innerHeight) * 100;
@@ -43,9 +108,15 @@ export default function PortfolioPage() {
         headingRef.current.style.setProperty('--gradient-center-y', `${gradientY}%`);
       }
     };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
+    if (isClient) {
+      window.addEventListener('mousemove', handleMouseMoveHeading);
+    }
+    return () => {
+      if (isClient) {
+        window.removeEventListener('mousemove', handleMouseMoveHeading);
+      }
+    };
+  }, [isClient]);
 
   const fetchData = useCallback(async () => {
     setIsLoadingProjects(true);
@@ -73,26 +144,28 @@ export default function PortfolioPage() {
 
   useEffect(() => {
     const handleScroll = () => {
-      if (!hasScrolled) {
+      if (!hasScrolled && isClient) {
         setHasScrolled(true);
         window.removeEventListener('scroll', handleScroll);
       }
     };
 
-    if (!hasScrolled) {
+    if (!hasScrolled && isClient) {
       window.addEventListener('scroll', handleScroll);
     }
 
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      if (isClient) {
+        window.removeEventListener('scroll', handleScroll);
+      }
     };
-  }, [hasScrolled]);
+  }, [hasScrolled, isClient]);
 
 
   useEffect(() => {
     setIsTextProcessed(false);
 
-    if (isLoadingName) {
+    if (isLoadingName || !isClient) {
       return;
     }
 
@@ -131,15 +204,15 @@ export default function PortfolioPage() {
     };
 
     processTextContent();
-  }, [detectedLanguage, isLoadingName]);
+  }, [detectedLanguage, isLoadingName, isClient]);
 
-  const displayGreeting = isLoadingName || !isTextProcessed
+  const displayGreeting = !isClient || isLoadingName || !isTextProcessed
     ? "..."
     : userName
       ? `${greetingPrefixText}${userName}, ${nameFallbackText}`
       : `${greetingNoNameText}${nameFallbackText}`;
 
-  const displayMotto = isLoadingName || !isTextProcessed ? "..." : mottoText;
+  const displayMotto = !isClient || isLoadingName || !isTextProcessed ? "..." : mottoText;
 
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {
@@ -156,7 +229,20 @@ export default function PortfolioPage() {
     setFilters(INITIAL_FILTERS);
   };
 
-  const isPageReady = !isLoadingProjects && !isLoadingName && isTextProcessed;
+  const handleViewProjectsClick = () => {
+    setIsViewProjectsButtonClicked(true);
+    if (isClient) {
+      localStorage.setItem('viewProjectsButtonClicked', 'true');
+      const projectsSection = document.getElementById('project-filters-section');
+      if (projectsSection) {
+        projectsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  };
+
+  const isButtonVisibleInDarkTheme = isClient && (isButtonIntersectingCursor || isViewProjectsButtonClicked);
+  const isPageReady = isClient && !isLoadingProjects && !isLoadingName && isTextProcessed;
+
 
   if (!isPageReady) {
     return (
@@ -200,6 +286,7 @@ export default function PortfolioPage() {
       </header>
 
       <section
+        aria-label="Quick navigation links"
         className={cn(
           "mb-16 p-6 bg-card border border-border rounded-xl shadow-lg",
           "transition-all duration-700 ease-in-out",
@@ -209,9 +296,28 @@ export default function PortfolioPage() {
         <h2 className="text-2xl font-semibold text-center text-foreground mb-6">Explore &amp; Connect</h2>
         <div className="flex flex-col sm:flex-row flex-wrap justify-center items-center gap-4">
           <Button
+            ref={viewProjectsButtonRef}
+            size="lg"
+            className={cn(
+              "w-full sm:w-auto transition-all duration-300 ease-out",
+              "bg-card text-foreground hover:bg-card hover:text-foreground hover:scale-105", // Light theme
+              "dark:bg-black dark:text-primary-foreground dark:hover:bg-black", // Dark theme base
+              resolvedTheme === 'dark' && (isButtonVisibleInDarkTheme ? "dark:opacity-100 dark:pointer-events-auto dark:hover:scale-105" : "dark:opacity-0 dark:pointer-events-none")
+            )}
+            onClick={handleViewProjectsClick}
+            // Disable button if it's supposed to be hidden by flashlight effect logic and hasn't been clicked
+            disabled={resolvedTheme === 'dark' && !isButtonVisibleInDarkTheme && !isViewProjectsButtonClicked && !isButtonIntersectingCursor}
+          >
+            <ViewIcon className="mr-2 h-5 w-5" /> View Projects
+          </Button>
+          <Button
             asChild
             size="lg"
-            className="w-full sm:w-auto transition-transform duration-200 ease-out hover:scale-105 bg-card text-foreground hover:bg-card hover:text-foreground dark:bg-black dark:text-primary-foreground dark:hover:bg-black dark:hover:text-primary-foreground"
+            className={cn(
+              "w-full sm:w-auto transition-transform duration-200 ease-out hover:scale-105",
+              "bg-card text-foreground hover:bg-card hover:text-foreground",
+              "dark:bg-black dark:text-primary-foreground dark:hover:bg-black"
+            )}
           >
             <Link href="/contact">
               <MessageSquare className="mr-2 h-5 w-5" /> Get in Touch
@@ -220,7 +326,11 @@ export default function PortfolioPage() {
           <Button
             asChild
             size="lg"
-            className="w-full sm:w-auto transition-transform duration-200 ease-out hover:scale-105 bg-card text-foreground hover:bg-card hover:text-foreground dark:bg-black dark:text-primary-foreground dark:hover:bg-black dark:hover:text-primary-foreground"
+            className={cn(
+              "w-full sm:w-auto transition-transform duration-200 ease-out hover:scale-105",
+              "bg-card text-foreground hover:bg-card hover:text-foreground",
+              "dark:bg-black dark:text-primary-foreground dark:hover:bg-black"
+            )}
           >
             <Link href="/resume">
               <FileTextIcon className="mr-2 h-5 w-5" /> View My Resume
@@ -229,7 +339,11 @@ export default function PortfolioPage() {
           <Button
             asChild
             size="lg"
-            className="w-full sm:w-auto transition-transform duration-200 ease-out hover:scale-105 bg-card text-foreground hover:bg-card hover:text-foreground dark:bg-black dark:text-primary-foreground dark:hover:bg-black dark:hover:text-primary-foreground"
+            className={cn(
+              "w-full sm:w-auto transition-transform duration-200 ease-out hover:scale-105",
+              "bg-card text-foreground hover:bg-card hover:text-foreground",
+              "dark:bg-black dark:text-primary-foreground dark:hover:bg-black"
+            )}
           >
             <Link href="/mr-m">
               <Bot className="mr-2 h-5 w-5" /> Meet Mr.M
@@ -237,13 +351,15 @@ export default function PortfolioPage() {
           </Button>
         </div>
       </section>
-
-      <ProjectFilter
-        filters={filters}
-        onFilterChange={handleFilterChange}
-        onResetFilters={handleResetFilters}
-        availableCategories={allCategories}
-      />
+      
+      <div id="project-filters-section">
+        <ProjectFilter
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onResetFilters={handleResetFilters}
+          availableCategories={allCategories}
+        />
+      </div>
 
       {filteredProjects.length === 0 && !isLoadingProjects && (
         <div className="text-center py-10">
@@ -273,4 +389,4 @@ export default function PortfolioPage() {
     </div>
   );
 }
-
+    
