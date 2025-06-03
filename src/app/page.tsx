@@ -27,22 +27,22 @@ export default function PortfolioPage() {
   const [error, setError] = useState<string | null>(null);
   const pageRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false); // For IntersectionObserver
-  const { userName, detectedLanguage, isLoadingName } = useName(); // isLoadingName for name/language context
+  const { userName, detectedLanguage, isLoadingName } = useName();
 
   const [greetingPrefixText, setGreetingPrefixText] = useState(ORIGINAL_GREETING_PREFIX);
   const [greetingNoNameText, setGreetingNoNameText] = useState(ORIGINAL_GREETING_NO_NAME);
   const [nameFallbackText, setNameFallbackText] = useState(ORIGINAL_NAME_FALLBACK);
   const [mottoText, setMottoText] = useState(ORIGINAL_MOTTO);
+  const [isTextProcessed, setIsTextProcessed] = useState(false); // New state for text readiness
 
   const fetchData = useCallback(async () => {
-    setIsLoading(true); // Set true for project loading
+    setIsLoading(true);
     setError(null);
     try {
       const [fetchedProjects, fetchedCategories] = await Promise.all([
         getProjects(),
         getUniqueCategoriesFromProjects(),
       ]);
-
       setProjects(fetchedProjects);
       setAllCategories(fetchedCategories);
     } catch (err) {
@@ -51,7 +51,7 @@ export default function PortfolioPage() {
       setProjects([]);
       setAllCategories([]);
     } finally {
-      setIsLoading(false); // Set false after project loading attempt
+      setIsLoading(false);
     }
   }, []);
 
@@ -60,52 +60,60 @@ export default function PortfolioPage() {
   }, [fetchData]);
 
   useEffect(() => {
+    setIsTextProcessed(false); // Reset when dependencies change, text needs reprocessing
+
     if (isLoadingName) {
-        setGreetingPrefixText("...");
-        setGreetingNoNameText("...");
-        setNameFallbackText("...");
-        setMottoText("...");
-        return;
+      // While name context is loading, actual text content is not yet determined.
+      // Placeholders will be shown by displayGreeting/displayMotto.
+      // We don't set isTextProcessed to true here, as final text is not ready.
+      return;
     }
 
-    const translateContent = async (text: string, targetLang: string) => {
-      if (!text || !targetLang || targetLang === 'en') return text;
-      try {
-        const result = await translateText({ textToTranslate: text, targetLanguage: targetLang });
-        return result.translatedText;
-      } catch (e) {
-        console.warn(`Translation failed for "${text}" to ${targetLang}:`, e);
-        return text; // Fallback to original text on error
+    // isLoadingName is false, proceed to set/translate text
+    const processTextContent = async () => {
+      if (detectedLanguage && detectedLanguage !== 'en') {
+        try {
+          const [
+            translatedGreetingPrefix,
+            translatedGreetingNoName,
+            translatedNameFallback,
+            translatedMotto,
+          ] = await Promise.all([
+            translateText({ textToTranslate: ORIGINAL_GREETING_PREFIX, targetLanguage: detectedLanguage }),
+            translateText({ textToTranslate: ORIGINAL_GREETING_NO_NAME, targetLanguage: detectedLanguage }),
+            translateText({ textToTranslate: ORIGINAL_NAME_FALLBACK, targetLanguage: detectedLanguage }),
+            translateText({ textToTranslate: ORIGINAL_MOTTO, targetLanguage: detectedLanguage }),
+          ]);
+          setGreetingPrefixText(translatedGreetingPrefix.translatedText);
+          setGreetingNoNameText(translatedGreetingNoName.translatedText);
+          setNameFallbackText(translatedNameFallback.translatedText);
+          setMottoText(translatedMotto.translatedText);
+        } catch (e) {
+          console.warn(`Translation to ${detectedLanguage} failed, falling back to original:`, e);
+          setGreetingPrefixText(ORIGINAL_GREETING_PREFIX);
+          setGreetingNoNameText(ORIGINAL_GREETING_NO_NAME);
+          setNameFallbackText(ORIGINAL_NAME_FALLBACK);
+          setMottoText(ORIGINAL_MOTTO);
+        }
+      } else {
+        setGreetingPrefixText(ORIGINAL_GREETING_PREFIX);
+        setGreetingNoNameText(ORIGINAL_GREETING_NO_NAME);
+        setNameFallbackText(ORIGINAL_NAME_FALLBACK);
+        setMottoText(ORIGINAL_MOTTO);
       }
+      setIsTextProcessed(true); // All text processing is done
     };
 
-    if (detectedLanguage && detectedLanguage !== 'en') {
-      Promise.all([
-        translateContent(ORIGINAL_GREETING_PREFIX, detectedLanguage),
-        translateContent(ORIGINAL_GREETING_NO_NAME, detectedLanguage),
-        translateContent(ORIGINAL_NAME_FALLBACK, detectedLanguage),
-        translateContent(ORIGINAL_MOTTO, detectedLanguage),
-      ]).then(([translatedGreetingPrefix, translatedGreetingNoName, translatedNameFallback, translatedMotto]) => {
-        setGreetingPrefixText(translatedGreetingPrefix);
-        setGreetingNoNameText(translatedGreetingNoName);
-        setNameFallbackText(translatedNameFallback);
-        setMottoText(translatedMotto);
-      });
-    } else {
-      setGreetingPrefixText(ORIGINAL_GREETING_PREFIX);
-      setGreetingNoNameText(ORIGINAL_GREETING_NO_NAME);
-      setNameFallbackText(ORIGINAL_NAME_FALLBACK);
-      setMottoText(ORIGINAL_MOTTO);
-    }
+    processTextContent();
   }, [detectedLanguage, isLoadingName]);
 
-  const displayGreeting = isLoadingName
+  const displayGreeting = isLoadingName || !isTextProcessed
     ? "..."
     : userName
       ? `${greetingPrefixText}${userName}, ${nameFallbackText}`
       : `${greetingNoNameText}${nameFallbackText}`;
 
-  const displayMotto = isLoadingName ? "..." : mottoText;
+  const displayMotto = isLoadingName || !isTextProcessed ? "..." : mottoText;
 
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {
@@ -136,12 +144,11 @@ export default function PortfolioPage() {
         observer.unobserve(currentRef);
       }
     };
-  }, []); // Empty dependency array: observe/unobserve once
+  }, []);
 
-  // Determine if all content is ready for the main section fade-in
-  const isContentReadyForFadeIn = isVisible && !isLoading && !isLoadingName;
+  const isPageReadyForFadeIn = isVisible && !isLoading && !isLoadingName && isTextProcessed;
 
-  if (isLoading) { // Show spinner only while projects are loading
+  if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] py-12">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -168,7 +175,7 @@ export default function PortfolioPage() {
       ref={pageRef}
       className={cn(
         "container mx-auto px-4 py-8 transition-opacity duration-700 ease-in-out",
-        isContentReadyForFadeIn ? "opacity-100" : "opacity-0" // Apply opacity based on combined readiness
+        isPageReadyForFadeIn ? "opacity-100" : "opacity-0"
       )}
     >
       <header className="mb-12 text-center">
@@ -209,7 +216,7 @@ export default function PortfolioPage() {
         availableCategories={allCategories}
       />
 
-      {filteredProjects.length === 0 && !isLoading && ( // Ensure not to show this during initial project load
+      {filteredProjects.length === 0 && !isLoading && (
         <div className="text-center py-10">
           <Palette className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
           <p className="text-xl text-muted-foreground">No projects match your current filters.</p>
@@ -237,4 +244,3 @@ export default function PortfolioPage() {
     </div>
   );
 }
-
