@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback, useRef, CSSProperties } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef, type CSSProperties } from 'react';
 import ProjectCard from '@/components/portfolio/ProjectCard';
 import ProjectFilter, { type Filters } from '@/components/portfolio/ProjectFilter';
 import type { Project } from '@/data/projects';
@@ -23,7 +23,7 @@ const ORIGINAL_MOTTO = "can create light outta a blackhole";
 const FLASHLIGHT_RADIUS = 150; // Must match CURSOR_TAIL_RADIUS from CursorTail.tsx for consistent effect
 
 // Define a type that allows CSS custom properties
-interface CSSWithCustomProps extends CSSProperties {
+interface CSSWithCustomProps extends React.CSSProperties {
   [key: `--${string}`]: string | number;
 }
 
@@ -65,27 +65,28 @@ export default function PortfolioPage() {
     const isFlashlightEffectActive = resolvedTheme === 'dark' && !isViewProjectsButtonClicked;
 
     if (!isFlashlightEffectActive) {
-      setButtonDynamicStyles({}); // Clear styles if effect is not active
+      setButtonDynamicStyles({}); 
       return;
     }
 
-    // Effect is active, set initial styles for "hidden" state via 0-radius clip-path
-    setButtonDynamicStyles({
+    const initialStyles: CSSWithCustomProps = {
       '--flashlight-radius': '0px',
       '--flashlight-x': '0px',
       '--flashlight-y': '0px',
-    });
+    };
+    setButtonDynamicStyles(initialStyles);
 
     const handleMouseMove = (event: MouseEvent) => {
-      if (!viewProjectsButtonRef.current) return; // Check ref still valid
+      if (!viewProjectsButtonRef.current) return; 
       const rect = viewProjectsButtonRef.current.getBoundingClientRect();
       const x = event.clientX - rect.left;
       const y = event.clientY - rect.top;
-      setButtonDynamicStyles({
+      const newMoveStyles: CSSWithCustomProps = {
         '--flashlight-radius': `${FLASHLIGHT_RADIUS}px`,
         '--flashlight-x': `${x}px`,
         '--flashlight-y': `${y}px`,
-      });
+      };
+      setButtonDynamicStyles(newMoveStyles);
     };
 
     window.addEventListener('mousemove', handleMouseMove);
