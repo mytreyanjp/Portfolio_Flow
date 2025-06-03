@@ -170,15 +170,11 @@ export default function Header({
     try {
       const result = await recognizeHandwriting({ imageDataUri });
       if (result.recognizedText && result.recognizedText.trim() !== "") {
-        // Name recognized
         setUserName(result.recognizedText.trim());
 
         if (result.detectedLanguage) {
-          // Language also detected
           setDetectedLanguage(result.detectedLanguage);
-          // No toast needed here as per new requirement
         } else {
-          // Name recognized, but language NOT detected
           setDetectedLanguage(null);
           toast({
             title: "Name Saved, Language Unclear",
@@ -186,10 +182,9 @@ export default function Header({
             variant: "default",
           });
         }
-        toggleNameInputDialog(); // Close dialog in both successful name cases
+        toggleNameInputDialog(); 
       } else {
-        // Name NOT recognized (text is empty or unclear)
-        setDetectedLanguage(null); // Ensure language is cleared
+        setDetectedLanguage(null); 
         toast({
           title: "Recognition Failed",
           description: "Could not recognize a name from the drawing. Please try writing more clearly.",
@@ -285,12 +280,11 @@ export default function Header({
             handwritingCanvasRef.current.clearCanvas();
           }
         }
-        // Ensure toggleNameInputDialog is called to correctly update state in RootLayout
-        if (isOpen !== showNameInputDialog) { // Prevent calling if already in desired state (e.g. external close)
+        if (isOpen !== showNameInputDialog) { 
             toggleNameInputDialog();
         }
       }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-w-xs sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Draw Your Name</DialogTitle>
             <DialogDescription>
@@ -301,15 +295,6 @@ export default function Header({
             <HandwritingCanvas ref={handwritingCanvasRef} />
           </div>
           <DialogFooter className="sm:justify-end">
-             <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={handleCloseNameDialog}
-              disabled={isRecognizingName}
-            >
-              Cancel
-            </Button>
             <Button
               type="button"
               size="sm"
