@@ -64,8 +64,15 @@ export default function PortfolioPage() {
       return;
     }
 
+    // Effect is active, set initial styles for "hidden" state via 0-radius clip-path
+    setButtonDynamicStyles({
+      '--flashlight-radius': '0px',
+      '--flashlight-x': '0px',
+      '--flashlight-y': '0px',
+    });
+
     const handleMouseMove = (event: MouseEvent) => {
-      if (!viewProjectsButtonRef.current) return;
+      if (!viewProjectsButtonRef.current) return; // Check ref still valid
       const rect = viewProjectsButtonRef.current.getBoundingClientRect();
       const x = event.clientX - rect.left;
       const y = event.clientY - rect.top;
@@ -77,8 +84,6 @@ export default function PortfolioPage() {
     };
 
     window.addEventListener('mousemove', handleMouseMove);
-    // Initial call to set style if mouse is already in position (e.g. after theme change)
-    // For simplicity, this relies on first mouse move. A more robust solution might get initial mouse pos.
     
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
@@ -275,9 +280,9 @@ export default function PortfolioPage() {
 
       <div
         className={cn(
-            "flex justify-center mb-12", // Always rendered
+            "flex justify-center mb-12", 
             "transition-opacity duration-500 ease-in-out",
-            "opacity-100" // Always opaque container
+            "opacity-100" 
         )}
       >
         <Button
@@ -286,9 +291,9 @@ export default function PortfolioPage() {
             size="lg"
             className={cn(
               "w-full sm:w-auto",
-              "transition-transform duration-300 ease-out hover:scale-105", // Only transform transition
-              "text-foreground dark:text-primary-foreground", // Base text colors, ensures text is there for dark theme flashlight
-              "hover:bg-transparent dark:hover:bg-transparent", // Ensure no bg change on hover
+              "transition-transform duration-300 ease-out hover:scale-105", 
+              "text-foreground dark:text-primary-foreground", 
+              "hover:bg-transparent dark:hover:bg-transparent", 
               showFlashlightEffect ? "flashlight-clip" : "opacity-100 pointer-events-auto"
             )}
             style={showFlashlightEffect ? buttonDynamicStyles : {}}
@@ -313,8 +318,8 @@ export default function PortfolioPage() {
             size="lg"
             className={cn(
               "w-full sm:w-auto transition-transform duration-200 ease-out hover:scale-105",
-              "bg-card text-foreground hover:bg-card hover:text-foreground", // Light theme specific
-              "dark:bg-black dark:text-primary-foreground dark:hover:bg-black dark:hover:text-primary-foreground" // Dark theme specific
+              "bg-card text-foreground hover:bg-card hover:text-foreground", 
+              "dark:bg-black dark:text-primary-foreground dark:hover:bg-black dark:hover:text-primary-foreground" 
             )}
           >
             <Link href="/contact">
