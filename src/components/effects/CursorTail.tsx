@@ -11,7 +11,7 @@ const BASE_FILL_COLOR_RGB_DARK_THEME = '107, 28, 117'; // Purple for dark theme
 const BASE_FILL_COLOR_RGB_LIGHT_THEME = '107, 28, 117'; // Base color for light theme (opacity will make it invisible)
 
 const BLUR_STD_DEVIATION = 15;
-const Z_INDEX = -1; // Place behind main content
+const Z_INDEX = 0; // Changed from -1 to 0
 // LERP_FACTOR removed as there's no more LERP
 
 interface Position {

@@ -199,7 +199,7 @@ const FirefliesEffect: React.FC<FirefliesEffectProps> = ({ isDarkTheme }) => {
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none',
-        zIndex: -1, // Behind content, above solid background
+        zIndex: 0, // Changed from -1 to 0
         display: isDarkTheme ? 'block' : 'none',
       }}
       aria-hidden="true"
