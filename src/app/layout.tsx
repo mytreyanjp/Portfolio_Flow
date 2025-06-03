@@ -84,7 +84,11 @@ export default function RootLayout({
     if (resolvedTheme !== 'light' && isPencilModeActive) {
       setIsPencilModeActive(false);
     }
-  }, [resolvedTheme, isPencilModeActive]);
+    // Console log the theme when it changes or on initial load (after client mount)
+    if (isClient) {
+      console.log('Current resolved theme:', resolvedTheme);
+    }
+  }, [resolvedTheme, isPencilModeActive, isClient]);
 
   useEffect(() => {
     const storedName = localStorage.getItem('portfolioUserName');
