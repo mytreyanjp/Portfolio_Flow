@@ -17,7 +17,7 @@ const INITIAL_FILTERS: Filters = { category: '' };
 const ORIGINAL_GREETING_PREFIX = "Hello ";
 const ORIGINAL_GREETING_NO_NAME = "Hello there, ";
 const ORIGINAL_NAME_FALLBACK = "Mytreyan here";
-const ORIGINAL_MOTTO = "Crafting digital experiences, one line of code at a time.";
+const ORIGINAL_MOTTO = "can create light outta a blackhole";
 
 export default function PortfolioPage() {
   const [projects, setProjects] = useState<Project[]>([]);
