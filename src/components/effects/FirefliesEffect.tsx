@@ -3,7 +3,7 @@
 
 import React, { useRef, useEffect, useCallback } from 'react';
 
-const NUM_FIREFLIES = 50;
+const NUM_FIREFLIES = 100; // Increased from 50
 const FIREFLY_BASE_COLOR_HSLA = '270, 80%, 70%'; // HSL part of hsla(H, S, L, A)
 const MAX_SPEED = 0.3;
 const MIN_RADIUS = 1;
