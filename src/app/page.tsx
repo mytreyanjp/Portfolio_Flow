@@ -276,20 +276,28 @@ export default function PortfolioPage() {
         </p>
       </header>
 
-      <div 
+      <div
         className={cn(
-            "flex justify-center mb-12", 
-            "transition-opacity duration-500 ease-in-out opacity-100" 
+            "flex justify-center mb-12",
+            "transition-opacity duration-500 ease-in-out",
+            "opacity-100"
         )}
       >
         <Button
             ref={viewProjectsButtonRef}
+            variant="ghost"
             size="lg"
             className={cn(
-              "w-full sm:w-auto transition-all duration-300 ease-out",
-              "bg-card text-foreground hover:bg-card hover:text-foreground hover:scale-105", 
-              "dark:bg-black dark:text-primary-foreground dark:hover:bg-black", 
-              resolvedTheme === 'dark' && (isButtonVisibleInDarkTheme ? "dark:opacity-100 dark:pointer-events-auto dark:hover:scale-105" : "dark:opacity-0 dark:pointer-events-none")
+              "w-full sm:w-auto",
+              "transition-all duration-300 ease-out hover:scale-105",
+              "text-foreground dark:text-primary-foreground", // Base text colors
+              "hover:bg-transparent hover:text-foreground", // Light theme hover
+              "dark:hover:bg-transparent dark:hover:text-primary-foreground", // Dark theme hover
+              resolvedTheme === 'dark' && (
+                isButtonVisibleInDarkTheme
+                ? "dark:opacity-100 dark:pointer-events-auto"
+                : "dark:opacity-0 dark:pointer-events-none"
+              )
             )}
             onClick={handleViewProjectsClick}
             disabled={resolvedTheme === 'dark' && !isButtonVisibleInDarkTheme}
@@ -392,3 +400,4 @@ export default function PortfolioPage() {
     
 
     
+
