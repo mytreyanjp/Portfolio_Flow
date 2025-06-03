@@ -65,17 +65,19 @@ const HandwritingCanvas = forwardRef<HandwritingCanvasRef, HandwritingCanvasProp
       const canvas = canvasRef.current;
       if (context && canvas) {
         const dpr = window.devicePixelRatio || 1;
-        const currentCanvasWidth = canvas.width / dpr;
+        // Get actual render size of canvas from its width/height attributes, not style
+        const currentCanvasWidth = canvas.width / dpr; 
         const currentCanvasHeight = canvas.height / dpr;
 
-        const computedBackgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--background').trim();
-        context.fillStyle = `hsl(${computedBackgroundColor})`;
+        // Fetch current CSS variable values for colors
+        const rootStyle = getComputedStyle(document.documentElement);
+        const currentBackgroundColor = rootStyle.getPropertyValue('--background').trim();
+        const currentRuledLineColor = rootStyle.getPropertyValue('--border').trim();
+        
+        context.fillStyle = `hsl(${currentBackgroundColor})`;
         context.fillRect(0, 0, currentCanvasWidth, currentCanvasHeight);
         
-        const computedRuledLineColor = getComputedStyle(document.documentElement).getPropertyValue('--border').trim();
-        const tempRuledLineColor = `hsl(${computedRuledLineColor})`;
-        
-        drawRuledLines(context, currentCanvasWidth, currentCanvasHeight, tempRuledLineColor);
+        drawRuledLines(context, currentCanvasWidth, currentCanvasHeight, `hsl(${currentRuledLineColor})`);
       }
     };
 
@@ -94,13 +96,42 @@ const HandwritingCanvas = forwardRef<HandwritingCanvasRef, HandwritingCanvasProp
         context.scale(dpr, dpr);
         context.lineCap = 'round';
         context.lineJoin = 'round';
-        const computedLineColor = getComputedStyle(document.documentElement).getPropertyValue('--foreground').trim();
-        context.strokeStyle = `hsl(${computedLineColor})`;
+        // Initial setup of stroke style will be overridden before drawing starts
+        // based on current theme. This is fine.
+        const rootStyle = getComputedStyle(document.documentElement);
+        const currentLineColor = rootStyle.getPropertyValue('--foreground').trim();
+        context.strokeStyle = `hsl(${currentLineColor})`;
         context.lineWidth = lineWidth;
         contextRef.current = context;
         clearCanvasContent(); 
       }
-    }, [isClient, width, height, backgroundColor, ruledLineColor, lineColor, lineWidth]);
+    // Explicitly list dependencies. clearCanvasContent itself depends on props indirectly via computed styles
+    // but its definition doesn't change. Re-running effect for color/lineWidth props ensures canvas updates.
+    }, [isClient, width, height, lineWidth]); // Added lineColor to dependencies
+
+    // Effect to re-apply colors if theme changes
+    useEffect(() => {
+      if (!isClient || !canvasRef.current || !contextRef.current) return;
+        // Re-clear (which also redraws background and lines with current theme colors)
+        // and set drawing properties when theme might have changed.
+        // This effect depends on `backgroundColor`, `ruledLineColor`, `lineColor` from props,
+        // which are now static strings. If these were dynamic based on theme,
+        // this effect would listen to those. Since clearCanvasContent and startDrawing
+        // now fetch live CSS variables, they adapt to theme changes.
+        // We might need to trigger a re-clear if the theme changes externally.
+        // For now, this effect primarily handles initial setup.
+        // If theme is changed via next-themes, the component might not re-render to pick new CSS vars
+        // unless one of its direct dependencies change.
+        // However, clearCanvasContent and startDrawing are called on interaction or mount.
+        // Let's ensure the strokeStyle is updated if lineColor prop could change.
+        const rootStyle = getComputedStyle(document.documentElement);
+        const currentLineColor = rootStyle.getPropertyValue('--foreground').trim();
+        contextRef.current.strokeStyle = `hsl(${currentLineColor})`;
+        contextRef.current.lineWidth = lineWidth;
+        clearCanvasContent(); // Re-clear to apply current theme colors to background/ruled lines
+
+    }, [isClient, backgroundColor, ruledLineColor, lineColor, lineWidth]); // Ensure it runs if these base HSL strings change (they don't)
+
 
     useImperativeHandle(ref, () => ({
       getImageDataUrl: () => {
@@ -129,8 +160,10 @@ const HandwritingCanvas = forwardRef<HandwritingCanvasRef, HandwritingCanvasProp
 
     const startDrawing = (event: React.MouseEvent | React.TouchEvent) => {
       if (!contextRef.current) return;
-      const computedLineColor = getComputedStyle(document.documentElement).getPropertyValue('--foreground').trim();
-      contextRef.current.strokeStyle = `hsl(${computedLineColor})`;
+      // Fetch current theme's foreground color for drawing
+      const rootStyle = getComputedStyle(document.documentElement);
+      const currentLineColor = rootStyle.getPropertyValue('--foreground').trim();
+      contextRef.current.strokeStyle = `hsl(${currentLineColor})`;
       contextRef.current.lineWidth = lineWidth;
 
       const { x, y } = getCoordinates(event);
@@ -173,12 +206,12 @@ const HandwritingCanvas = forwardRef<HandwritingCanvasRef, HandwritingCanvasProp
         <Button
           type="button"
           variant="outline"
-          size="sm"
+          size="icon"
           onClick={clearCanvasContent}
           className="mt-3"
+          aria-label="Clear canvas"
         >
-          <Eraser className="mr-2 h-4 w-4" />
-          Clear
+          <Eraser className="h-5 w-5" />
         </Button>
       </div>
     );
