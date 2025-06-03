@@ -171,7 +171,7 @@ export default function Header({
       const result = await recognizeHandwriting({ imageDataUri });
       if (result.recognizedText && result.recognizedText.trim() !== "") {
         setUserName(result.recognizedText.trim());
-        toast({ title: "Name Recognized!", description: `Your greeting is now personalized, ${result.recognizedText.trim()}!` });
+        // Toast removed from here
         toggleNameInputDialog(); // Close dialog
       } else {
         toast({ title: "Recognition Failed", description: "Could not recognize a name. Please try drawing more clearly.", variant: "destructive" });
