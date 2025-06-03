@@ -258,7 +258,7 @@ export default function PortfolioPage() {
           ) : (
             <h1
               id="portfolio-page-main-heading"
-              className="font-subtext text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-transparent bg-clip-text relative overflow-hidden mb-2"
+              className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-transparent bg-clip-text relative overflow-hidden mb-2"
               style={{
                 backgroundImage:
                   'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 5%, hsl(var(--primary)) 75%)',
@@ -268,7 +268,7 @@ export default function PortfolioPage() {
             </h1>
           )}
           <p
-            className="font-subtext text-lg sm:text-xl md:text-2xl lg:text-3xl text-transparent bg-clip-text relative overflow-hidden mb-2"
+            className="font-display text-lg sm:text-xl md:text-2xl lg:text-3xl text-transparent bg-clip-text relative overflow-hidden mb-2"
              style={{
               backgroundImage:
                 'radial-gradient(circle at calc(100% - var(--gradient-center-x, 50%)) calc(100% - var(--gradient-center-y, 50%)), hsl(var(--primary)) 5%, hsl(var(--accent)) 75%)',
@@ -422,5 +422,7 @@ export default function PortfolioPage() {
     </div>
   );
 }
+
+    
 
     
