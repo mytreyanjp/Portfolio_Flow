@@ -14,8 +14,8 @@ import { translateText } from '@/ai/flows/translate-text-flow';
 import Link from 'next/link';
 
 const INITIAL_FILTERS: Filters = { category: '' };
-const ORIGINAL_GREETING_PREFIX = "Hello "; // Adjusted for "{userName}, "
-const ORIGINAL_GREETING_NO_NAME = "Hello there, "; // Used when no userName
+const ORIGINAL_GREETING_PREFIX = "Hello ";
+const ORIGINAL_GREETING_NO_NAME = "Hello there, ";
 const ORIGINAL_NAME_FALLBACK = "Mytreyan here";
 const ORIGINAL_MOTTO = "Crafting digital experiences, one line of code at a time.";
 
@@ -23,11 +23,11 @@ export default function PortfolioPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [allCategories, setAllCategories] = useState<string[]>([]);
   const [filters, setFilters] = useState<Filters>(INITIAL_FILTERS);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // For project data
   const [error, setError] = useState<string | null>(null);
   const pageRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-  const { userName, detectedLanguage, isLoadingName } = useName(); // Added isLoadingName
+  const [isVisible, setIsVisible] = useState(false); // For IntersectionObserver
+  const { userName, detectedLanguage, isLoadingName } = useName(); // isLoadingName for name/language context
 
   const [greetingPrefixText, setGreetingPrefixText] = useState(ORIGINAL_GREETING_PREFIX);
   const [greetingNoNameText, setGreetingNoNameText] = useState(ORIGINAL_GREETING_NO_NAME);
@@ -35,7 +35,7 @@ export default function PortfolioPage() {
   const [mottoText, setMottoText] = useState(ORIGINAL_MOTTO);
 
   const fetchData = useCallback(async () => {
-    setIsLoading(true);
+    setIsLoading(true); // Set true for project loading
     setError(null);
     try {
       const [fetchedProjects, fetchedCategories] = await Promise.all([
@@ -51,7 +51,7 @@ export default function PortfolioPage() {
       setProjects([]);
       setAllCategories([]);
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Set false after project loading attempt
     }
   }, []);
 
@@ -60,12 +60,11 @@ export default function PortfolioPage() {
   }, [fetchData]);
 
   useEffect(() => {
-    if (isLoadingName) { // Don't run translation if context is still loading
-        // Optionally set to placeholders if desired, or just wait
-        // setGreetingPrefixText("...");
-        // setGreetingNoNameText("...");
-        // setNameFallbackText("...");
-        // setMottoText("...");
+    if (isLoadingName) {
+        setGreetingPrefixText("...");
+        setGreetingNoNameText("...");
+        setNameFallbackText("...");
+        setMottoText("...");
         return;
     }
 
@@ -76,7 +75,7 @@ export default function PortfolioPage() {
         return result.translatedText;
       } catch (e) {
         console.warn(`Translation failed for "${text}" to ${targetLang}:`, e);
-        return text;
+        return text; // Fallback to original text on error
       }
     };
 
@@ -98,16 +97,15 @@ export default function PortfolioPage() {
       setNameFallbackText(ORIGINAL_NAME_FALLBACK);
       setMottoText(ORIGINAL_MOTTO);
     }
-  }, [detectedLanguage, isLoadingName]); // Added isLoadingName dependency
+  }, [detectedLanguage, isLoadingName]);
 
   const displayGreeting = isLoadingName
-    ? "..." // Placeholder while name context is loading
+    ? "..."
     : userName
       ? `${greetingPrefixText}${userName}, ${nameFallbackText}`
       : `${greetingNoNameText}${nameFallbackText}`;
 
-  const displayMotto = isLoadingName ? "..." : mottoText; // Placeholder for motto
-
+  const displayMotto = isLoadingName ? "..." : mottoText;
 
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {
@@ -138,10 +136,12 @@ export default function PortfolioPage() {
         observer.unobserve(currentRef);
       }
     };
-  }, []);
+  }, []); // Empty dependency array: observe/unobserve once
 
+  // Determine if all content is ready for the main section fade-in
+  const isContentReadyForFadeIn = isVisible && !isLoading && !isLoadingName;
 
-  if (isLoading) {
+  if (isLoading) { // Show spinner only while projects are loading
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] py-12">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -168,7 +168,7 @@ export default function PortfolioPage() {
       ref={pageRef}
       className={cn(
         "container mx-auto px-4 py-8 transition-opacity duration-700 ease-in-out",
-        isVisible ? "opacity-100" : "opacity-0"
+        isContentReadyForFadeIn ? "opacity-100" : "opacity-0" // Apply opacity based on combined readiness
       )}
     >
       <header className="mb-12 text-center">
@@ -209,21 +209,23 @@ export default function PortfolioPage() {
         availableCategories={allCategories}
       />
 
-      {filteredProjects.length === 0 ? (
+      {filteredProjects.length === 0 && !isLoading && ( // Ensure not to show this during initial project load
         <div className="text-center py-10">
           <Palette className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
           <p className="text-xl text-muted-foreground">No projects match your current filters.</p>
           <p className="text-sm text-muted-foreground mt-2">Try adjusting or resetting the filters.</p>
         </div>
-      ) : (
+      )}
+
+      {filteredProjects.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10">
           {filteredProjects.map((project, index) => (
             <ProjectCard key={project.id || index} project={project} index={index} />
           ))}
         </div>
       )}
-
-      {projects.length > 0 && filteredProjects.length > 0 && (
+      
+      {projects.length > 0 && filteredProjects.length > 0 && !isLoading && (
          <div className="mt-16 text-center">
           <Code2 className="h-10 w-10 text-primary/70 mx-auto mb-3"/>
           <p className="text-muted-foreground text-sm">
@@ -235,3 +237,4 @@ export default function PortfolioPage() {
     </div>
   );
 }
+
