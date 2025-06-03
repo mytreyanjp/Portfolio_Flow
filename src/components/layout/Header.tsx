@@ -19,8 +19,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input"; // Keep for password
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"; // DialogClose removed
+import { Input } from "@/components/ui/input"; 
 import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from 'next-themes';
@@ -171,6 +171,7 @@ export default function Header({
       const result = await recognizeHandwriting({ imageDataUri });
       if (result.recognizedText && result.recognizedText.trim() !== "") {
         setUserName(result.recognizedText.trim());
+        // No toast here as per request
         toggleNameInputDialog(); // Close dialog
       } else {
         toast({ title: "Recognition Failed", description: "Could not recognize a name. Please try drawing more clearly.", variant: "destructive" });
@@ -182,6 +183,16 @@ export default function Header({
       setIsRecognizingName(false);
     }
   };
+
+  const handleCloseNameDialog = () => {
+    // Call clearCanvas when dialog is about to be closed by any means
+    // (X button, clicking outside, or programmatically)
+    if (handwritingCanvasRef.current) {
+      handwritingCanvasRef.current.clearCanvas();
+    }
+    toggleNameInputDialog(); // Actual toggle from props
+  };
+
 
   return (
     <>
@@ -249,26 +260,31 @@ export default function Header({
       </AlertDialog>
 
       <Dialog open={showNameInputDialog} onOpenChange={(isOpen) => {
-        toggleNameInputDialog();
-        if (isOpen && handwritingCanvasRef.current) {
-          setTimeout(() => handwritingCanvasRef.current?.clearCanvas(), 0); // Ensure canvas is cleared when dialog opens
+        if (!isOpen) { // If dialog is closing
+          if (handwritingCanvasRef.current) {
+            handwritingCanvasRef.current.clearCanvas(); // Clear canvas on close
+          }
         }
+        toggleNameInputDialog(); // Propagate state change
       }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Draw Your Name</DialogTitle>
             <DialogDescription>
-              {/* Description removed as per user request */}
+              {/* Empty as per user request */}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 flex justify-center">
             <HandwritingCanvas ref={handwritingCanvasRef} />
           </div>
-          <DialogFooter className="sm:justify-between">
-            <DialogClose asChild>
-              <Button type="button" variant="outline" disabled={isRecognizingName}>Cancel</Button>
-            </DialogClose>
-            <Button type="button" onClick={handleSaveDrawnName} disabled={isRecognizingName}>
+          <DialogFooter className="sm:justify-end"> 
+            {/* Cancel button removed as per user request */}
+            <Button 
+              type="button" 
+              size="sm" // Made save button smaller
+              onClick={handleSaveDrawnName} 
+              disabled={isRecognizingName}
+            >
               {isRecognizingName ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
               {isRecognizingName ? 'Recognizing...' : 'Save Name'}
             </Button>
@@ -278,4 +294,3 @@ export default function Header({
     </>
   );
 }
-
