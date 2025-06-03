@@ -51,14 +51,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const authError = new Error("Firebase Auth is not initialized for Google Sign-In.");
       setError(authError);
       toast({ title: "Sign-In Error", description: authError.message, variant: "destructive" });
+      console.error("AuthContext: signInWithGoogle called but auth object is not available.");
       return null;
     }
     setIsLoading(true);
     setError(null);
-    const provider = new GoogleAuthProvider();
+    // Explicitly pass the auth instance
+    const provider = new GoogleAuthProvider(auth); 
     try {
       const sdkAuthDomain = auth.app.options.authDomain;
-      console.log(`AuthContext: Attempting Google Sign-In. Using authDomain from SDK: ${sdkAuthDomain}`);
+      const sdkProjectId = auth.app.options.projectId;
+      console.log(`AuthContext: Attempting Google Sign-In. Using authDomain from SDK: ${sdkAuthDomain}, ProjectID: ${sdkProjectId}`);
 
       const result = await signInWithPopup(auth, provider);
       setUser(result.user);
@@ -67,7 +70,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (e: any) {
       console.error("Google Sign-In error:", e);
       const sdkAuthDomainOnError = auth.app.options.authDomain;
-      console.error(`AuthContext: Google Sign-In failed. authDomain from SDK at time of error: ${sdkAuthDomainOnError}`);
+      const sdkProjectIdOnError = auth.app.options.projectId;
+      console.error(`AuthContext: Google Sign-In failed. authDomain from SDK at time of error: ${sdkAuthDomainOnError}, ProjectID: ${sdkProjectIdOnError}`);
       setError(e);
       toast({ title: "Sign-In Failed", description: e.message || "Could not sign in with Google. Please try again.", variant: "destructive" });
       return null;
