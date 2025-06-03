@@ -7,7 +7,7 @@ import ProjectFilter from '@/components/portfolio/ProjectFilter';
 import type { Project } from '@/data/projects';
 import { getProjects, getUniqueCategoriesFromProjects } from '@/services/projectsService';
 import { Button } from '@/components/ui/button';
-import { ArrowDown, Mail, FileText, AlertTriangle, X as XIcon, Loader2, UserCircle } from 'lucide-react';
+import { ArrowDown, Mail, FileText, AlertTriangle, X as XIcon, Loader2, UserCircle, Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -342,6 +342,19 @@ export default function PortfolioPage() {
               <span className="flex items-center">
                 <FileText className="mr-2 h-5 w-5" />
                 View Resume
+              </span>
+            </Link>
+          </Button>
+          <Button
+            asChild
+            size="lg"
+            variant="outline"
+            className="shadow-md hover:shadow-lg transition-transform duration-200 ease-out hover:scale-105 hover:bg-background w-full md:w-auto"
+          >
+            <Link href="/mr-m">
+              <span className="flex items-center">
+                <Bot className="mr-2 h-5 w-5" />
+                Chat with Mr.M
               </span>
             </Link>
           </Button>
