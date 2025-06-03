@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'; // Added useRef
@@ -212,7 +211,7 @@ export default function PortfolioPage() {
           <Button
             asChild
             size="lg"
-            className="bg-black text-primary-foreground hover:bg-black hover:text-primary-foreground hover:scale-105 transition-transform duration-200 ease-out w-full sm:w-auto"
+            className="w-full sm:w-auto transition-transform duration-200 ease-out hover:scale-105 bg-card text-foreground hover:bg-card hover:text-foreground dark:bg-black dark:text-primary-foreground dark:hover:bg-black dark:hover:text-primary-foreground"
           >
             <Link href="/contact">
               <MessageSquare className="mr-2 h-5 w-5" /> Get in Touch
@@ -221,7 +220,7 @@ export default function PortfolioPage() {
           <Button
             asChild
             size="lg"
-            className="bg-black text-primary-foreground hover:bg-black hover:text-primary-foreground hover:scale-105 transition-transform duration-200 ease-out w-full sm:w-auto"
+            className="w-full sm:w-auto transition-transform duration-200 ease-out hover:scale-105 bg-card text-foreground hover:bg-card hover:text-foreground dark:bg-black dark:text-primary-foreground dark:hover:bg-black dark:hover:text-primary-foreground"
           >
             <Link href="/resume">
               <FileTextIcon className="mr-2 h-5 w-5" /> View My Resume
@@ -230,7 +229,7 @@ export default function PortfolioPage() {
           <Button
             asChild
             size="lg"
-            className="bg-black text-primary-foreground hover:bg-black hover:text-primary-foreground hover:scale-105 transition-transform duration-200 ease-out w-full sm:w-auto"
+            className="w-full sm:w-auto transition-transform duration-200 ease-out hover:scale-105 bg-card text-foreground hover:bg-card hover:text-foreground dark:bg-black dark:text-primary-foreground dark:hover:bg-black dark:hover:text-primary-foreground"
           >
             <Link href="/mr-m">
               <Bot className="mr-2 h-5 w-5" /> Meet Mr.M
@@ -274,3 +273,4 @@ export default function PortfolioPage() {
     </div>
   );
 }
+
