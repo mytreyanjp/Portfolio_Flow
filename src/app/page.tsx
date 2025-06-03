@@ -32,6 +32,7 @@ export default function PortfolioPage() {
   const [nameFallbackText, setNameFallbackText] = useState(ORIGINAL_NAME_FALLBACK);
   const [mottoText, setMottoText] = useState(ORIGINAL_MOTTO);
   const [isTextProcessed, setIsTextProcessed] = useState(false);
+  const [hasScrolled, setHasScrolled] = useState(false); // New state for scroll detection
 
   const fetchData = useCallback(async () => {
     setIsLoadingProjects(true);
@@ -56,6 +57,24 @@ export default function PortfolioPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!hasScrolled) {
+        setHasScrolled(true);
+        window.removeEventListener('scroll', handleScroll);
+      }
+    };
+
+    if (!hasScrolled) {
+      window.addEventListener('scroll', handleScroll);
+    }
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [hasScrolled]);
+
 
   useEffect(() => {
     setIsTextProcessed(false);
@@ -161,7 +180,13 @@ export default function PortfolioPage() {
         </p>
       </header>
 
-      <section className="mb-16 p-6 bg-card border border-border rounded-xl shadow-lg">
+      <section
+        className={cn(
+          "mb-16 p-6 bg-card border border-border rounded-xl shadow-lg",
+          "transition-all duration-700 ease-in-out",
+          hasScrolled ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10 pointer-events-none"
+        )}
+      >
         <h2 className="text-2xl font-semibold text-center text-foreground mb-6">Explore &amp; Connect</h2>
         <div className="flex flex-col sm:flex-row flex-wrap justify-center items-center gap-4">
           <Button asChild size="lg" className="hover:scale-105 transition-transform duration-200 ease-out hover:bg-primary/80 w-full sm:w-auto">
