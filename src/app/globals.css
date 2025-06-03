@@ -118,7 +118,7 @@
     opacity: 0;
     transform: translateY(15px) scale(0.9);
   }
-  60% { 
+  60% {
     opacity: 1;
     transform: translateY(-2px) scale(1.05);
   }
@@ -128,4 +128,12 @@
   }
 }
 
-
+/* Flashlight clip effect for buttons */
+.flashlight-clip {
+  /* Ensure the button's content is rendered and opaque so clip-path can reveal it */
+  opacity: 1 !important; 
+  color: hsl(var(--primary-foreground)); /* Explicitly set text color for dark theme reveal */
+  clip-path: circle(var(--flashlight-radius) at var(--flashlight-x) var(--flashlight-y));
+  -webkit-clip-path: circle(var(--flashlight-radius) at var(--flashlight-x) var(--flashlight-y));
+  /* transition: clip-path 0.05s linear; */ /* Optional: for smoother edge transition */
+}

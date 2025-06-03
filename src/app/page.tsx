@@ -20,7 +20,7 @@ const ORIGINAL_GREETING_NO_NAME = "Hello there, ";
 const ORIGINAL_NAME_FALLBACK = "Mytreyan here";
 const ORIGINAL_MOTTO = "can create light outta a blackhole";
 
-const CURSOR_TAIL_RADIUS = 150; 
+const FLASHLIGHT_RADIUS = 150; // Must match CURSOR_TAIL_RADIUS from CursorTail.tsx for consistent effect
 
 export default function PortfolioPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -40,9 +40,9 @@ export default function PortfolioPage() {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const viewProjectsButtonRef = useRef<HTMLButtonElement>(null);
 
-  const [isButtonIntersectingCursor, setIsButtonIntersectingCursor] = useState(false);
   const [isViewProjectsButtonClicked, setIsViewProjectsButtonClicked] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [buttonDynamicStyles, setButtonDynamicStyles] = useState<React.CSSProperties>({});
 
   useEffect(() => {
     setIsClient(true);
@@ -54,40 +54,36 @@ export default function PortfolioPage() {
     }
   }, []);
 
-  const checkCollision = useCallback((circleX: number, circleY: number, circleR: number, buttonElement: HTMLElement | null) => {
-    if (!buttonElement) return false;
-    const rect = buttonElement.getBoundingClientRect();
-    const closestX = Math.max(rect.left, Math.min(circleX, rect.right));
-    const closestY = Math.max(rect.top, Math.min(circleY, rect.bottom));
-    const distanceX = circleX - closestX;
-    const distanceY = circleY - closestY;
-    const distanceSquared = (distanceX * distanceX) + (distanceY * distanceY);
-    return distanceSquared < (circleR * circleR);
-  }, []);
-
   useEffect(() => {
-    if (!isClient || resolvedTheme !== 'dark' || isViewProjectsButtonClicked) {
-      setIsButtonIntersectingCursor(false); 
+    if (!isClient || !viewProjectsButtonRef.current) return;
+
+    const isFlashlightEffectActive = resolvedTheme === 'dark' && !isViewProjectsButtonClicked;
+
+    if (!isFlashlightEffectActive) {
+      setButtonDynamicStyles({}); // Clear styles if effect is not active
       return;
     }
 
     const handleMouseMove = (event: MouseEvent) => {
-      if (viewProjectsButtonRef.current) {
-        const intersecting = checkCollision(
-          event.clientX,
-          event.clientY,
-          CURSOR_TAIL_RADIUS,
-          viewProjectsButtonRef.current
-        );
-        setIsButtonIntersectingCursor(intersecting);
-      }
+      if (!viewProjectsButtonRef.current) return;
+      const rect = viewProjectsButtonRef.current.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      setButtonDynamicStyles({
+        '--flashlight-radius': `${FLASHLIGHT_RADIUS}px`,
+        '--flashlight-x': `${x}px`,
+        '--flashlight-y': `${y}px`,
+      });
     };
 
     window.addEventListener('mousemove', handleMouseMove);
+    // Initial call to set style if mouse is already in position (e.g. after theme change)
+    // For simplicity, this relies on first mouse move. A more robust solution might get initial mouse pos.
+    
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
     };
-  }, [isClient, resolvedTheme, isViewProjectsButtonClicked, checkCollision]);
+  }, [isClient, resolvedTheme, isViewProjectsButtonClicked]);
 
 
   useEffect(() => {
@@ -230,8 +226,7 @@ export default function PortfolioPage() {
       }
     }
   };
-
-  const isButtonVisibleInDarkTheme = isClient && (isButtonIntersectingCursor || isViewProjectsButtonClicked);
+  
   const isPageReady = isClient && !isLoadingProjects && !isLoadingName && isTextProcessed;
 
 
@@ -259,6 +254,8 @@ export default function PortfolioPage() {
     );
   }
 
+  const showFlashlightEffect = isClient && resolvedTheme === 'dark' && !isViewProjectsButtonClicked;
+
   return (
     <div className="container mx-auto px-4 py-8">
       <header className="mb-8 text-center">
@@ -278,9 +275,9 @@ export default function PortfolioPage() {
 
       <div
         className={cn(
-            "flex justify-center mb-12",
+            "flex justify-center mb-12", // Always rendered
             "transition-opacity duration-500 ease-in-out",
-            "opacity-100"
+            "opacity-100" // Always opaque container
         )}
       >
         <Button
@@ -289,18 +286,13 @@ export default function PortfolioPage() {
             size="lg"
             className={cn(
               "w-full sm:w-auto",
-              "transition-all duration-300 ease-out hover:scale-105",
-              "text-foreground dark:text-primary-foreground", // Base text colors
-              "hover:bg-transparent hover:text-foreground", // Light theme hover
-              "dark:hover:bg-transparent dark:hover:text-primary-foreground", // Dark theme hover
-              resolvedTheme === 'dark' && (
-                isButtonVisibleInDarkTheme
-                ? "dark:opacity-100 dark:pointer-events-auto"
-                : "dark:opacity-0 dark:pointer-events-none"
-              )
+              "transition-transform duration-300 ease-out hover:scale-105", // Only transform transition
+              "text-foreground dark:text-primary-foreground", // Base text colors, ensures text is there for dark theme flashlight
+              "hover:bg-transparent dark:hover:bg-transparent", // Ensure no bg change on hover
+              showFlashlightEffect ? "flashlight-clip" : "opacity-100 pointer-events-auto"
             )}
+            style={showFlashlightEffect ? buttonDynamicStyles : {}}
             onClick={handleViewProjectsClick}
-            disabled={resolvedTheme === 'dark' && !isButtonVisibleInDarkTheme}
           >
             <ViewIcon className="mr-2 h-5 w-5" /> View Projects
         </Button>
@@ -321,8 +313,8 @@ export default function PortfolioPage() {
             size="lg"
             className={cn(
               "w-full sm:w-auto transition-transform duration-200 ease-out hover:scale-105",
-              "bg-card text-foreground hover:bg-card hover:text-foreground",
-              "dark:bg-black dark:text-primary-foreground dark:hover:bg-black"
+              "bg-card text-foreground hover:bg-card hover:text-foreground", // Light theme specific
+              "dark:bg-black dark:text-primary-foreground dark:hover:bg-black dark:hover:text-primary-foreground" // Dark theme specific
             )}
           >
             <Link href="/contact">
@@ -335,7 +327,7 @@ export default function PortfolioPage() {
             className={cn(
               "w-full sm:w-auto transition-transform duration-200 ease-out hover:scale-105",
               "bg-card text-foreground hover:bg-card hover:text-foreground",
-              "dark:bg-black dark:text-primary-foreground dark:hover:bg-black"
+              "dark:bg-black dark:text-primary-foreground dark:hover:bg-black dark:hover:text-primary-foreground"
             )}
           >
             <Link href="/resume">
@@ -348,7 +340,7 @@ export default function PortfolioPage() {
             className={cn(
               "w-full sm:w-auto transition-transform duration-200 ease-out hover:scale-105",
               "bg-card text-foreground hover:bg-card hover:text-foreground",
-              "dark:bg-black dark:text-primary-foreground dark:hover:bg-black"
+              "dark:bg-black dark:text-primary-foreground dark:hover:bg-black dark:hover:text-primary-foreground"
             )}
           >
             <Link href="/mr-m">
@@ -395,9 +387,3 @@ export default function PortfolioPage() {
     </div>
   );
 }
-    
-
-    
-
-    
-
