@@ -259,17 +259,17 @@ export default function EditResumeForm() {
 
         <Card>
           <CardHeader>
-            <div className="flex justify-between items-center">
+            <div className="flex flex-wrap justify-between items-center gap-2">
               <CardTitle className="text-xl font-semibold">Key Skills</CardTitle>
               <Button type="button" variant="outline" size="sm" onClick={() => appendSkill({ id: generateId('skill'), name: '', level: 75 })}> <PlusCircle className="mr-2 h-4 w-4" /> Add Skill </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
             {skillFields.map((field, index) => (
-              <div key={field.id} className="flex items-end space-x-3 p-3 border rounded-md bg-muted/30">
-                <FormField control={form.control} name={`skills.${index}.name`} render={({ field: nameField }) => ( <FormItem className="flex-grow"><FormLabel>Skill Name</FormLabel><FormControl><Input placeholder="e.g., React" {...nameField} /></FormControl><FormMessage /></FormItem> )}/>
-                <FormField control={form.control} name={`skills.${index}.level`} render={({ field: levelField }) => ( <FormItem className="w-28"><FormLabel>Proficiency (%)</FormLabel><FormControl><Input type="number" placeholder="e.g., 90" {...levelField} /></FormControl><FormMessage /></FormItem> )}/>
-                <Button type="button" variant="destructive" size="icon" onClick={() => removeSkill(index)} aria-label="Remove skill"><Trash2 className="h-4 w-4" /></Button>
+              <div key={field.id} className="flex flex-col sm:flex-row sm:items-end gap-3 p-3 border rounded-md bg-muted/30">
+                <FormField control={form.control} name={`skills.${index}.name`} render={({ field: nameField }) => ( <FormItem className="w-full sm:flex-grow"><FormLabel>Skill Name</FormLabel><FormControl><Input placeholder="e.g., React" {...nameField} /></FormControl><FormMessage /></FormItem> )}/>
+                <FormField control={form.control} name={`skills.${index}.level`} render={({ field: levelField }) => ( <FormItem className="w-full sm:w-32 flex-shrink-0"><FormLabel>Proficiency (%)</FormLabel><FormControl><Input type="number" placeholder="e.g., 90" {...levelField} /></FormControl><FormMessage /></FormItem> )}/>
+                <Button type="button" variant="destructive" size="icon" onClick={() => removeSkill(index)} aria-label="Remove skill" className="w-full sm:w-auto self-start sm:self-end mt-2 sm:mt-0"><Trash2 className="h-4 w-4" /></Button>
               </div>
             ))}
             <FormMessage>{form.formState.errors.skills?.message || form.formState.errors.skills?.root?.message}</FormMessage>
@@ -278,7 +278,7 @@ export default function EditResumeForm() {
 
         <Card>
           <CardHeader>
-            <div className="flex justify-between items-center">
+            <div className="flex flex-wrap justify-between items-center gap-2">
               <CardTitle className="text-xl font-semibold flex items-center"><BookOpen className="mr-2 h-5 w-5 text-primary" />Education</CardTitle>
               <Button type="button" variant="outline" size="sm" onClick={() => appendEdu({ id: generateId('edu'), degree: '', institution: '', dates: '', description: '' })}><PlusCircle className="mr-2 h-4 w-4" /> Add Education</Button>
             </div>
@@ -298,7 +298,7 @@ export default function EditResumeForm() {
 
         <Card>
           <CardHeader>
-            <div className="flex justify-between items-center">
+            <div className="flex flex-wrap justify-between items-center gap-2">
               <CardTitle className="text-xl font-semibold flex items-center"><Briefcase className="mr-2 h-5 w-5 text-primary" />Work Experience</CardTitle>
               <Button type="button" variant="outline" size="sm" onClick={() => appendExp({ id: generateId('exp'), jobTitle: '', company: '', dates: '', responsibilities: '' })}><PlusCircle className="mr-2 h-4 w-4" /> Add Experience</Button>
             </div>
@@ -318,7 +318,7 @@ export default function EditResumeForm() {
         
         <Card>
           <CardHeader>
-            <div className="flex justify-between items-center">
+            <div className="flex flex-wrap justify-between items-center gap-2">
               <CardTitle className="text-xl font-semibold flex items-center"><AwardIcon className="mr-2 h-5 w-5 text-primary" />Awards & Certifications</CardTitle>
               <Button type="button" variant="outline" size="sm" onClick={() => appendAward({ id: generateId('award'), title: '', issuer: '', date: '', url: '' })}><PlusCircle className="mr-2 h-4 w-4" /> Add Award/Certification</Button>
             </div>
