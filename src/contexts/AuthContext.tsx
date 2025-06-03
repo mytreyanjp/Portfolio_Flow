@@ -57,12 +57,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
     const provider = new GoogleAuthProvider();
     try {
+      const sdkAuthDomain = auth.app.options.authDomain;
+      console.log(`AuthContext: Attempting Google Sign-In. Using authDomain from SDK: ${sdkAuthDomain}`);
+
       const result = await signInWithPopup(auth, provider);
       setUser(result.user);
       toast({ title: "Signed In", description: "Successfully signed in with Google." });
       return result.user;
     } catch (e: any) {
       console.error("Google Sign-In error:", e);
+      const sdkAuthDomainOnError = auth.app.options.authDomain;
+      console.error(`AuthContext: Google Sign-In failed. authDomain from SDK at time of error: ${sdkAuthDomainOnError}`);
       setError(e);
       toast({ title: "Sign-In Failed", description: e.message || "Could not sign in with Google. Please try again.", variant: "destructive" });
       return null;
