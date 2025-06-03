@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'; // Added useRef
 import ProjectCard from '@/components/portfolio/ProjectCard';
 import ProjectFilter, { type Filters } from '@/components/portfolio/ProjectFilter';
 import type { Project } from '@/data/projects';
@@ -33,6 +33,20 @@ export default function PortfolioPage() {
   const [mottoText, setMottoText] = useState(ORIGINAL_MOTTO);
   const [isTextProcessed, setIsTextProcessed] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
+  const headingRef = useRef<HTMLHeadingElement>(null); // Ref for the main heading
+
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      if (headingRef.current) {
+        const gradientX = (event.clientX / window.innerWidth) * 100;
+        const gradientY = (event.clientY / window.innerHeight) * 100;
+        headingRef.current.style.setProperty('--gradient-center-x', `${gradientX}%`);
+        headingRef.current.style.setProperty('--gradient-center-y', `${gradientY}%`);
+      }
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   const fetchData = useCallback(async () => {
     setIsLoadingProjects(true);
@@ -172,7 +186,13 @@ export default function PortfolioPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <header className="mb-12 text-center">
-        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent mb-2">
+        <h1
+          ref={headingRef}
+          className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold text-transparent bg-clip-text mb-2 relative overflow-hidden"
+          style={{
+            backgroundImage: 'radial-gradient(circle at var(--gradient-center-x, 50%) var(--gradient-center-y, 50%), hsl(var(--accent)) 10%, hsl(var(--primary)) 90%)',
+          }}
+        >
           {displayGreeting}
         </h1>
         <p className="text-lg text-muted-foreground font-subtext italic max-w-2xl mx-auto mb-8">
@@ -192,7 +212,7 @@ export default function PortfolioPage() {
           <Button
             asChild
             size="lg"
-            className="bg-black text-primary-foreground hover:bg-black hover:scale-105 transition-transform duration-200 ease-out w-full sm:w-auto"
+            className="bg-black text-primary-foreground hover:bg-black hover:text-primary-foreground hover:scale-105 transition-transform duration-200 ease-out w-full sm:w-auto"
           >
             <Link href="/contact">
               <MessageSquare className="mr-2 h-5 w-5" /> Get in Touch
@@ -201,7 +221,7 @@ export default function PortfolioPage() {
           <Button
             asChild
             size="lg"
-            className="bg-black text-primary-foreground hover:bg-black hover:scale-105 transition-transform duration-200 ease-out w-full sm:w-auto"
+            className="bg-black text-primary-foreground hover:bg-black hover:text-primary-foreground hover:scale-105 transition-transform duration-200 ease-out w-full sm:w-auto"
           >
             <Link href="/resume">
               <FileTextIcon className="mr-2 h-5 w-5" /> View My Resume
@@ -210,7 +230,7 @@ export default function PortfolioPage() {
           <Button
             asChild
             size="lg"
-            className="bg-black text-primary-foreground hover:bg-black hover:scale-105 transition-transform duration-200 ease-out w-full sm:w-auto"
+            className="bg-black text-primary-foreground hover:bg-black hover:text-primary-foreground hover:scale-105 transition-transform duration-200 ease-out w-full sm:w-auto"
           >
             <Link href="/mr-m">
               <Bot className="mr-2 h-5 w-5" /> Meet Mr.M
