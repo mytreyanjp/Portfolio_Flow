@@ -7,7 +7,7 @@ import ProjectFilter, { type Filters } from '@/components/portfolio/ProjectFilte
 import type { Project } from '@/data/projects';
 import { getProjects, getUniqueCategoriesFromProjects } from '@/services/projectsService';
 import { Button } from '@/components/ui/button';
-import { Loader2, AlertTriangle, Palette, Code2, Sparkles, MessageSquare, FileTextIcon, Bot } from 'lucide-react';
+import { Loader2, AlertTriangle, Palette, Code2, MessageSquare, FileTextIcon, Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useName } from '@/contexts/NameContext';
 import { translateText } from '@/ai/flows/translate-text-flow';
@@ -162,19 +162,19 @@ export default function PortfolioPage() {
       </header>
 
       <section className="mb-16 p-6 bg-card border border-border rounded-xl shadow-lg">
-        <h2 className="text-2xl font-semibold text-center text-foreground mb-6">Explore & Connect</h2>
+        <h2 className="text-2xl font-semibold text-center text-foreground mb-6">Explore &amp; Connect</h2>
         <div className="flex flex-col sm:flex-row flex-wrap justify-center items-center gap-4">
-          <Button asChild size="lg" className="hover:scale-105 transition-transform duration-200 ease-out hover:bg-primary w-full sm:w-auto">
+          <Button asChild size="lg" className="hover:scale-105 transition-transform duration-200 ease-out hover:bg-primary/80 w-full sm:w-auto">
             <Link href="/contact">
               <MessageSquare className="mr-2 h-5 w-5" /> Get in Touch
             </Link>
           </Button>
-          <Button asChild variant="outline" size="lg" className="hover:scale-105 transition-transform duration-200 ease-out hover:bg-background w-full sm:w-auto">
+          <Button asChild variant="outline" size="lg" className="hover:scale-105 transition-transform duration-200 ease-out hover:bg-primary/80 hover:text-primary-foreground hover:border-primary/80 w-full sm:w-auto">
             <Link href="/resume">
               <FileTextIcon className="mr-2 h-5 w-5" /> View My Resume
             </Link>
           </Button>
-          <Button asChild size="lg" variant="secondary" className="hover:scale-105 transition-transform duration-200 ease-out hover:bg-accent hover:text-accent-foreground w-full sm:w-auto">
+          <Button asChild size="lg" variant="secondary" className="hover:scale-105 transition-transform duration-200 ease-out hover:bg-primary/80 hover:text-primary-foreground w-full sm:w-auto">
             <Link href="/mr-m">
               <Bot className="mr-2 h-5 w-5" /> Meet Mr.M
             </Link>
