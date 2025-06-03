@@ -23,7 +23,7 @@ export default function PortfolioPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [allCategories, setAllCategories] = useState<string[]>([]);
   const [filters, setFilters] = useState<Filters>(INITIAL_FILTERS);
-  const [isLoading, setIsLoading] = useState(true); // For project data
+  const [isLoadingProjects, setIsLoadingProjects] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { userName, detectedLanguage, isLoadingName } = useName();
 
@@ -34,7 +34,7 @@ export default function PortfolioPage() {
   const [isTextProcessed, setIsTextProcessed] = useState(false);
 
   const fetchData = useCallback(async () => {
-    setIsLoading(true);
+    setIsLoadingProjects(true);
     setError(null);
     try {
       const [fetchedProjects, fetchedCategories] = await Promise.all([
@@ -49,7 +49,7 @@ export default function PortfolioPage() {
       setProjects([]);
       setAllCategories([]);
     } finally {
-      setIsLoading(false);
+      setIsLoadingProjects(false);
     }
   }, []);
 
@@ -58,7 +58,7 @@ export default function PortfolioPage() {
   }, [fetchData]);
 
   useEffect(() => {
-    setIsTextProcessed(false); 
+    setIsTextProcessed(false);
 
     if (isLoadingName) {
       return;
@@ -95,7 +95,7 @@ export default function PortfolioPage() {
         setNameFallbackText(ORIGINAL_NAME_FALLBACK);
         setMottoText(ORIGINAL_MOTTO);
       }
-      setIsTextProcessed(true); 
+      setIsTextProcessed(true);
     };
 
     processTextContent();
@@ -124,14 +124,14 @@ export default function PortfolioPage() {
     setFilters(INITIAL_FILTERS);
   };
 
-  const isPageReady = !isLoading && !isLoadingName && isTextProcessed;
+  const isPageReady = !isLoadingProjects && !isLoadingName && isTextProcessed;
 
-  if (isLoading || isLoadingName || !isTextProcessed) {
+  if (!isPageReady) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] py-12">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
         <p className="text-muted-foreground">
-          {isLoading ? "Loading projects..." : "Preparing content..."}
+          {isLoadingProjects ? "Loading projects..." : "Preparing content..."}
         </p>
       </div>
     );
@@ -151,12 +151,7 @@ export default function PortfolioPage() {
   }
 
   return (
-    <div
-      className={cn(
-        "container mx-auto px-4 py-8",
-        isPageReady ? "opacity-100" : "opacity-0" // Keep opacity for initial render before ready
-      )}
-    >
+    <div className="container mx-auto px-4 py-8">
       <header className="mb-12 text-center">
         <div className="inline-block mb-4 p-3 bg-primary/10 rounded-full">
           <Sparkles className="h-12 w-12 text-primary" />
@@ -170,11 +165,8 @@ export default function PortfolioPage() {
       </header>
 
       <section className="mb-16 p-6 bg-card border border-border rounded-xl shadow-lg">
-        <h2 className="text-2xl font-semibold text-center text-foreground mb-3">Explore &amp; Connect</h2>
-        <p className="text-muted-foreground text-center max-w-xl mx-auto mb-6">
-          Dive deeper into my work, or get in touch to discuss potential collaborations, projects, or just to say hi!
-        </p>
-        <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
+        <h2 className="text-2xl font-semibold text-center text-foreground mb-6">Explore &amp; Connect</h2>
+        <div className="flex flex-col sm:flex-row flex-wrap justify-center items-center gap-4">
           <Button asChild size="lg" className="hover:scale-105 transition-transform duration-200 ease-out hover:bg-primary w-full sm:w-auto">
             <Link href="/contact">
               <MessageSquare className="mr-2 h-5 w-5" /> Get in Touch
@@ -183,6 +175,11 @@ export default function PortfolioPage() {
           <Button asChild variant="outline" size="lg" className="hover:scale-105 transition-transform duration-200 ease-out hover:bg-background w-full sm:w-auto">
             <Link href="/resume">
               <FileTextIcon className="mr-2 h-5 w-5" /> View My Resume
+            </Link>
+          </Button>
+          <Button asChild size="lg" variant="secondary" className="hover:scale-105 transition-transform duration-200 ease-out hover:bg-accent hover:text-accent-foreground w-full sm:w-auto">
+            <Link href="/ai-intro">
+              <Sparkles className="mr-2 h-5 w-5" /> AI Tools
             </Link>
           </Button>
         </div>
@@ -195,7 +192,7 @@ export default function PortfolioPage() {
         availableCategories={allCategories}
       />
 
-      {filteredProjects.length === 0 && !isLoading && (
+      {filteredProjects.length === 0 && !isLoadingProjects && (
         <div className="text-center py-10">
           <Palette className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
           <p className="text-xl text-muted-foreground">No projects match your current filters.</p>
@@ -211,7 +208,7 @@ export default function PortfolioPage() {
         </div>
       )}
       
-      {projects.length > 0 && filteredProjects.length > 0 && !isLoading && (
+      {projects.length > 0 && filteredProjects.length > 0 && !isLoadingProjects && (
          <div className="mt-16 text-center">
           <Code2 className="h-10 w-10 text-primary/70 mx-auto mb-3"/>
           <p className="text-muted-foreground text-sm">
