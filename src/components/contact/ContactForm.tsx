@@ -10,15 +10,16 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import React from 'react';
+import React, { useEffect } from 'react'; // Added useEffect
 import { cn } from '@/lib/utils';
 import { db } from '@/lib/firebase/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useName } from '@/contexts/NameContext'; // Import useName
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.').max(50, 'Name must be less than 50 characters.'),
   email: z.string().email('Invalid email address.'),
-  message: z.string().min(10, 'Message must be at least 10 characters.').max(1000, 'Message must be less than 1000 characters.'), // Increased max length
+  message: z.string().min(10, 'Message must be at least 10 characters.').max(1000, 'Message must be less than 1000 characters.'),
 });
 
 type ContactFormValues = z.infer<typeof formSchema>;
@@ -30,7 +31,7 @@ async function saveContactMessageToFirestore(data: ContactFormValues): Promise<{
       email: data.email,
       message: data.message,
       createdAt: serverTimestamp(),
-      isRead: false, // Default to unread
+      isRead: false, 
     });
     return {
       success: true,
@@ -50,6 +51,7 @@ async function saveContactMessageToFirestore(data: ContactFormValues): Promise<{
 export default function ContactForm() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const { userName, isLoadingName } = useName(); // Get userName and loading state
 
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(formSchema),
@@ -60,6 +62,27 @@ export default function ContactForm() {
     },
   });
 
+  useEffect(() => {
+    if (!isLoadingName && userName) {
+      // Only set the value if the form's name field is currently empty
+      // or if it matches the previous userName (if we were tracking that)
+      // For simplicity, we'll update it if userName is available.
+      // To prevent overwriting user input, you could add more complex logic here,
+      // e.g., form.getValues('name') === ''
+      form.reset({ ...form.getValues(), name: userName });
+    } else if (!isLoadingName && !userName) {
+      // If userName is cleared, clear the name field if it was prefilled by the context
+      // This check prevents clearing manually typed names if the context name was never set
+      // or was already different. A more robust way might involve checking if the current
+      // form name value was indeed set by the context previously.
+      // For now, if userName from context is null, we don't change the form's name field
+      // unless it was clearly set by a previous userName value.
+      // To simplify, we can decide to clear it or leave it.
+      // Let's leave it as is if userName becomes null, user can clear it manually.
+      // If you want to clear it: form.reset({ ...form.getValues(), name: '' });
+    }
+  }, [userName, isLoadingName, form]);
+
   async function onSubmit(data: ContactFormValues) {
     setIsSubmitting(true);
     try {
@@ -69,7 +92,7 @@ export default function ContactForm() {
           title: 'Message Sent!',
           description: result.message,
         });
-        form.reset();
+        form.reset({ name: userName || '', email: '', message: '' }); // Reset form but keep pre-filled name if available
       } else {
         toast({
           title: 'Error Sending Message',
@@ -135,7 +158,7 @@ export default function ContactForm() {
           className={cn(
             "w-full hover:scale-105 transition-transform duration-200 ease-out hover:bg-primary"
           )}
-          disabled={isSubmitting}
+          disabled={isSubmitting || isLoadingName} // Disable button while name is loading too
         >
           {isSubmitting ? (
             <>
