@@ -50,7 +50,16 @@ export default function RootLayout({
     setIsClient(true);
     const storedSoundPref = localStorage.getItem('portfolioSoundEnabled');
     if (storedSoundPref) {
-      setIsSoundEnabled(JSON.parse(storedSoundPref));
+      const soundPrefEnabled = JSON.parse(storedSoundPref);
+      setIsSoundEnabled(soundPrefEnabled);
+      // If sound was enabled and audio element is ready, set loop and play
+      if (soundPrefEnabled && clickSoundRef.current) {
+        clickSoundRef.current.loop = true;
+        clickSoundRef.current.play().catch(error => {
+          console.warn("Initial auto-play failed:", error);
+          // User interaction might be needed to start audio in some browsers
+        });
+      }
     }
     const storedName = localStorage.getItem('portfolioUserName');
     if (storedName) {
@@ -61,9 +70,23 @@ export default function RootLayout({
     if (typeof Audio !== "undefined") {
       clickSoundRef.current = new Audio('/sounds/dark-theme-sound.mp3');
       clickSoundRef.current.preload = 'auto';
+      // If sound was already set to enabled from localStorage, start playing
+      if (JSON.parse(storedSoundPref || 'false')) {
+        clickSoundRef.current.loop = true;
+        clickSoundRef.current.play().catch(error => {
+           if (error.name === 'NotSupportedError' || error.message.includes('failed to load')) {
+            console.error(
+              "Audio play failed. Ensure '/sounds/dark-theme-sound.mp3' exists in the 'public/sounds/' folder and is a valid audio file.",
+              error
+            );
+            toast({ title: "Audio Error", description: "Sound file '/sounds/dark-theme-sound.mp3' missing or invalid.", variant: "destructive" });
+          } else {
+            console.warn("Initial audio play failed for dark-theme-sound.mp3 (possibly due to browser policy):", error);
+          }
+        });
+      }
     }
-
-  }, []);
+  }, [toast]); // Added toast to dependency array
 
   const toggleSoundEnabled = useCallback(() => {
     const newSoundState = !isSoundEnabled;
@@ -72,6 +95,7 @@ export default function RootLayout({
 
     if (clickSoundRef.current) {
       if (newSoundState) { // Sound is being turned ON
+        clickSoundRef.current.loop = true;
         clickSoundRef.current.currentTime = 0; 
         clickSoundRef.current.play().catch(error => {
           if (error.name === 'NotSupportedError' || error.message.includes('failed to load')) {
@@ -85,6 +109,7 @@ export default function RootLayout({
           }
         });
       } else { // Sound is being turned OFF
+        clickSoundRef.current.loop = false;
         clickSoundRef.current.pause();
         clickSoundRef.current.currentTime = 0; 
       }
