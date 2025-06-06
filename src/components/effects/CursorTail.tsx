@@ -80,7 +80,7 @@ export default function CursorTail() {
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none',
-        zIndex: 5, // Updated z-index
+        zIndex: 3, // Adjusted z-index to be above fireflies
         opacity: isClient && resolvedTheme === 'dark' ? 1 : 0, 
         transition: 'opacity 0.3s ease-in-out', 
       }}
