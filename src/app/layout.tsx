@@ -122,7 +122,7 @@ export default function RootLayout({
                   showNameInputDialog={showNameInputDialog}
                   
                 />
-                <main className="flex-1 container mx-auto px-4 py-8 md:py-12 mt-16 mb-16 md:mt-0 md:mb-0">
+                <main className="flex-1 container mx-auto px-4 py-16 md:py-20 mt-16 mb-16 md:mt-0 md:mb-0">
                   {children}
                 </main>
                 <Footer />
