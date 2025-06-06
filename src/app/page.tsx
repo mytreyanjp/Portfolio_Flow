@@ -15,14 +15,15 @@ import Link from 'next/link';
 import { useTheme } from 'next-themes';
 
 const INITIAL_FILTERS: Filters = { category: '' };
-const ORIGINAL_GREETING_PREFIX = "Hello ";
-const ORIGINAL_GREETING_NO_NAME = "Hello there, ";
-const ORIGINAL_NAME_FALLBACK = "Mytreyan here";
+
+// New constants for personalized greeting
+const ORIGINAL_GREETING_WITH_NAME_PREFIX = "Hello ";
+const ORIGINAL_GREETING_WITH_NAME_SUFFIX = ", I'm Mytreyan"; // Comma is part of the suffix
+const ORIGINAL_GREETING_WITHOUT_NAME = "Hello there, I'm Mytreyan";
 const ORIGINAL_MOTTO = "can create light outta a blackhole";
 
-const FLASHLIGHT_RADIUS = 150; // Must match CURSOR_TAIL_RADIUS from CursorTail.tsx for consistent effect
+const FLASHLIGHT_RADIUS = 150; 
 
-// Define a type that allows CSS custom properties
 interface CSSWithCustomProps extends React.CSSProperties {
   [key: `--${string}`]: string | number;
 }
@@ -36,10 +37,12 @@ export default function PortfolioPage() {
   const { userName, detectedLanguage, isLoadingName } = useName();
   const { resolvedTheme } = useTheme();
 
-  const [greetingPrefixText, setGreetingPrefixText] = useState(ORIGINAL_GREETING_PREFIX);
-  const [greetingNoNameText, setGreetingNoNameText] = useState(ORIGINAL_GREETING_NO_NAME);
-  const [nameFallbackText, setNameFallbackText] = useState(ORIGINAL_NAME_FALLBACK);
+  // State for translated text parts
+  const [greetingWithNamePrefixText, setGreetingWithNamePrefixText] = useState(ORIGINAL_GREETING_WITH_NAME_PREFIX);
+  const [greetingWithNameSuffixText, setGreetingWithNameSuffixText] = useState(ORIGINAL_GREETING_WITH_NAME_SUFFIX);
+  const [greetingWithoutNameText, setGreetingWithoutNameText] = useState(ORIGINAL_GREETING_WITHOUT_NAME);
   const [mottoText, setMottoText] = useState(ORIGINAL_MOTTO);
+
   const [isTextProcessed, setIsTextProcessed] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -171,31 +174,32 @@ export default function PortfolioPage() {
       if (detectedLanguage && detectedLanguage !== 'en') {
         try {
           const [
-            translatedGreetingPrefix,
-            translatedGreetingNoName,
-            translatedNameFallback,
+            translatedGreetingWithNamePrefix,
+            translatedGreetingWithNameSuffix,
+            translatedGreetingWithoutName,
             translatedMotto,
           ] = await Promise.all([
-            translateText({ textToTranslate: ORIGINAL_GREETING_PREFIX, targetLanguage: detectedLanguage }),
-            translateText({ textToTranslate: ORIGINAL_GREETING_NO_NAME, targetLanguage: detectedLanguage }),
-            translateText({ textToTranslate: ORIGINAL_NAME_FALLBACK, targetLanguage: detectedLanguage }),
+            translateText({ textToTranslate: ORIGINAL_GREETING_WITH_NAME_PREFIX, targetLanguage: detectedLanguage }),
+            translateText({ textToTranslate: ORIGINAL_GREETING_WITH_NAME_SUFFIX, targetLanguage: detectedLanguage }),
+            translateText({ textToTranslate: ORIGINAL_GREETING_WITHOUT_NAME, targetLanguage: detectedLanguage }),
             translateText({ textToTranslate: ORIGINAL_MOTTO, targetLanguage: detectedLanguage }),
           ]);
-          setGreetingPrefixText(translatedGreetingPrefix.translatedText);
-          setGreetingNoNameText(translatedGreetingNoName.translatedText);
-          setNameFallbackText(translatedNameFallback.translatedText);
+          setGreetingWithNamePrefixText(translatedGreetingWithNamePrefix.translatedText);
+          setGreetingWithNameSuffixText(translatedGreetingWithNameSuffix.translatedText);
+          setGreetingWithoutNameText(translatedGreetingWithoutName.translatedText);
           setMottoText(translatedMotto.translatedText);
         } catch (e) {
           console.warn(`Translation to ${detectedLanguage} failed, falling back to original:`, e);
-          setGreetingPrefixText(ORIGINAL_GREETING_PREFIX);
-          setGreetingNoNameText(ORIGINAL_GREETING_NO_NAME);
-          setNameFallbackText(ORIGINAL_NAME_FALLBACK);
+          setGreetingWithNamePrefixText(ORIGINAL_GREETING_WITH_NAME_PREFIX);
+          setGreetingWithNameSuffixText(ORIGINAL_GREETING_WITH_NAME_SUFFIX);
+          setGreetingWithoutNameText(ORIGINAL_GREETING_WITHOUT_NAME);
           setMottoText(ORIGINAL_MOTTO);
         }
       } else {
-        setGreetingPrefixText(ORIGINAL_GREETING_PREFIX);
-        setGreetingNoNameText(ORIGINAL_GREETING_NO_NAME);
-        setNameFallbackText(ORIGINAL_NAME_FALLBACK);
+        // Set to original English strings if no (other) language detected or if it's English
+        setGreetingWithNamePrefixText(ORIGINAL_GREETING_WITH_NAME_PREFIX);
+        setGreetingWithNameSuffixText(ORIGINAL_GREETING_WITH_NAME_SUFFIX);
+        setGreetingWithoutNameText(ORIGINAL_GREETING_WITHOUT_NAME);
         setMottoText(ORIGINAL_MOTTO);
       }
       setIsTextProcessed(true);
@@ -207,8 +211,8 @@ export default function PortfolioPage() {
   const displayGreeting = !isClient || isLoadingName || !isTextProcessed
     ? "..."
     : userName
-      ? `${greetingPrefixText}${userName}, ${nameFallbackText}`
-      : `${greetingNoNameText}${nameFallbackText}`;
+      ? `${greetingWithNamePrefixText}${userName}${greetingWithNameSuffixText}`
+      : `${greetingWithoutNameText}`;
 
   const displayMotto = !isClient || isLoadingName || !isTextProcessed ? "..." : mottoText;
 
@@ -398,3 +402,4 @@ export default function PortfolioPage() {
     </div>
   );
 }
+
