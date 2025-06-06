@@ -23,7 +23,7 @@ export default function MrMPage() {
   }, []);
 
   return (
-    <div className="max-w-3xl mx-auto py-8 px-4">
+    <div className="max-w-3xl mx-auto pt-0 pb-8 px-4">
       <header className="text-center mb-12">
         <Bot className="h-16 w-16 text-primary mx-auto mb-4 animate-bounce" />
         <h1

@@ -70,7 +70,7 @@ export default function ContactPage() {
     <div
       ref={sectionRef}
       className={cn(
-        "relative z-0 max-w-4xl mx-auto py-8 transition-all duration-700 ease-in-out font-title",
+        "relative z-0 max-w-4xl mx-auto pt-0 pb-8 transition-all duration-700 ease-in-out font-title",
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
       )}
     >
@@ -153,4 +153,3 @@ export default function ContactPage() {
     </div>
   );
 }
-

@@ -67,7 +67,7 @@ export default function AiIntroPage() {
     <div
       ref={sectionRef}
       className={cn(
-        "max-w-3xl mx-auto py-8 transition-all duration-700 ease-in-out",
+        "max-w-3xl mx-auto pt-0 pb-8 transition-all duration-700 ease-in-out",
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
       )}
     >
