@@ -38,6 +38,7 @@ export interface ResumeData {
   instagramUrl?: string;
   githubUrl?: string;
   linkedinUrl?: string;
+  resumePdfUrl?: string; // Added resume PDF URL
 }
 
 export const DEFAULT_RESUME_DATA: ResumeData = {
@@ -104,4 +105,6 @@ export const DEFAULT_RESUME_DATA: ResumeData = {
   instagramUrl: "https://www.instagram.com/mytreyn?igsh=YnZyanJmOTZwaW1l",
   githubUrl: "https://github.com/mytreyanjp",
   linkedinUrl: "https://www.linkedin.com/in/mytreyan-jp-49226a2a7/",
+  resumePdfUrl: "https://example.com/placeholder-resume.pdf", // Added default placeholder
 };
+

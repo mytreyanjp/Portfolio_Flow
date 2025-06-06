@@ -60,6 +60,7 @@ export async function getResumeData(): Promise<ResumeData> {
         instagramUrl: data.instagramUrl || DEFAULT_RESUME_DATA.instagramUrl,
         githubUrl: data.githubUrl || DEFAULT_RESUME_DATA.githubUrl,
         linkedinUrl: data.linkedinUrl || DEFAULT_RESUME_DATA.linkedinUrl,
+        resumePdfUrl: data.resumePdfUrl || DEFAULT_RESUME_DATA.resumePdfUrl, // Fetch resumePdfUrl
       };
     } else {
       // Document doesn't exist in Firestore, return DEFAULT_RESUME_DATA from memory.
@@ -70,6 +71,7 @@ export async function getResumeData(): Promise<ResumeData> {
          education: DEFAULT_RESUME_DATA.education.map((e,i) => ensureId(e,i)),
          experience: DEFAULT_RESUME_DATA.experience.map((e,i) => ensureId(e,i)),
          awards: DEFAULT_RESUME_DATA.awards.map((a,i) => ensureId(a,i)),
+         resumePdfUrl: DEFAULT_RESUME_DATA.resumePdfUrl, // Include in default fallback
       };
     }
   } catch (error) {
@@ -81,6 +83,7 @@ export async function getResumeData(): Promise<ResumeData> {
         education: DEFAULT_RESUME_DATA.education.map((e,i) => ensureId(e,i)),
         experience: DEFAULT_RESUME_DATA.experience.map((e,i) => ensureId(e,i)),
         awards: DEFAULT_RESUME_DATA.awards.map((a,i) => ensureId(a,i)),
+        resumePdfUrl: DEFAULT_RESUME_DATA.resumePdfUrl, // Include in error fallback
     };
   }
 }
@@ -101,6 +104,7 @@ export async function updateResumeData(data: Partial<ResumeData>): Promise<void>
     if (data.instagramUrl !== undefined) updatePayload.instagramUrl = data.instagramUrl;
     if (data.githubUrl !== undefined) updatePayload.githubUrl = data.githubUrl;
     if (data.linkedinUrl !== undefined) updatePayload.linkedinUrl = data.linkedinUrl;
+    if (data.resumePdfUrl !== undefined) updatePayload.resumePdfUrl = data.resumePdfUrl; // Add resumePdfUrl to payload
     
     console.log("[resumeService] Firestore update/set payload (excluding timestamps):", JSON.stringify(updatePayload, null, 2));
 
@@ -119,6 +123,7 @@ export async function updateResumeData(data: Partial<ResumeData>): Promise<void>
           instagramUrl: data.instagramUrl !== undefined ? data.instagramUrl : DEFAULT_RESUME_DATA.instagramUrl,
           githubUrl: data.githubUrl !== undefined ? data.githubUrl : DEFAULT_RESUME_DATA.githubUrl,
           linkedinUrl: data.linkedinUrl !== undefined ? data.linkedinUrl : DEFAULT_RESUME_DATA.linkedinUrl,
+          resumePdfUrl: data.resumePdfUrl !== undefined ? data.resumePdfUrl : DEFAULT_RESUME_DATA.resumePdfUrl, // Include resumePdfUrl
           createdAt: serverTimestamp(), 
           updatedAt: serverTimestamp(), 
         };

@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import React, { useState, useEffect, useCallback } from 'react';
-import { Loader2, Save, Trash2, PlusCircle, Link as LinkIcon, BookOpen, Briefcase, Award as AwardIcon } from 'lucide-react';
+import { Loader2, Save, Trash2, PlusCircle, Link as LinkIcon, BookOpen, Briefcase, Award as AwardIcon, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ResumeData, Skill, EducationEntry, WorkExperienceEntry, AwardEntry } from '@/data/resumeData';
 import { getResumeData } from '@/services/resumeService'; // getResumeData is still used for fetching
@@ -60,6 +60,7 @@ const editResumeSchema = z.object({
   instagramUrl: z.string().url({ message: "Please enter a valid URL or leave empty." }).or(z.literal('')).optional(),
   githubUrl: z.string().url({ message: "Please enter a valid URL or leave empty." }).or(z.literal('')).optional(),
   linkedinUrl: z.string().url({ message: "Please enter a valid URL or leave empty." }).or(z.literal('')).optional(),
+  resumePdfUrl: z.string().url({ message: "Please enter a valid URL for the resume PDF or leave empty." }).or(z.literal('')).optional(),
 });
 
 type EditResumeFormValues = z.infer<typeof editResumeSchema>;
@@ -91,6 +92,7 @@ export default function EditResumeForm() {
       instagramUrl: DEFAULT_RESUME_DATA.instagramUrl || '',
       githubUrl: DEFAULT_RESUME_DATA.githubUrl || '',
       linkedinUrl: DEFAULT_RESUME_DATA.linkedinUrl || '',
+      resumePdfUrl: DEFAULT_RESUME_DATA.resumePdfUrl || '',
     },
   });
 
@@ -116,6 +118,7 @@ export default function EditResumeForm() {
         instagramUrl: data.instagramUrl || '',
         githubUrl: data.githubUrl || '',
         linkedinUrl: data.linkedinUrl || '',
+        resumePdfUrl: data.resumePdfUrl || '',
       });
     } catch (error) {
       toast({
@@ -182,6 +185,7 @@ export default function EditResumeForm() {
         instagramUrl: data.instagramUrl || '',
         githubUrl: data.githubUrl || '',
         linkedinUrl: data.linkedinUrl || '',
+        resumePdfUrl: data.resumePdfUrl || '', // Add resumePdfUrl
         updatedAt: serverTimestamp(),
       };
       
@@ -249,11 +253,25 @@ export default function EditResumeForm() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-xl font-semibold">Social Links</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-xl font-semibold">Social & Resume Links</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <FormField control={form.control} name="instagramUrl" render={({ field }) => ( <FormItem><FormLabel>Instagram URL</FormLabel><FormControl><Input placeholder="https://instagram.com/yourprofile" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem> )} />
             <FormField control={form.control} name="githubUrl" render={({ field }) => ( <FormItem><FormLabel>GitHub URL</FormLabel><FormControl><Input placeholder="https://github.com/yourprofile" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem> )} />
             <FormField control={form.control} name="linkedinUrl" render={({ field }) => ( <FormItem><FormLabel>LinkedIn URL</FormLabel><FormControl><Input placeholder="https://linkedin.com/in/yourprofile" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem> )} />
+            <FormField
+              control={form.control}
+              name="resumePdfUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center"><FileText className="mr-2 h-4 w-4 text-primary"/>Resume PDF URL</FormLabel>
+                  <FormControl>
+                    <Input placeholder="https://example.com/your-resume.pdf" {...field} value={field.value || ''} />
+                  </FormControl>
+                  <FormDescription>The direct link to your hosted resume PDF.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </CardContent>
         </Card>
 
