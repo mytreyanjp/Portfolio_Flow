@@ -91,6 +91,12 @@ export default function RootLayout({
   if (!isClient) {
     return (
       <html lang="en" className={cn(greaterTheory.variable, wastedVindey.variable, "h-full")}>
+        <head>
+          <title>PortfolioFlow</title>
+          <meta name="description" content="PortfolioFlow App" />
+          <link rel="icon" href="/favicon22.png" type="image/png" sizes="any" />
+          <link rel="apple-touch-icon" href="/favicon22.png" type="image/png" />
+        </head>
         <body className="h-full">
           {/* Simple loading placeholder for SSR or initial client render */}
         </body>
@@ -103,6 +109,8 @@ export default function RootLayout({
       <head>
          <title>PortfolioFlow</title>
          <meta name="description" content="PortfolioFlow App" />
+         <link rel="icon" href="/favicon22.png" type="image/png" sizes="any" />
+         <link rel="apple-touch-icon" href="/favicon22.png" type="image/png" />
       </head>
       <body className="h-full bg-background text-foreground font-sans antialiased">
         <ThemeProvider
