@@ -81,7 +81,7 @@ export default function RootLayout({
     localStorage.setItem('portfolioSoundEnabled', JSON.stringify(newSoundState));
 
     if (clickSoundRef.current) {
-      if (newSoundState) { // Sound is being turned ON
+      if (newSoundState) { 
         clickSoundRef.current.loop = true; 
         clickSoundRef.current.currentTime = 0; 
         clickSoundRef.current.play().catch(error => {
@@ -92,7 +92,7 @@ export default function RootLayout({
             console.warn("Audio play failed for dark-theme-sound.mp3:", error);
           }
         });
-      } else { // Sound is being turned OFF
+      } else { 
         clickSoundRef.current.loop = false; 
         clickSoundRef.current.pause();
         clickSoundRef.current.currentTime = 0; 
@@ -161,7 +161,7 @@ export default function RootLayout({
                   toggleNameInputDialog={toggleNameInputDialog}
                   showNameInputDialog={showNameInputDialog}
                 />
-                <main className="flex-1 container mx-auto px-4 pt-8 pb-20 md:pb-28 mt-16 mb-16">
+                <main className="flex-1 container mx-auto px-4 pb-20 md:pb-28 mt-16 mb-16">
                   {children}
                 </main>
                 <Footer />
