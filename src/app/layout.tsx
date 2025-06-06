@@ -66,25 +66,28 @@ export default function RootLayout({
   }, []);
 
   const toggleSoundEnabled = useCallback(() => {
-    // Toggle the state first
     const newSoundState = !isSoundEnabled;
     setIsSoundEnabled(newSoundState);
     localStorage.setItem('portfolioSoundEnabled', JSON.stringify(newSoundState));
 
-    // Only play sound if it was just turned ON
-    if (newSoundState && clickSoundRef.current) {
-      clickSoundRef.current.currentTime = 0; // Rewind to start
-      clickSoundRef.current.play().catch(error => {
-        if (error.name === 'NotSupportedError' || error.message.includes('failed to load')) {
-          console.error(
-            "Audio play failed. Ensure '/sounds/dark-theme-sound.mp3' exists in the 'public/sounds/' folder and is a valid audio file.",
-            error
-          );
-           toast({ title: "Audio Error", description: "Sound file '/sounds/dark-theme-sound.mp3' missing or invalid.", variant: "destructive" });
-        } else {
-          console.warn("Audio play failed for dark-theme-sound.mp3:", error);
-        }
-      });
+    if (clickSoundRef.current) {
+      if (newSoundState) { // Sound is being turned ON
+        clickSoundRef.current.currentTime = 0; 
+        clickSoundRef.current.play().catch(error => {
+          if (error.name === 'NotSupportedError' || error.message.includes('failed to load')) {
+            console.error(
+              "Audio play failed. Ensure '/sounds/dark-theme-sound.mp3' exists in the 'public/sounds/' folder and is a valid audio file.",
+              error
+            );
+            toast({ title: "Audio Error", description: "Sound file '/sounds/dark-theme-sound.mp3' missing or invalid.", variant: "destructive" });
+          } else {
+            console.warn("Audio play failed for dark-theme-sound.mp3:", error);
+          }
+        });
+      } else { // Sound is being turned OFF
+        clickSoundRef.current.pause();
+        clickSoundRef.current.currentTime = 0; 
+      }
     }
   }, [isSoundEnabled, toast]);
 
