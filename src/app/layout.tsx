@@ -52,12 +52,6 @@ export default function RootLayout({
     if (storedSoundPref) {
       const soundPrefEnabled = JSON.parse(storedSoundPref);
       setIsSoundEnabled(soundPrefEnabled);
-      if (soundPrefEnabled && clickSoundRef.current) {
-        clickSoundRef.current.loop = true;
-        clickSoundRef.current.play().catch(error => {
-          console.warn("Initial auto-play failed:", error);
-        });
-      }
     }
     const storedName = localStorage.getItem('portfolioUserName');
     if (storedName) {
@@ -68,7 +62,7 @@ export default function RootLayout({
       clickSoundRef.current = new Audio('/sounds/dark-theme-sound.mp3');
       clickSoundRef.current.preload = 'auto';
       if (JSON.parse(storedSoundPref || 'false')) {
-        clickSoundRef.current.loop = true;
+        clickSoundRef.current.loop = true; // Ensure loop is true if sound enabled from storage
         clickSoundRef.current.play().catch(error => {
            if (error.name === 'NotSupportedError' || error.message.includes('failed to load')) {
             console.error(
@@ -90,8 +84,8 @@ export default function RootLayout({
     localStorage.setItem('portfolioSoundEnabled', JSON.stringify(newSoundState));
 
     if (clickSoundRef.current) {
-      if (newSoundState) { 
-        clickSoundRef.current.loop = true;
+      if (newSoundState) { // Sound is being turned ON
+        clickSoundRef.current.loop = true; // Set loop to true
         clickSoundRef.current.currentTime = 0; 
         clickSoundRef.current.play().catch(error => {
           if (error.name === 'NotSupportedError' || error.message.includes('failed to load')) {
@@ -104,8 +98,8 @@ export default function RootLayout({
             console.warn("Audio play failed for dark-theme-sound.mp3:", error);
           }
         });
-      } else { 
-        clickSoundRef.current.loop = false;
+      } else { // Sound is being turned OFF
+        clickSoundRef.current.loop = false; // Set loop to false
         clickSoundRef.current.pause();
         clickSoundRef.current.currentTime = 0; 
       }
