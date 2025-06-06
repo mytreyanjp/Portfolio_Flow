@@ -2,7 +2,7 @@
 'use client';
 
 import './globals.css';
-import React, { useState, useEffect, useCallback, type ReactNode } from 'react';
+import React, { useState, useEffect, useCallback, type ReactNode, useRef } from 'react';
 import { useTheme } from 'next-themes';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
@@ -16,7 +16,6 @@ import { useToast } from '@/hooks/use-toast';
 
 import CursorTail from '@/components/effects/CursorTail';
 import FirefliesEffect from '@/components/effects/FirefliesEffect';
-// LightModeDrawingCanvas is removed
 
 const greaterTheory = localFont({
   src: '../../public/fonts/GreaterTheory.otf',
@@ -45,6 +44,7 @@ export default function RootLayout({
   const [isPersonalizationActive, setIsPersonalizationActive] = useState(false);
   const [showNameInputDialog, setShowNameInputDialog] = useState(false);
   
+  const clickSoundRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -56,21 +56,40 @@ export default function RootLayout({
     if (storedName) {
       setIsPersonalizationActive(true);
     }
+
+    // Initialize the Audio object on the client
+    clickSoundRef.current = new Audio('/sounds/ui-toggle.mp3');
+    clickSoundRef.current.preload = 'auto';
+
   }, []);
 
   const toggleSoundEnabled = useCallback(() => {
+    if (clickSoundRef.current) {
+      clickSoundRef.current.currentTime = 0; // Rewind to start
+      clickSoundRef.current.play().catch(error => {
+        if (error.name === 'NotSupportedError' || error.message.includes('failed to load')) {
+          console.error(
+            "Audio play failed. Ensure '/sounds/ui-toggle.mp3' exists in the 'public/sounds/' folder and is a valid audio file.",
+            error
+          );
+          // You could add a toast here if desired, e.g.:
+          // toast({ title: "Audio Error", description: "Sound file '/sounds/ui-toggle.mp3' missing or invalid.", variant: "destructive" });
+        } else {
+          console.warn("Audio play failed for ui-toggle.mp3:", error);
+        }
+      });
+    }
+
     setIsSoundEnabled(prev => {
       const newState = !prev;
       localStorage.setItem('portfolioSoundEnabled', JSON.stringify(newState));
       return newState;
     });
-  }, []);
+  }, []); // clickSoundRef is stable, setIsSoundEnabled is stable
 
   const toggleNameInputDialog = useCallback(() => {
     setShowNameInputDialog(prev => !prev);
   }, []);
-
-  
 
   useEffect(() => {
     if (isClient) {
@@ -128,7 +147,6 @@ export default function RootLayout({
                   isPersonalizationActive={isPersonalizationActive}
                   toggleNameInputDialog={toggleNameInputDialog}
                   showNameInputDialog={showNameInputDialog}
-                  
                 />
                 <main className="flex-1 container mx-auto px-4 py-28 md:py-36 mt-16 mb-16">
                   {children}
@@ -138,7 +156,6 @@ export default function RootLayout({
               <Toaster />
               <CursorTail />
               <FirefliesEffect />
-              
             </NameProvider>
           </AuthProvider>
         </ThemeProvider>
