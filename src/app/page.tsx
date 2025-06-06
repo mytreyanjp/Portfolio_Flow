@@ -41,7 +41,7 @@ export default function PortfolioPage() {
   const [greetingWithNamePrefixText, setGreetingWithNamePrefixText] = useState(ORIGINAL_GREETING_WITH_NAME_PREFIX);
   const [greetingWithNameSuffixText, setGreetingWithNameSuffixText] = useState(ORIGINAL_GREETING_WITH_NAME_SUFFIX);
   const [greetingWithoutNameText, setGreetingWithoutNameText] = useState(ORIGINAL_GREETING_WITHOUT_NAME);
-  const [mottoText, setMottoText] = useState(ORIGINAL_MOTTO);
+  // mottoText state removed, ORIGINAL_MOTTO will be used directly
 
   const [isTextProcessed, setIsTextProcessed] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
@@ -177,30 +177,30 @@ export default function PortfolioPage() {
             translatedGreetingWithNamePrefix,
             translatedGreetingWithNameSuffix,
             translatedGreetingWithoutName,
-            translatedMotto,
+            // Motto translation removed
           ] = await Promise.all([
             translateText({ textToTranslate: ORIGINAL_GREETING_WITH_NAME_PREFIX, targetLanguage: detectedLanguage }),
             translateText({ textToTranslate: ORIGINAL_GREETING_WITH_NAME_SUFFIX, targetLanguage: detectedLanguage }),
             translateText({ textToTranslate: ORIGINAL_GREETING_WITHOUT_NAME, targetLanguage: detectedLanguage }),
-            translateText({ textToTranslate: ORIGINAL_MOTTO, targetLanguage: detectedLanguage }),
+            // translateText({ textToTranslate: ORIGINAL_MOTTO, targetLanguage: detectedLanguage }), // Removed
           ]);
           setGreetingWithNamePrefixText(translatedGreetingWithNamePrefix.translatedText);
           setGreetingWithNameSuffixText(translatedGreetingWithNameSuffix.translatedText);
           setGreetingWithoutNameText(translatedGreetingWithoutName.translatedText);
-          setMottoText(translatedMotto.translatedText);
+          // setMottoText(translatedMotto.translatedText); // Removed
         } catch (e) {
           console.warn(`Translation to ${detectedLanguage} failed, falling back to original:`, e);
           setGreetingWithNamePrefixText(ORIGINAL_GREETING_WITH_NAME_PREFIX);
           setGreetingWithNameSuffixText(ORIGINAL_GREETING_WITH_NAME_SUFFIX);
           setGreetingWithoutNameText(ORIGINAL_GREETING_WITHOUT_NAME);
-          setMottoText(ORIGINAL_MOTTO);
+          // setMottoText(ORIGINAL_MOTTO); // Removed
         }
       } else {
         // Set to original English strings if no (other) language detected or if it's English
         setGreetingWithNamePrefixText(ORIGINAL_GREETING_WITH_NAME_PREFIX);
         setGreetingWithNameSuffixText(ORIGINAL_GREETING_WITH_NAME_SUFFIX);
         setGreetingWithoutNameText(ORIGINAL_GREETING_WITHOUT_NAME);
-        setMottoText(ORIGINAL_MOTTO);
+        // setMottoText(ORIGINAL_MOTTO); // Removed
       }
       setIsTextProcessed(true);
     };
@@ -214,7 +214,7 @@ export default function PortfolioPage() {
       ? `${greetingWithNamePrefixText}${userName}${greetingWithNameSuffixText}`
       : `${greetingWithoutNameText}`;
 
-  const displayMotto = !isClient || isLoadingName || !isTextProcessed ? "..." : mottoText;
+  const displayMotto = !isClient || isLoadingName ? "..." : ORIGINAL_MOTTO; // Directly use ORIGINAL_MOTTO
 
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {
