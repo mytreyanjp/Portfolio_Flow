@@ -272,7 +272,7 @@ export default function PortfolioPage() {
   const showFlashlightEffect = isClient && resolvedTheme === 'dark' && !isViewProjectsButtonClicked;
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 pt-16 pb-8">
       <header className="mb-8 text-center">
         <h1
           ref={headingRef}

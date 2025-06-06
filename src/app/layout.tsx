@@ -52,12 +52,10 @@ export default function RootLayout({
     if (storedSoundPref) {
       const soundPrefEnabled = JSON.parse(storedSoundPref);
       setIsSoundEnabled(soundPrefEnabled);
-      // If sound was enabled and audio element is ready, set loop and play
       if (soundPrefEnabled && clickSoundRef.current) {
         clickSoundRef.current.loop = true;
         clickSoundRef.current.play().catch(error => {
           console.warn("Initial auto-play failed:", error);
-          // User interaction might be needed to start audio in some browsers
         });
       }
     }
@@ -66,11 +64,9 @@ export default function RootLayout({
       setIsPersonalizationActive(true);
     }
 
-    // Initialize the Audio object on the client
     if (typeof Audio !== "undefined") {
       clickSoundRef.current = new Audio('/sounds/dark-theme-sound.mp3');
       clickSoundRef.current.preload = 'auto';
-      // If sound was already set to enabled from localStorage, start playing
       if (JSON.parse(storedSoundPref || 'false')) {
         clickSoundRef.current.loop = true;
         clickSoundRef.current.play().catch(error => {
@@ -86,7 +82,7 @@ export default function RootLayout({
         });
       }
     }
-  }, [toast]); // Added toast to dependency array
+  }, [toast]);
 
   const toggleSoundEnabled = useCallback(() => {
     const newSoundState = !isSoundEnabled;
@@ -94,7 +90,7 @@ export default function RootLayout({
     localStorage.setItem('portfolioSoundEnabled', JSON.stringify(newSoundState));
 
     if (clickSoundRef.current) {
-      if (newSoundState) { // Sound is being turned ON
+      if (newSoundState) { 
         clickSoundRef.current.loop = true;
         clickSoundRef.current.currentTime = 0; 
         clickSoundRef.current.play().catch(error => {
@@ -108,7 +104,7 @@ export default function RootLayout({
             console.warn("Audio play failed for dark-theme-sound.mp3:", error);
           }
         });
-      } else { // Sound is being turned OFF
+      } else { 
         clickSoundRef.current.loop = false;
         clickSoundRef.current.pause();
         clickSoundRef.current.currentTime = 0; 
@@ -177,7 +173,7 @@ export default function RootLayout({
                   toggleNameInputDialog={toggleNameInputDialog}
                   showNameInputDialog={showNameInputDialog}
                 />
-                <main className="flex-1 container mx-auto px-4 py-28 md:py-36 mt-16 mb-16">
+                <main className="flex-1 container mx-auto px-4 py-20 md:py-28 mt-16 mb-16">
                   {children}
                 </main>
                 <Footer />
