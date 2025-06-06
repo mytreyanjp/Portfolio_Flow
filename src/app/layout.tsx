@@ -58,13 +58,21 @@ export default function RootLayout({
     }
 
     // Initialize the Audio object on the client
-    clickSoundRef.current = new Audio('/sounds/dark-theme-sound.mp3');
-    clickSoundRef.current.preload = 'auto';
+    if (typeof Audio !== "undefined") {
+      clickSoundRef.current = new Audio('/sounds/dark-theme-sound.mp3');
+      clickSoundRef.current.preload = 'auto';
+    }
 
   }, []);
 
   const toggleSoundEnabled = useCallback(() => {
-    if (clickSoundRef.current) {
+    // Toggle the state first
+    const newSoundState = !isSoundEnabled;
+    setIsSoundEnabled(newSoundState);
+    localStorage.setItem('portfolioSoundEnabled', JSON.stringify(newSoundState));
+
+    // Only play sound if it was just turned ON
+    if (newSoundState && clickSoundRef.current) {
       clickSoundRef.current.currentTime = 0; // Rewind to start
       clickSoundRef.current.play().catch(error => {
         if (error.name === 'NotSupportedError' || error.message.includes('failed to load')) {
@@ -72,20 +80,13 @@ export default function RootLayout({
             "Audio play failed. Ensure '/sounds/dark-theme-sound.mp3' exists in the 'public/sounds/' folder and is a valid audio file.",
             error
           );
-          // You could add a toast here if desired, e.g.:
-          // toast({ title: "Audio Error", description: "Sound file '/sounds/dark-theme-sound.mp3' missing or invalid.", variant: "destructive" });
+           toast({ title: "Audio Error", description: "Sound file '/sounds/dark-theme-sound.mp3' missing or invalid.", variant: "destructive" });
         } else {
           console.warn("Audio play failed for dark-theme-sound.mp3:", error);
         }
       });
     }
-
-    setIsSoundEnabled(prev => {
-      const newState = !prev;
-      localStorage.setItem('portfolioSoundEnabled', JSON.stringify(newState));
-      return newState;
-    });
-  }, []); // clickSoundRef is stable, setIsSoundEnabled is stable
+  }, [isSoundEnabled, toast]);
 
   const toggleNameInputDialog = useCallback(() => {
     setShowNameInputDialog(prev => !prev);
