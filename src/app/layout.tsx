@@ -58,7 +58,7 @@ export default function RootLayout({
     }
 
     // Initialize the Audio object on the client
-    clickSoundRef.current = new Audio('/sounds/ui-toggle.mp3');
+    clickSoundRef.current = new Audio('/sounds/dark-theme-sound.mp3');
     clickSoundRef.current.preload = 'auto';
 
   }, []);
@@ -69,13 +69,13 @@ export default function RootLayout({
       clickSoundRef.current.play().catch(error => {
         if (error.name === 'NotSupportedError' || error.message.includes('failed to load')) {
           console.error(
-            "Audio play failed. Ensure '/sounds/ui-toggle.mp3' exists in the 'public/sounds/' folder and is a valid audio file.",
+            "Audio play failed. Ensure '/sounds/dark-theme-sound.mp3' exists in the 'public/sounds/' folder and is a valid audio file.",
             error
           );
           // You could add a toast here if desired, e.g.:
-          // toast({ title: "Audio Error", description: "Sound file '/sounds/ui-toggle.mp3' missing or invalid.", variant: "destructive" });
+          // toast({ title: "Audio Error", description: "Sound file '/sounds/dark-theme-sound.mp3' missing or invalid.", variant: "destructive" });
         } else {
-          console.warn("Audio play failed for ui-toggle.mp3:", error);
+          console.warn("Audio play failed for dark-theme-sound.mp3:", error);
         }
       });
     }
