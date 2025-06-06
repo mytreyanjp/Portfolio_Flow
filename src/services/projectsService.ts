@@ -80,35 +80,36 @@ export async function getProjects(): Promise<Project[]> {
 export async function getUniqueCategoriesFromProjects(): Promise<string[]> {
   try {
     const projectsCollection = collection(db, 'projects');
-    const q = query(projectsCollection);
+    const q = query(projectsCollection); // No orderBy needed here, just fetching data
     const querySnapshot = await getDocs(q);
-    const fetchedProjectsData: any[] = [];
-    querySnapshot.forEach((doc) => fetchedProjectsData.push(doc.data()));
+    const categoriesFromDbProjects = new Set<string>();
 
-    const categoriesFromProjects = new Set<string>();
-    const projectsDataToConsider = fetchedProjectsData.length > 0 ? fetchedProjectsData : [defaultProject];
+    if (querySnapshot.empty) {
+      // If there are no projects in Firestore, there are no "existing project categories"
+      // The form will allow adding new ones by typing.
+      console.log("No projects in Firestore, so no existing categories to suggest for AddProjectForm.");
+      return [];
+    }
 
-    projectsDataToConsider.forEach(data => {
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
       if (Array.isArray(data.categories)) {
         data.categories.forEach((cat: any) => {
           if (typeof cat === 'string' && cat.trim() !== '') {
-            categoriesFromProjects.add(cat.trim());
+            categoriesFromDbProjects.add(cat.trim());
           }
         });
-      } else if (typeof data.category === 'string' && data.category.trim() !== '') { 
-         categoriesFromProjects.add(data.category.trim());
+      } else if (typeof data.category === 'string' && data.category.trim() !== '') { // Legacy support for single category string
+        categoriesFromDbProjects.add(data.category.trim());
       }
     });
     
-    if (fetchedProjectsData.length === 0 && defaultProject.categories) {
-       defaultProject.categories.forEach(cat => categoriesFromProjects.add(cat.trim()));
-    }
+    return Array.from(categoriesFromDbProjects).sort((a, b) => a.localeCompare(b));
 
-    const allUniqueCategories = new Set([...initialCategories, ...Array.from(categoriesFromProjects)]);
-    
-    return Array.from(allUniqueCategories).sort((a, b) => a.localeCompare(b));
   } catch (error) {
-    console.error("Error fetching unique categories: ", error);
-    return [...initialCategories].sort((a, b) => a.localeCompare(b));
+    console.error("Error fetching unique categories from projects: ", error);
+    // In case of error, returning empty array is safer for this specific request,
+    // as the admin can still type new categories in the form.
+    return [];
   }
 }
