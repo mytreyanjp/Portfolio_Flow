@@ -52,29 +52,26 @@ export default function RootLayout({
     if (storedSoundPref) {
       const soundPrefEnabled = JSON.parse(storedSoundPref);
       setIsSoundEnabled(soundPrefEnabled);
-    }
-    const storedName = localStorage.getItem('portfolioUserName');
-    if (storedName) {
-      setIsPersonalizationActive(true);
-    }
-
-    if (typeof Audio !== "undefined") {
-      clickSoundRef.current = new Audio('/sounds/dark-theme-sound.mp3');
-      clickSoundRef.current.preload = 'auto';
-      if (JSON.parse(storedSoundPref || 'false')) {
-        clickSoundRef.current.loop = true; // Ensure loop is true if sound enabled from storage
+      if (soundPrefEnabled && clickSoundRef.current) {
+        clickSoundRef.current.loop = true;
         clickSoundRef.current.play().catch(error => {
            if (error.name === 'NotSupportedError' || error.message.includes('failed to load')) {
-            console.error(
-              "Audio play failed. Ensure '/sounds/dark-theme-sound.mp3' exists in the 'public/sounds/' folder and is a valid audio file.",
-              error
-            );
+            console.error("Audio play failed. Ensure '/sounds/dark-theme-sound.mp3' exists in 'public/sounds/' folder and is valid.", error);
             toast({ title: "Audio Error", description: "Sound file '/sounds/dark-theme-sound.mp3' missing or invalid.", variant: "destructive" });
           } else {
             console.warn("Initial audio play failed for dark-theme-sound.mp3 (possibly due to browser policy):", error);
           }
         });
       }
+    }
+    const storedName = localStorage.getItem('portfolioUserName');
+    if (storedName) {
+      setIsPersonalizationActive(true);
+    }
+
+    if (typeof Audio !== "undefined" && !clickSoundRef.current) {
+      clickSoundRef.current = new Audio('/sounds/dark-theme-sound.mp3');
+      clickSoundRef.current.preload = 'auto';
     }
   }, [toast]);
 
@@ -85,21 +82,18 @@ export default function RootLayout({
 
     if (clickSoundRef.current) {
       if (newSoundState) { // Sound is being turned ON
-        clickSoundRef.current.loop = true; // Set loop to true
+        clickSoundRef.current.loop = true; 
         clickSoundRef.current.currentTime = 0; 
         clickSoundRef.current.play().catch(error => {
           if (error.name === 'NotSupportedError' || error.message.includes('failed to load')) {
-            console.error(
-              "Audio play failed. Ensure '/sounds/dark-theme-sound.mp3' exists in the 'public/sounds/' folder and is a valid audio file.",
-              error
-            );
+            console.error("Audio play failed. Ensure '/sounds/dark-theme-sound.mp3' exists in 'public/sounds/' folder and is valid.", error);
             toast({ title: "Audio Error", description: "Sound file '/sounds/dark-theme-sound.mp3' missing or invalid.", variant: "destructive" });
           } else {
             console.warn("Audio play failed for dark-theme-sound.mp3:", error);
           }
         });
       } else { // Sound is being turned OFF
-        clickSoundRef.current.loop = false; // Set loop to false
+        clickSoundRef.current.loop = false; 
         clickSoundRef.current.pause();
         clickSoundRef.current.currentTime = 0; 
       }
@@ -167,7 +161,7 @@ export default function RootLayout({
                   toggleNameInputDialog={toggleNameInputDialog}
                   showNameInputDialog={showNameInputDialog}
                 />
-                <main className="flex-1 container mx-auto px-4 py-20 md:py-28 mt-16 mb-16">
+                <main className="flex-1 container mx-auto px-4 pt-8 pb-20 md:pb-28 mt-16 mb-16">
                   {children}
                 </main>
                 <Footer />
