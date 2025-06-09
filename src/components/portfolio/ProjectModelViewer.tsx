@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import * as _THREE from 'three'; 
+import * as _THREE from 'three';
 import { GLTFLoader as _GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader as _DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -27,10 +27,10 @@ dracoLoaderInstance.setDecoderConfig({ type: 'wasm' });
 const gltfLoaderInstance = new GLTFLoader();
 gltfLoaderInstance.setDRACOLoader(dracoLoaderInstance);
 
-const MIN_CAMERA_Z = 1.2; 
-const MAX_CAMERA_Z = 2.8; 
-const MIN_MODEL_Y_OFFSET = -0.2; 
-const MAX_MODEL_Y_OFFSET = 0;    
+const MIN_CAMERA_Z = 1.2;
+const MAX_CAMERA_Z = 2.8;
+const MIN_MODEL_Y_OFFSET = -0.2;
+const MAX_MODEL_Y_OFFSET = 0;
 const LERP_SPEED_ROTATION = 0.08;
 const LERP_SPEED_CAMERA_Z = 0.05;
 const LERP_SPEED_MODEL_Y = 0.05;
@@ -76,12 +76,12 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
     const cardCenterY = cardRect.top + cardRect.height / 2;
     const distanceFromViewportCenter = cardCenterY - viewportHeight / 2;
     const normalizedDistance = Math.min(1, Math.abs(distanceFromViewportCenter) / (viewportHeight / 2));
-    
+
     let newTargetZ = MIN_CAMERA_Z + normalizedDistance * (MAX_CAMERA_Z - MIN_CAMERA_Z);
-    newTargetZ = Math.max(MIN_CAMERA_Z, Math.min(MAX_CAMERA_Z, newTargetZ)); 
+    newTargetZ = Math.max(MIN_CAMERA_Z, Math.min(MAX_CAMERA_Z, newTargetZ));
     targetCameraZRef.current = newTargetZ;
 
-    const zoomFactor = 1 - normalizedDistance; 
+    const zoomFactor = 1 - normalizedDistance;
     const newTargetYOffset = MAX_MODEL_Y_OFFSET + (MIN_MODEL_Y_OFFSET - MAX_MODEL_Y_OFFSET) * zoomFactor;
     targetModelYOffsetRef.current = newTargetYOffset;
 
@@ -89,10 +89,10 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
 
 
   useEffect(() => {
-    const effectModelPath = modelPath; 
+    const effectModelPath = modelPath;
     let isMounted = true;
     let timeoutId: NodeJS.Timeout;
-    
+
     if (!effectModelPath || typeof effectModelPath !== 'string' || effectModelPath.trim() === '') {
       setError("No valid model path provided.");
       setIsLoading(false);
@@ -100,16 +100,15 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       if (animationFrameIdRef.current) cancelAnimationFrame(animationFrameIdRef.current);
       return;
     }
-    
+
     setError(null);
     setIsLoading(true);
-    // Reset gyro state on model change or if it was previously active and now component re-initializes
-    if (isGyroActive) {
-      console.log("ProjectModelViewer: Resetting isGyroActive to false due to model change or re-init.");
-      setIsGyroActive(false);
-    }
+
+    // Reset gyro state for new model, but not based on isGyroActive changing for the *same* model
     initialGyroOffsetRef.current = { beta: null, gamma: null };
-    targetCameraZRef.current = MAX_CAMERA_Z; 
+    // setIsGyroActive(false); // Do NOT reset isGyroActive here based on modelPath, only if explicitly needed
+
+    targetCameraZRef.current = MAX_CAMERA_Z;
     targetModelYOffsetRef.current = MAX_MODEL_Y_OFFSET;
     initialModelYAfterCenteringRef.current = 0;
 
@@ -117,7 +116,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       if (!isMounted || !modelGroupRef.current || typeof window === 'undefined' || isGyroActive) return; // Ignore mouse if gyro is active
       const x = (event.clientX / window.innerWidth - 0.5) * 2;
       const y = -(event.clientY / window.innerHeight - 0.5) * 2;
-      const sensitivity = 0.3; 
+      const sensitivity = 0.3;
       targetRotationRef.current.x = y * sensitivity;
       targetRotationRef.current.y = x * sensitivity;
     };
@@ -127,14 +126,14 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
           return;
       }
 
-      if (!isGyroActive) {
-          setIsGyroActive(true); 
+      if (!isGyroActive) { // Only log and set if changing state
+          setIsGyroActive(true);
           console.log("ProjectModelViewer: Gyroscope control activated.");
       }
 
       const { beta, gamma } = event;
 
-      if (initialGyroOffsetRef.current.beta === null) { 
+      if (initialGyroOffsetRef.current.beta === null) {
           initialGyroOffsetRef.current.beta = beta;
           initialGyroOffsetRef.current.gamma = gamma;
           if (modelGroupRef.current) {
@@ -142,7 +141,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
             targetRotationRef.current.y = modelGroupRef.current.rotation.y;
           }
           console.log("ProjectModelViewer: Gyroscope calibrated with initial offset.", initialGyroOffsetRef.current);
-          return; 
+          return;
       }
 
       let relativeBeta = beta - (initialGyroOffsetRef.current.beta || 0);
@@ -154,11 +153,13 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       targetRotationRef.current.x = normBeta * GYRO_TARGET_MODEL_MAX_ROT_RAD_X;
       targetRotationRef.current.y = -normGamma * GYRO_TARGET_MODEL_MAX_ROT_RAD_Y;
     };
-    
+
     let deviceOrientationListenerAttached = false;
     if (typeof window.DeviceOrientationEvent !== 'undefined') {
         if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
             console.log("ProjectModelViewer: DeviceOrientationEvent.requestPermission found. Gyro may need user interaction.");
+            // For simplicity, we're not implementing a UI button for requestPermission here.
+            // It might "just work" in some browsers/contexts, or fail silently if permission is needed and not granted.
             window.addEventListener('deviceorientation', handleDeviceOrientation);
             deviceOrientationListenerAttached = true;
         } else {
@@ -166,7 +167,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
             deviceOrientationListenerAttached = true;
         }
     }
-    
+
     window.addEventListener('mousemove', handleGlobalMouseMove);
     window.addEventListener('scroll', handleScroll, { passive: true });
 
@@ -175,18 +176,18 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
         ([entry]) => {
           isIntersectingRef.current = entry.isIntersecting;
           if(entry.isIntersecting) {
-            handleScroll(); 
+            handleScroll();
           } else {
-            targetCameraZRef.current = MAX_CAMERA_Z; 
+            targetCameraZRef.current = MAX_CAMERA_Z;
             targetModelYOffsetRef.current = MAX_MODEL_Y_OFFSET;
-            if (isGyroActive) {
+            if (isGyroActive) { // If it *was* active and now it's not intersecting
               console.log("ProjectModelViewer: Element not intersecting, deactivating gyro and resetting calibration.");
               initialGyroOffsetRef.current = { beta: null, gamma: null };
-              setIsGyroActive(false); 
+              setIsGyroActive(false); // This will allow mouse control to resume
             }
           }
         },
-        { threshold: 0.01 } 
+        { threshold: 0.01 }
       );
       observer.observe(containerRef.current);
       observerRef.current = observer;
@@ -199,13 +200,13 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
         onModelErrorOrMissing?.();
         return;
       }
-      
+
       const currentMount = mountRef.current;
 
       if (!sceneRef.current) sceneRef.current = new THREE.Scene();
       if (!cameraRef.current) {
         cameraRef.current = new THREE.PerspectiveCamera(50, currentMount.clientWidth > 0 ? currentMount.clientWidth / currentMount.clientHeight : 1, 0.1, 100);
-        cameraRef.current.position.z = MAX_CAMERA_Z; 
+        cameraRef.current.position.z = MAX_CAMERA_Z;
       } else {
         if (currentMount.clientWidth > 0 && currentMount.clientHeight > 0) {
           cameraRef.current.aspect = currentMount.clientWidth / currentMount.clientHeight;
@@ -222,29 +223,29 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       if (currentMount.clientWidth > 0 && currentMount.clientHeight > 0) {
         rendererRef.current.setSize(currentMount.clientWidth, currentMount.clientHeight);
       } else {
-        rendererRef.current.setSize(300, 150); 
+        rendererRef.current.setSize(300, 150);
       }
-      
+
       if (currentMount.contains(rendererRef.current.domElement)) {
         currentMount.removeChild(rendererRef.current.domElement);
       }
       currentMount.appendChild(rendererRef.current.domElement);
-      
+
       lightsRef.current.forEach(light => sceneRef.current?.remove(light));
       lightsRef.current = [];
 
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6); 
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
       sceneRef.current.add(ambientLight);
-      
-      const mainDirectionalLight = new THREE.DirectionalLight(0xffffff, 1.2); 
+
+      const mainDirectionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
       mainDirectionalLight.position.set(2, 2, 3);
       sceneRef.current.add(mainDirectionalLight);
-      
-      const purpleDirectionalLight = new THREE.DirectionalLight(0x9B59B6, 1.0); 
-      purpleDirectionalLight.position.set(-2, 1, 1); 
+
+      const purpleDirectionalLight = new THREE.DirectionalLight(0x9B59B6, 1.0);
+      purpleDirectionalLight.position.set(-2, 1, 1);
       sceneRef.current.add(purpleDirectionalLight);
 
-      const purplePointLight = new THREE.PointLight(0x9575CD, 0.5, 10); 
+      const purplePointLight = new THREE.PointLight(0x9575CD, 0.5, 10);
       purplePointLight.position.set(0, 1, 2);
       sceneRef.current.add(purplePointLight);
 
@@ -262,7 +263,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
         });
         modelGroupRef.current = null;
       }
-      
+
       gltfLoaderInstance.load(
         effectModelPath,
         (gltf) => {
@@ -273,27 +274,27 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
           const box = new THREE.Box3().setFromObject(modelGroupRef.current);
           const size = box.getSize(new THREE.Vector3());
           const maxDim = Math.max(size.x, size.y, size.z);
-          
+
           let scaleFactor = 1.0;
-          const targetViewSize = 1.8; 
+          const targetViewSize = 1.8;
           if (maxDim > 0.001) scaleFactor = targetViewSize / maxDim;
-          
+
           modelGroupRef.current.scale.set(scaleFactor, scaleFactor, scaleFactor);
           const scaledBox = new THREE.Box3().setFromObject(modelGroupRef.current);
           const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
-          modelGroupRef.current.position.sub(scaledCenter); 
-          initialModelYAfterCenteringRef.current = modelGroupRef.current.position.y; 
-          
+          modelGroupRef.current.position.sub(scaledCenter);
+          initialModelYAfterCenteringRef.current = modelGroupRef.current.position.y;
+
           if (cameraRef.current) cameraRef.current.lookAt(0, 0, 0);
           setIsLoading(false);
-          handleScroll(); 
+          handleScroll();
         },
         undefined,
         (loadError) => {
           if (!isMounted) return;
           setError(`Failed to load model. ${loadError.message || 'Unknown error'}`);
           setIsLoading(false);
-          onModelErrorOrMissing?.(); 
+          onModelErrorOrMissing?.();
         }
       );
 
@@ -303,12 +304,12 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
         if (modelGroupRef.current && rendererRef.current && sceneRef.current && cameraRef.current) {
           modelGroupRef.current.rotation.x += (targetRotationRef.current.x - modelGroupRef.current.rotation.x) * LERP_SPEED_ROTATION;
           modelGroupRef.current.rotation.y += (targetRotationRef.current.y - modelGroupRef.current.rotation.y) * LERP_SPEED_ROTATION;
-          
+
           cameraRef.current.position.z += (targetCameraZRef.current - cameraRef.current.position.z) * LERP_SPEED_CAMERA_Z;
 
           const finalTargetY = initialModelYAfterCenteringRef.current + targetModelYOffsetRef.current;
           modelGroupRef.current.position.y += (finalTargetY - modelGroupRef.current.position.y) * LERP_SPEED_MODEL_Y;
-          
+
           rendererRef.current.render(sceneRef.current, cameraRef.current);
         }
       };
@@ -322,16 +323,16 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
         cameraRef.current.aspect = currentMount.clientWidth / currentMount.clientHeight;
         cameraRef.current.updateProjectionMatrix();
         rendererRef.current.setSize(currentMount.clientWidth, currentMount.clientHeight);
-        handleScroll(); 
+        handleScroll();
       };
       window.addEventListener('resize', handleResize);
-      
+
       const initialResizeTimeoutId = setTimeout(() => {
         if (isMounted && currentMount && currentMount.clientWidth > 0 && currentMount.clientHeight > 0) {
             handleResize();
         }
       }, 100);
-      
+
       return () => {
         clearTimeout(initialResizeTimeoutId);
         window.removeEventListener('resize', handleResize);
@@ -346,18 +347,16 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
         cancelAnimationFrame(animationFrameIdRef.current);
         animationFrameIdRef.current = null;
       }
-      
+
       window.removeEventListener('mousemove', handleGlobalMouseMove);
       window.removeEventListener('scroll', handleScroll);
       if (deviceOrientationListenerAttached) {
         window.removeEventListener('deviceorientation', handleDeviceOrientation);
       }
-      if (isGyroActive) {
-        console.log("ProjectModelViewer: Gyroscope control deactivated during cleanup.");
-      }
+      // No need to log gyro deactivation here specifically, the IntersectionObserver handles it.
       initialGyroOffsetRef.current = { beta: null, gamma: null };
-      setIsGyroActive(false); 
-      
+      setIsGyroActive(false); // Ensure it's reset on cleanup
+
       if (observerRef.current) {
         observerRef.current.disconnect();
         observerRef.current = null;
@@ -381,7 +380,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
         (light as any).dispose?.();
       });
       lightsRef.current = [];
-      
+
       if (mountRef.current && rendererRef.current?.domElement) {
          try {
             if (mountRef.current.contains(rendererRef.current.domElement)) {
@@ -392,8 +391,11 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
         }
       }
       rendererRef.current?.dispose();
+      // Do NOT nullify sceneRef, cameraRef, rendererRef here if they are meant to persist across model loads
+      // Only if the entire ProjectModelViewer component is unmounting.
+      // For now, assuming they are managed by the component's lifecycle.
     };
-  }, [modelPath, containerRef, handleScroll, onModelErrorOrMissing, isGyroActive]); // isGyroActive dependency ensures mouse listener behavior updates
+  }, [modelPath, containerRef, handleScroll, onModelErrorOrMissing]); // Removed isGyroActive from dependencies
 
   return (
     <div ref={mountRef} className="w-full h-full overflow-hidden relative">
@@ -402,7 +404,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
           <Skeleton className="w-full h-full" />
         </div>
       )}
-      {error && ( 
+      {error && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-destructive/10 text-destructive p-2 text-center z-10 pointer-events-none">
           <AlertTriangle className="h-8 w-8 mb-2" />
           <p className="text-xs font-semibold">Model Error</p>
