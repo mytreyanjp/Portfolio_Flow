@@ -298,7 +298,7 @@ export default function PortfolioPage() {
         <Button
             ref={viewProjectsButtonRef}
             variant="ghost"
-            size="lg"
+            size="sm"
             className={cn(
               "w-full sm:w-auto",
               "transition-transform duration-300 ease-out hover:scale-105", 
