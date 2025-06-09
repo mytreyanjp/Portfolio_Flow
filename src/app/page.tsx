@@ -321,7 +321,7 @@ export default function PortfolioPage() {
           hasScrolled ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10 pointer-events-none"
         )}
       >
-        <h2 className="text-2xl font-semibold text-center text-foreground mb-6">Explore &amp; Connect</h2>
+        <h2 className="text-2xl font-display font-semibold text-center text-foreground mb-6">Explore &amp; Connect</h2>
         <div className="flex flex-col sm:flex-row flex-wrap justify-center items-center gap-4">
           <Button
             asChild
