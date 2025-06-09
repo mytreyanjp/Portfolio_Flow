@@ -103,7 +103,11 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
     
     setError(null);
     setIsLoading(true);
-    setIsGyroActive(false); // Reset gyro state on model change
+    // Reset gyro state on model change or if it was previously active and now component re-initializes
+    if (isGyroActive) {
+      console.log("ProjectModelViewer: Resetting isGyroActive to false due to model change or re-init.");
+      setIsGyroActive(false);
+    }
     initialGyroOffsetRef.current = { beta: null, gamma: null };
     targetCameraZRef.current = MAX_CAMERA_Z; 
     targetModelYOffsetRef.current = MAX_MODEL_Y_OFFSET;
@@ -124,45 +128,40 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       }
 
       if (!isGyroActive) {
-          setIsGyroActive(true); // Set gyro active on first valid event
+          setIsGyroActive(true); 
+          console.log("ProjectModelViewer: Gyroscope control activated.");
       }
 
       const { beta, gamma } = event;
 
-      if (initialGyroOffsetRef.current.beta === null) { // Calibrate on first event after gyro becomes active
+      if (initialGyroOffsetRef.current.beta === null) { 
           initialGyroOffsetRef.current.beta = beta;
           initialGyroOffsetRef.current.gamma = gamma;
-          // Set target to current model rotation to prevent jump
           if (modelGroupRef.current) {
             targetRotationRef.current.x = modelGroupRef.current.rotation.x;
             targetRotationRef.current.y = modelGroupRef.current.rotation.y;
           }
-          return; // Skip processing for the very first event used for calibration
+          console.log("ProjectModelViewer: Gyroscope calibrated with initial offset.", initialGyroOffsetRef.current);
+          return; 
       }
 
       let relativeBeta = beta - (initialGyroOffsetRef.current.beta || 0);
       let relativeGamma = gamma - (initialGyroOffsetRef.current.gamma || 0);
 
-      // Normalize tilt input (e.g., map -30 to +30 deg tilt to -1 to +1)
       let normBeta = THREE.MathUtils.clamp(relativeBeta / GYRO_MAX_INPUT_DEG, -1, 1);
       let normGamma = THREE.MathUtils.clamp(relativeGamma / GYRO_MAX_INPUT_DEG, -1, 1);
 
-      // Map normalized tilt to target model rotation angles
       targetRotationRef.current.x = normBeta * GYRO_TARGET_MODEL_MAX_ROT_RAD_X;
-      // Invert gamma: tilting phone right (positive gamma) should make model rotate to show its right side (negative Y rotation in THREE typical setup)
       targetRotationRef.current.y = -normGamma * GYRO_TARGET_MODEL_MAX_ROT_RAD_Y;
     };
     
     let deviceOrientationListenerAttached = false;
     if (typeof window.DeviceOrientationEvent !== 'undefined') {
         if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
-            // Handle iOS 13+ permission (usually needs a user gesture - for prototype, we'll log)
-            console.log("ProjectModelViewer: DeviceOrientationEvent.requestPermission found. Gyro may need user interaction to enable fully.");
-            // Attempting to add listener; it might not fire if permission is 'denied' or 'default'
+            console.log("ProjectModelViewer: DeviceOrientationEvent.requestPermission found. Gyro may need user interaction.");
             window.addEventListener('deviceorientation', handleDeviceOrientation);
             deviceOrientationListenerAttached = true;
         } else {
-            // For other devices or if permission isn't required / already granted
             window.addEventListener('deviceorientation', handleDeviceOrientation);
             deviceOrientationListenerAttached = true;
         }
@@ -180,9 +179,11 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
           } else {
             targetCameraZRef.current = MAX_CAMERA_Z; 
             targetModelYOffsetRef.current = MAX_MODEL_Y_OFFSET;
-             // When not intersecting, reset gyro calibration to re-calibrate when it becomes visible again
-            initialGyroOffsetRef.current = { beta: null, gamma: null };
-            setIsGyroActive(false); // Deactivate gyro if not visible, to re-init on visibility
+            if (isGyroActive) {
+              console.log("ProjectModelViewer: Element not intersecting, deactivating gyro and resetting calibration.");
+              initialGyroOffsetRef.current = { beta: null, gamma: null };
+              setIsGyroActive(false); 
+            }
           }
         },
         { threshold: 0.01 } 
@@ -351,8 +352,11 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       if (deviceOrientationListenerAttached) {
         window.removeEventListener('deviceorientation', handleDeviceOrientation);
       }
+      if (isGyroActive) {
+        console.log("ProjectModelViewer: Gyroscope control deactivated during cleanup.");
+      }
       initialGyroOffsetRef.current = { beta: null, gamma: null };
-      setIsGyroActive(false); // Reset gyro active state on cleanup
+      setIsGyroActive(false); 
       
       if (observerRef.current) {
         observerRef.current.disconnect();
@@ -388,10 +392,8 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
         }
       }
       rendererRef.current?.dispose();
-      // Do not nullify sceneRef, cameraRef here if they are meant to persist across modelPath changes
-      // rendererRef.current = null; // This one should be nulled if re-created per model.
     };
-  }, [modelPath, containerRef, handleScroll, onModelErrorOrMissing, isGyroActive]); // Added isGyroActive to dependencies for mouse listener disabling
+  }, [modelPath, containerRef, handleScroll, onModelErrorOrMissing, isGyroActive]); // isGyroActive dependency ensures mouse listener behavior updates
 
   return (
     <div ref={mountRef} className="w-full h-full overflow-hidden relative">
@@ -400,7 +402,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
           <Skeleton className="w-full h-full" />
         </div>
       )}
-      {error && ( // Only show error if there's an error message
+      {error && ( 
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-destructive/10 text-destructive p-2 text-center z-10 pointer-events-none">
           <AlertTriangle className="h-8 w-8 mb-2" />
           <p className="text-xs font-semibold">Model Error</p>
