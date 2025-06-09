@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback, useRef, type CSSProperties } from 'react';
@@ -316,7 +315,7 @@ export default function PortfolioPage() {
       <section
         aria-label="Quick navigation links"
         className={cn(
-          "mb-16 p-6 border border-border rounded-xl shadow-lg", // Removed bg-card
+          "mb-16 p-6 rounded-xl shadow-lg", 
           "transition-all duration-700 ease-in-out",
           hasScrolled ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10 pointer-events-none"
         )}
@@ -328,8 +327,8 @@ export default function PortfolioPage() {
             size="lg"
             className={cn(
               "w-full sm:w-auto transition-transform duration-200 ease-out hover:scale-105",
-              "bg-card text-foreground hover:bg-card hover:text-foreground", 
-              "dark:bg-black dark:text-primary-foreground dark:hover:bg-black dark:hover:text-primary-foreground" 
+              "bg-card/70 text-foreground hover:bg-card/80 hover:text-foreground", 
+              "dark:bg-black/70 dark:text-primary-foreground dark:hover:bg-black/80 dark:hover:text-primary-foreground" 
             )}
           >
             <Link href="/contact">
@@ -341,8 +340,8 @@ export default function PortfolioPage() {
             size="lg"
             className={cn(
               "w-full sm:w-auto transition-transform duration-200 ease-out hover:scale-105",
-              "bg-card text-foreground hover:bg-card hover:text-foreground",
-              "dark:bg-black dark:text-primary-foreground dark:hover:bg-black dark:hover:text-primary-foreground"
+              "bg-card/70 text-foreground hover:bg-card/80 hover:text-foreground",
+              "dark:bg-black/70 dark:text-primary-foreground dark:hover:bg-black/80 dark:hover:text-primary-foreground"
             )}
           >
             <Link href="/resume">
@@ -354,8 +353,8 @@ export default function PortfolioPage() {
             size="lg"
             className={cn(
               "w-full sm:w-auto transition-transform duration-200 ease-out hover:scale-105",
-              "bg-card text-foreground hover:bg-card hover:text-foreground",
-              "dark:bg-black dark:text-primary-foreground dark:hover:bg-black dark:hover:text-primary-foreground"
+              "bg-card/70 text-foreground hover:bg-card/80 hover:text-foreground",
+              "dark:bg-black/70 dark:text-primary-foreground dark:hover:bg-black/80 dark:hover:text-primary-foreground"
             )}
           >
             <Link href="/mr-m">
