@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback, useRef, type CSSProperties } from 'react';
@@ -315,7 +316,7 @@ export default function PortfolioPage() {
       <section
         aria-label="Quick navigation links"
         className={cn(
-          "mb-16 p-6 rounded-xl shadow-lg", 
+          "mb-16 p-6 rounded-xl", 
           "transition-all duration-700 ease-in-out",
           hasScrolled ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10 pointer-events-none"
         )}
@@ -401,4 +402,5 @@ export default function PortfolioPage() {
     </div>
   );
 }
+
 
