@@ -36,9 +36,13 @@ const LERP_SPEED_CAMERA_Z = 0.05;
 const LERP_SPEED_MODEL_Y = 0.05;
 
 // Gyroscope control parameters
-const GYRO_MAX_INPUT_DEG = 30; // Max phone tilt in degrees to consider for full rotation effect
-const GYRO_TARGET_MODEL_MAX_ROT_RAD_X = 0.45; // Max model X rotation in radians (approx +/- 25 degrees)
-const GYRO_TARGET_MODEL_MAX_ROT_RAD_Y = 0.6; // Max model Y rotation in radians (approx +/- 34 degrees)
+const GYRO_MAX_INPUT_DEG = 30;
+const GYRO_TARGET_MODEL_MAX_ROT_RAD_X = 0.45;
+const GYRO_TARGET_MODEL_MAX_ROT_RAD_Y = 0.6;
+
+// Jump animation parameters
+const JUMP_HEIGHT = 0.15;
+const JUMP_DURATION = 300; // milliseconds
 
 
 const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, containerRef, onModelErrorOrMissing }) => {
@@ -62,6 +66,10 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
 
   const [isGyroActive, setIsGyroActive] = useState(false);
   const initialGyroOffsetRef = useRef<{ beta: number | null; gamma: number | null }>({ beta: null, gamma: null });
+
+  // Refs for jump animation
+  const isJumpingRef = useRef(false);
+  const jumpStartTimeRef = useRef(0);
 
 
   const handleScroll = useCallback(() => {
@@ -87,6 +95,13 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
 
   }, [containerRef]);
 
+  const handleModelClick = useCallback(() => {
+    if (!isJumpingRef.current && modelGroupRef.current) { // Prevent starting a new jump if one is in progress
+        isJumpingRef.current = true;
+        jumpStartTimeRef.current = Date.now();
+    }
+  }, []);
+
 
   useEffect(() => {
     const effectModelPath = modelPath;
@@ -104,16 +119,15 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
     setError(null);
     setIsLoading(true);
 
-    // Reset gyro state for new model, but not based on isGyroActive changing for the *same* model
     initialGyroOffsetRef.current = { beta: null, gamma: null };
-    // setIsGyroActive(false); // Do NOT reset isGyroActive here based on modelPath, only if explicitly needed
+    isJumpingRef.current = false; // Reset jump state on model change
 
     targetCameraZRef.current = MAX_CAMERA_Z;
     targetModelYOffsetRef.current = MAX_MODEL_Y_OFFSET;
     initialModelYAfterCenteringRef.current = 0;
 
     const handleGlobalMouseMove = (event: MouseEvent) => {
-      if (!isMounted || !modelGroupRef.current || typeof window === 'undefined' || isGyroActive) return; // Ignore mouse if gyro is active
+      if (!isMounted || !modelGroupRef.current || typeof window === 'undefined' || isGyroActive) return;
       const x = (event.clientX / window.innerWidth - 0.5) * 2;
       const y = -(event.clientY / window.innerHeight - 0.5) * 2;
       const sensitivity = 0.3;
@@ -126,7 +140,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
           return;
       }
 
-      if (!isGyroActive) { // Only log and set if changing state
+      if (!isGyroActive) {
           setIsGyroActive(true);
           console.log("ProjectModelViewer: Gyroscope control activated.");
       }
@@ -158,8 +172,6 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
     if (typeof window.DeviceOrientationEvent !== 'undefined') {
         if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
             console.log("ProjectModelViewer: DeviceOrientationEvent.requestPermission found. Gyro may need user interaction.");
-            // For simplicity, we're not implementing a UI button for requestPermission here.
-            // It might "just work" in some browsers/contexts, or fail silently if permission is needed and not granted.
             window.addEventListener('deviceorientation', handleDeviceOrientation);
             deviceOrientationListenerAttached = true;
         } else {
@@ -170,6 +182,11 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
 
     window.addEventListener('mousemove', handleGlobalMouseMove);
     window.addEventListener('scroll', handleScroll, { passive: true });
+    const currentMountForListeners = mountRef.current;
+    if (currentMountForListeners) {
+        currentMountForListeners.addEventListener('click', handleModelClick);
+    }
+
 
     if (containerRef.current) {
       const observer = new IntersectionObserver(
@@ -180,10 +197,10 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
           } else {
             targetCameraZRef.current = MAX_CAMERA_Z;
             targetModelYOffsetRef.current = MAX_MODEL_Y_OFFSET;
-            if (isGyroActive) { // If it *was* active and now it's not intersecting
+            if (isGyroActive) {
               console.log("ProjectModelViewer: Element not intersecting, deactivating gyro and resetting calibration.");
               initialGyroOffsetRef.current = { beta: null, gamma: null };
-              setIsGyroActive(false); // This will allow mouse control to resume
+              setIsGyroActive(false);
             }
           }
         },
@@ -307,8 +324,21 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
 
           cameraRef.current.position.z += (targetCameraZRef.current - cameraRef.current.position.z) * LERP_SPEED_CAMERA_Z;
 
-          const finalTargetY = initialModelYAfterCenteringRef.current + targetModelYOffsetRef.current;
-          modelGroupRef.current.position.y += (finalTargetY - modelGroupRef.current.position.y) * LERP_SPEED_MODEL_Y;
+          let currentBaseTargetModelY = initialModelYAfterCenteringRef.current + targetModelYOffsetRef.current;
+          let finalTargetModelY = currentBaseTargetModelY;
+
+          if (isJumpingRef.current) {
+            const elapsedJumpTime = Date.now() - jumpStartTimeRef.current;
+            if (elapsedJumpTime < JUMP_DURATION) {
+              const progress = elapsedJumpTime / JUMP_DURATION;
+              const jumpOffset = JUMP_HEIGHT * Math.sin(progress * Math.PI);
+              finalTargetModelY = currentBaseTargetModelY + jumpOffset;
+            } else {
+              isJumpingRef.current = false;
+            }
+          }
+          
+          modelGroupRef.current.position.y += (finalTargetModelY - modelGroupRef.current.position.y) * LERP_SPEED_MODEL_Y;
 
           rendererRef.current.render(sceneRef.current, cameraRef.current);
         }
@@ -353,9 +383,11 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       if (deviceOrientationListenerAttached) {
         window.removeEventListener('deviceorientation', handleDeviceOrientation);
       }
-      // No need to log gyro deactivation here specifically, the IntersectionObserver handles it.
+      if (currentMountForListeners) {
+        currentMountForListeners.removeEventListener('click', handleModelClick);
+      }
       initialGyroOffsetRef.current = { beta: null, gamma: null };
-      setIsGyroActive(false); // Ensure it's reset on cleanup
+      setIsGyroActive(false);
 
       if (observerRef.current) {
         observerRef.current.disconnect();
@@ -391,14 +423,11 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
         }
       }
       rendererRef.current?.dispose();
-      // Do NOT nullify sceneRef, cameraRef, rendererRef here if they are meant to persist across model loads
-      // Only if the entire ProjectModelViewer component is unmounting.
-      // For now, assuming they are managed by the component's lifecycle.
     };
-  }, [modelPath, containerRef, handleScroll, onModelErrorOrMissing]); // Removed isGyroActive from dependencies
+  }, [modelPath, containerRef, handleScroll, onModelErrorOrMissing, handleModelClick]);
 
   return (
-    <div ref={mountRef} className="w-full h-full overflow-hidden relative">
+    <div ref={mountRef} className="w-full h-full overflow-hidden relative cursor-pointer">
       {isLoading && !error && (
         <div className="absolute inset-0 flex items-center justify-center bg-muted/10 z-10 pointer-events-none">
           <Skeleton className="w-full h-full" />
@@ -416,3 +445,4 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
 };
 
 export default ProjectModelViewer;
+
