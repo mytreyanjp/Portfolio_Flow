@@ -35,6 +35,12 @@ const LERP_SPEED_ROTATION = 0.08;
 const LERP_SPEED_CAMERA_Z = 0.05;
 const LERP_SPEED_MODEL_Y = 0.05;
 
+// Gyroscope control parameters
+const GYRO_MAX_INPUT_DEG = 30; // Max phone tilt in degrees to consider for full rotation effect
+const GYRO_TARGET_MODEL_MAX_ROT_RAD_X = 0.45; // Max model X rotation in radians (approx +/- 25 degrees)
+const GYRO_TARGET_MODEL_MAX_ROT_RAD_Y = 0.6; // Max model Y rotation in radians (approx +/- 34 degrees)
+
+
 const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, containerRef, onModelErrorOrMissing }) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -53,6 +59,9 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
   const lightsRef = useRef<THREE.Light[]>([]);
   const isIntersectingRef = useRef(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
+
+  const [isGyroActive, setIsGyroActive] = useState(false);
+  const initialGyroOffsetRef = useRef<{ beta: number | null; gamma: number | null }>({ beta: null, gamma: null });
 
 
   const handleScroll = useCallback(() => {
@@ -94,18 +103,70 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
     
     setError(null);
     setIsLoading(true);
+    setIsGyroActive(false); // Reset gyro state on model change
+    initialGyroOffsetRef.current = { beta: null, gamma: null };
     targetCameraZRef.current = MAX_CAMERA_Z; 
     targetModelYOffsetRef.current = MAX_MODEL_Y_OFFSET;
     initialModelYAfterCenteringRef.current = 0;
 
     const handleGlobalMouseMove = (event: MouseEvent) => {
-      if (!isMounted || !modelGroupRef.current || typeof window === 'undefined') return;
+      if (!isMounted || !modelGroupRef.current || typeof window === 'undefined' || isGyroActive) return; // Ignore mouse if gyro is active
       const x = (event.clientX / window.innerWidth - 0.5) * 2;
       const y = -(event.clientY / window.innerHeight - 0.5) * 2;
       const sensitivity = 0.3; 
       targetRotationRef.current.x = y * sensitivity;
       targetRotationRef.current.y = x * sensitivity;
     };
+
+    const handleDeviceOrientation = (event: DeviceOrientationEvent) => {
+      if (!isMounted || !modelGroupRef.current || event.beta === null || event.gamma === null) {
+          return;
+      }
+
+      if (!isGyroActive) {
+          setIsGyroActive(true); // Set gyro active on first valid event
+      }
+
+      const { beta, gamma } = event;
+
+      if (initialGyroOffsetRef.current.beta === null) { // Calibrate on first event after gyro becomes active
+          initialGyroOffsetRef.current.beta = beta;
+          initialGyroOffsetRef.current.gamma = gamma;
+          // Set target to current model rotation to prevent jump
+          if (modelGroupRef.current) {
+            targetRotationRef.current.x = modelGroupRef.current.rotation.x;
+            targetRotationRef.current.y = modelGroupRef.current.rotation.y;
+          }
+          return; // Skip processing for the very first event used for calibration
+      }
+
+      let relativeBeta = beta - (initialGyroOffsetRef.current.beta || 0);
+      let relativeGamma = gamma - (initialGyroOffsetRef.current.gamma || 0);
+
+      // Normalize tilt input (e.g., map -30 to +30 deg tilt to -1 to +1)
+      let normBeta = THREE.MathUtils.clamp(relativeBeta / GYRO_MAX_INPUT_DEG, -1, 1);
+      let normGamma = THREE.MathUtils.clamp(relativeGamma / GYRO_MAX_INPUT_DEG, -1, 1);
+
+      // Map normalized tilt to target model rotation angles
+      targetRotationRef.current.x = normBeta * GYRO_TARGET_MODEL_MAX_ROT_RAD_X;
+      // Invert gamma: tilting phone right (positive gamma) should make model rotate to show its right side (negative Y rotation in THREE typical setup)
+      targetRotationRef.current.y = -normGamma * GYRO_TARGET_MODEL_MAX_ROT_RAD_Y;
+    };
+    
+    let deviceOrientationListenerAttached = false;
+    if (typeof window.DeviceOrientationEvent !== 'undefined') {
+        if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+            // Handle iOS 13+ permission (usually needs a user gesture - for prototype, we'll log)
+            console.log("ProjectModelViewer: DeviceOrientationEvent.requestPermission found. Gyro may need user interaction to enable fully.");
+            // Attempting to add listener; it might not fire if permission is 'denied' or 'default'
+            window.addEventListener('deviceorientation', handleDeviceOrientation);
+            deviceOrientationListenerAttached = true;
+        } else {
+            // For other devices or if permission isn't required / already granted
+            window.addEventListener('deviceorientation', handleDeviceOrientation);
+            deviceOrientationListenerAttached = true;
+        }
+    }
     
     window.addEventListener('mousemove', handleGlobalMouseMove);
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -119,6 +180,9 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
           } else {
             targetCameraZRef.current = MAX_CAMERA_Z; 
             targetModelYOffsetRef.current = MAX_MODEL_Y_OFFSET;
+             // When not intersecting, reset gyro calibration to re-calibrate when it becomes visible again
+            initialGyroOffsetRef.current = { beta: null, gamma: null };
+            setIsGyroActive(false); // Deactivate gyro if not visible, to re-init on visibility
           }
         },
         { threshold: 0.01 } 
@@ -284,6 +348,11 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       
       window.removeEventListener('mousemove', handleGlobalMouseMove);
       window.removeEventListener('scroll', handleScroll);
+      if (deviceOrientationListenerAttached) {
+        window.removeEventListener('deviceorientation', handleDeviceOrientation);
+      }
+      initialGyroOffsetRef.current = { beta: null, gamma: null };
+      setIsGyroActive(false); // Reset gyro active state on cleanup
       
       if (observerRef.current) {
         observerRef.current.disconnect();
@@ -322,7 +391,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       // Do not nullify sceneRef, cameraRef here if they are meant to persist across modelPath changes
       // rendererRef.current = null; // This one should be nulled if re-created per model.
     };
-  }, [modelPath, containerRef, handleScroll, onModelErrorOrMissing]); 
+  }, [modelPath, containerRef, handleScroll, onModelErrorOrMissing, isGyroActive]); // Added isGyroActive to dependencies for mouse listener disabling
 
   return (
     <div ref={mountRef} className="w-full h-full overflow-hidden relative">
