@@ -316,7 +316,7 @@ export default function PortfolioPage() {
       <section
         aria-label="Quick navigation links"
         className={cn(
-          "mb-16 p-6 bg-card border border-border rounded-xl shadow-lg",
+          "mb-16 p-6 border border-border rounded-xl shadow-lg", // Removed bg-card
           "transition-all duration-700 ease-in-out",
           hasScrolled ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10 pointer-events-none"
         )}
