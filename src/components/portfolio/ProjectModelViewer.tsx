@@ -13,7 +13,6 @@ const THREE = _THREE;
 const GLTFLoader = _GLTFLoader;
 const DRACOLoader = _DRACOLoader;
 
-
 interface ProjectModelViewerProps {
   modelPath: string | undefined | null;
   containerRef: React.RefObject<HTMLDivElement>;
@@ -27,10 +26,17 @@ dracoLoaderInstance.setDecoderConfig({ type: 'wasm' });
 const gltfLoaderInstance = new GLTFLoader();
 gltfLoaderInstance.setDRACOLoader(dracoLoaderInstance);
 
-const FIXED_CAMERA_Z = 1.8; // Fixed camera Z position
+// Interaction constants
+const SCROLL_OFFSET_Y_FACTOR = 0.3; // How much model moves up/down with scroll
+const SCROLL_ZOOM_FACTOR_MIN = 1.5; // Camera Z at top of scroll
+const SCROLL_ZOOM_FACTOR_MAX = 2.5; // Camera Z at bottom of scroll
+
 const LERP_SPEED_ROTATION = 0.08;
 const LERP_SPEED_MODEL_Y = 0.05;
-const DRAG_ROTATION_SENSITIVITY = 0.007;
+const LERP_SPEED_CAMERA_Z = 0.05;
+
+const MOUSE_ROTATION_SENSITIVITY_X = 0.4;
+const MOUSE_ROTATION_SENSITIVITY_Y = 0.3;
 
 const GYRO_MAX_INPUT_DEG = 30;
 const GYRO_TARGET_MODEL_MAX_ROT_RAD_X = 0.45;
@@ -47,8 +53,12 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
 
   const modelGroupRef = useRef<THREE.Group | null>(null);
   const targetRotationRef = useRef({ x: 0, y: 0 });
+  const targetModelYOffsetRef = useRef<number>(0); // For scroll-based Y position changes
+  const targetCameraZRef = useRef<number>(SCROLL_ZOOM_FACTOR_MIN); // For scroll-based camera zoom
   
   const initialModelYAfterCenteringRef = useRef<number>(0);
+  const isWindowFocusedRef = useRef(true);
+  const scrollPercentageRef = useRef(0);
 
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -64,19 +74,11 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
   const isJumpingRef = useRef(false);
   const jumpStartTimeRef = useRef(0);
 
-  const isDraggingRef = useRef(false);
-  const previousMousePositionRef = useRef<{ x: number; y: number } | null>(null);
-  const didDragRef = useRef(false); // To distinguish click from drag end
-
-
   const handleModelClick = useCallback(() => {
-    // Only jump if it wasn't a drag operation that just ended
-    if (!isJumpingRef.current && modelGroupRef.current && !didDragRef.current) {
+    if (!isJumpingRef.current && modelGroupRef.current) {
         isJumpingRef.current = true;
         jumpStartTimeRef.current = Date.now();
     }
-    // Reset didDragRef after click check
-    didDragRef.current = false;
   }, []);
 
 
@@ -98,14 +100,16 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
 
     initialGyroOffsetRef.current = { beta: null, gamma: null };
     isJumpingRef.current = false;
-    isDraggingRef.current = false;
-    previousMousePositionRef.current = null;
     targetRotationRef.current = {x: 0, y: 0}; 
+    targetModelYOffsetRef.current = 0;
+    targetCameraZRef.current = SCROLL_ZOOM_FACTOR_MIN;
     initialModelYAfterCenteringRef.current = 0;
+    isWindowFocusedRef.current = (typeof document !== 'undefined' && document.hasFocus());
+    scrollPercentageRef.current = 0;
 
 
     const handleDeviceOrientation = (event: DeviceOrientationEvent) => {
-      if (!isMounted || !modelGroupRef.current || event.beta === null || event.gamma === null) {
+      if (!isMounted || !modelGroupRef.current || event.beta === null || event.gamma === null || !isWindowFocusedRef.current || !isIntersectingRef.current) {
           return;
       }
 
@@ -119,7 +123,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       if (initialGyroOffsetRef.current.beta === null) {
           initialGyroOffsetRef.current.beta = beta;
           initialGyroOffsetRef.current.gamma = gamma;
-          if (modelGroupRef.current) {
+           if (modelGroupRef.current) { // Use current model rotation as base for gyro
             targetRotationRef.current.x = modelGroupRef.current.rotation.x;
             targetRotationRef.current.y = modelGroupRef.current.rotation.y;
           }
@@ -140,65 +144,53 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
     let deviceOrientationListenerAttached = false;
     if (typeof window.DeviceOrientationEvent !== 'undefined') {
         if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+             // For iOS 13+
+             // Consider adding a UI button to trigger this for better UX
+            // (DeviceOrientationEvent as any).requestPermission().then((permissionState: string) => {
+            //    if (permissionState === 'granted') {
+            //        window.addEventListener('deviceorientation', handleDeviceOrientation);
+            //        deviceOrientationListenerAttached = true;
+            //    }
+            // }).catch(console.error);
+            // For now, just try to attach directly, might not work on iOS without user gesture.
             window.addEventListener('deviceorientation', handleDeviceOrientation);
             deviceOrientationListenerAttached = true;
         } else {
+            // For other browsers
             window.addEventListener('deviceorientation', handleDeviceOrientation);
             deviceOrientationListenerAttached = true;
         }
     }
 
-    const currentMountForListeners = mountRef.current;
+    const handleGlobalMouseMove = (event: MouseEvent) => {
+      if (!isMounted || isGyroActive || !isWindowFocusedRef.current || !isIntersectingRef.current) return;
+      const mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+      const mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+      targetRotationRef.current.y = mouseX * MOUSE_ROTATION_SENSITIVITY_X;
+      targetRotationRef.current.x = mouseY * MOUSE_ROTATION_SENSITIVITY_Y;
+    };
+    
+    const handleScroll = () => {
+        if (!isMounted || !isIntersectingRef.current || isGyroActive) return;
+        const currentScroll = window.scrollY;
+        const totalScrollableHeight = document.documentElement.scrollHeight - window.innerHeight;
+        scrollPercentageRef.current = totalScrollableHeight > 0 ? Math.max(0, Math.min(1, currentScroll / totalScrollableHeight)) : 0;
 
-    const onPointerDown = (event: PointerEvent) => {
-      if (!isMounted || isGyroActive || !currentMountForListeners) return;
-      if (event.pointerType === 'mouse' && event.button !== 0) return;
-
-      isDraggingRef.current = true;
-      didDragRef.current = false; // Reset drag flag
-      previousMousePositionRef.current = { x: event.clientX, y: event.clientY };
-      currentMountForListeners.setPointerCapture(event.pointerId);
-      currentMountForListeners.style.cursor = 'grabbing';
-      
-      currentMountForListeners.addEventListener('pointermove', onPointerMove);
-      currentMountForListeners.addEventListener('pointerup', onPointerUp);
-      currentMountForListeners.addEventListener('pointercancel', onPointerUp);
+        targetModelYOffsetRef.current = scrollPercentageRef.current * SCROLL_OFFSET_Y_FACTOR * -2;
+        targetCameraZRef.current = SCROLL_ZOOM_FACTOR_MIN + (SCROLL_ZOOM_FACTOR_MAX - SCROLL_ZOOM_FACTOR_MIN) * scrollPercentageRef.current;
     };
 
-    const onPointerMove = (event: PointerEvent) => {
-      if (!isMounted || !isDraggingRef.current || isGyroActive || !previousMousePositionRef.current) return;
+    const handleWindowFocus = () => { isWindowFocusedRef.current = true; };
+    const handleWindowBlur = () => { isWindowFocusedRef.current = false; };
 
-      const deltaX = event.clientX - previousMousePositionRef.current.x;
-      const deltaY = event.clientY - previousMousePositionRef.current.y;
-
-      if (Math.abs(deltaX) > 0 || Math.abs(deltaY) > 0) {
-        didDragRef.current = true; // It's a drag if there's movement
-      }
-
-      targetRotationRef.current.y += deltaX * DRAG_ROTATION_SENSITIVITY;
-      targetRotationRef.current.x += deltaY * DRAG_ROTATION_SENSITIVITY;
-
-      previousMousePositionRef.current = { x: event.clientX, y: event.clientY };
-    };
-
-    const onPointerUp = (event: PointerEvent) => {
-      if (!isMounted || !currentMountForListeners) return;
-      
-      isDraggingRef.current = false;
-      currentMountForListeners.style.cursor = isGyroActive ? '' : 'grab';
-      currentMountForListeners.releasePointerCapture(event.pointerId);
-      
-      currentMountForListeners.removeEventListener('pointermove', onPointerMove);
-      currentMountForListeners.removeEventListener('pointerup', onPointerUp);
-      currentMountForListeners.removeEventListener('pointercancel', onPointerUp);
-      
-      // didDragRef will be checked by handleModelClick
-    };
-
-    if (currentMountForListeners) {
-        currentMountForListeners.style.cursor = isGyroActive ? '' : 'grab';
-        currentMountForListeners.addEventListener('pointerdown', onPointerDown);
-        currentMountForListeners.addEventListener('click', handleModelClick);
+    window.addEventListener('mousemove', handleGlobalMouseMove);
+    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('focus', handleWindowFocus);
+    window.addEventListener('blur', handleWindowBlur);
+    
+    const currentMountForClick = mountRef.current;
+    if (currentMountForClick) {
+        currentMountForClick.addEventListener('click', handleModelClick);
     }
 
 
@@ -211,11 +203,10 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
               console.log("ProjectModelViewer: Element not intersecting, deactivating gyro and resetting calibration.");
               initialGyroOffsetRef.current = { beta: null, gamma: null };
               setIsGyroActive(false);
-               if (mountRef.current) mountRef.current.style.cursor = 'grab';
             }
-          } else {
-             if (mountRef.current && isGyroActive) mountRef.current.style.cursor = '';
-             else if (mountRef.current && !isGyroActive) mountRef.current.style.cursor = 'grab';
+          }
+          if (entry.isIntersecting) {
+            handleScroll(); // Update scroll-based positions when it becomes visible
           }
         },
         { threshold: 0.01 }
@@ -236,14 +227,13 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       if (!sceneRef.current) sceneRef.current = new THREE.Scene();
       if (!cameraRef.current) {
         cameraRef.current = new THREE.PerspectiveCamera(50, currentMount.clientWidth > 0 ? currentMount.clientWidth / currentMount.clientHeight : 1, 0.1, 100);
-        cameraRef.current.position.z = FIXED_CAMERA_Z;
       } else {
         if (currentMount.clientWidth > 0 && currentMount.clientHeight > 0) {
           cameraRef.current.aspect = currentMount.clientWidth / currentMount.clientHeight;
           cameraRef.current.updateProjectionMatrix();
         }
-        cameraRef.current.position.z = FIXED_CAMERA_Z; 
       }
+      // Initial camera Z position is set by handleScroll via targetCameraZRef
 
       if (!rendererRef.current) {
         rendererRef.current = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -254,7 +244,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       if (currentMount.clientWidth > 0 && currentMount.clientHeight > 0) {
         rendererRef.current.setSize(currentMount.clientWidth, currentMount.clientHeight);
       } else {
-        rendererRef.current.setSize(300, 150);
+        rendererRef.current.setSize(300, 150); // Fallback
       }
 
       if (currentMount.contains(rendererRef.current.domElement)) {
@@ -302,15 +292,16 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
           const size = box.getSize(new THREE.Vector3());
           const maxDim = Math.max(size.x, size.y, size.z);
           let scaleFactor = 1.0;
-          const targetViewSize = 1.8;
+          const targetViewSize = 1.8; // Scale factor for initial view
           if (maxDim > 0.001) scaleFactor = targetViewSize / maxDim;
           modelGroupRef.current.scale.set(scaleFactor, scaleFactor, scaleFactor);
           const scaledBox = new THREE.Box3().setFromObject(modelGroupRef.current);
           const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
-          modelGroupRef.current.position.sub(scaledCenter);
-          initialModelYAfterCenteringRef.current = modelGroupRef.current.position.y;
+          modelGroupRef.current.position.sub(scaledCenter); // Center the model
+          initialModelYAfterCenteringRef.current = modelGroupRef.current.position.y; // Store centered Y
 
           if (cameraRef.current) cameraRef.current.lookAt(0, 0, 0);
+          handleScroll(); // Initial call to set scroll-based positions
           setIsLoading(false);
         },
         undefined,
@@ -326,24 +317,27 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
         if (!isMounted) return;
         animationFrameIdRef.current = requestAnimationFrame(animate);
         if (modelGroupRef.current && rendererRef.current && sceneRef.current && cameraRef.current) {
-          modelGroupRef.current.rotation.x += (targetRotationRef.current.x - modelGroupRef.current.rotation.x) * LERP_SPEED_ROTATION;
-          modelGroupRef.current.rotation.y += (targetRotationRef.current.y - modelGroupRef.current.rotation.y) * LERP_SPEED_ROTATION;
+          if (isIntersectingRef.current) {
+            modelGroupRef.current.rotation.x += (targetRotationRef.current.x - modelGroupRef.current.rotation.x) * LERP_SPEED_ROTATION;
+            modelGroupRef.current.rotation.y += (targetRotationRef.current.y - modelGroupRef.current.rotation.y) * LERP_SPEED_ROTATION;
+            
+            let currentBaseY = initialModelYAfterCenteringRef.current + targetModelYOffsetRef.current;
+            let finalTargetModelY = currentBaseY;
 
-          cameraRef.current.position.z = FIXED_CAMERA_Z;
-
-          let finalTargetModelY = initialModelYAfterCenteringRef.current;
-          if (isJumpingRef.current) {
-            const elapsedJumpTime = Date.now() - jumpStartTimeRef.current;
-            if (elapsedJumpTime < JUMP_DURATION) {
-              const progress = elapsedJumpTime / JUMP_DURATION;
-              const jumpOffset = JUMP_HEIGHT * Math.sin(progress * Math.PI);
-              finalTargetModelY += jumpOffset;
-            } else {
-              isJumpingRef.current = false;
+            if (isJumpingRef.current) {
+              const elapsedJumpTime = Date.now() - jumpStartTimeRef.current;
+              if (elapsedJumpTime < JUMP_DURATION) {
+                const progress = elapsedJumpTime / JUMP_DURATION;
+                const jumpOffset = JUMP_HEIGHT * Math.sin(progress * Math.PI);
+                finalTargetModelY += jumpOffset;
+              } else {
+                isJumpingRef.current = false;
+              }
             }
+            modelGroupRef.current.position.y += (finalTargetModelY - modelGroupRef.current.position.y) * LERP_SPEED_MODEL_Y;
+            
+            cameraRef.current.position.z += (targetCameraZRef.current - cameraRef.current.position.z) * LERP_SPEED_CAMERA_Z;
           }
-          modelGroupRef.current.position.y += (finalTargetModelY - modelGroupRef.current.position.y) * LERP_SPEED_MODEL_Y;
-
           rendererRef.current.render(sceneRef.current, cameraRef.current);
         }
       };
@@ -357,6 +351,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
         cameraRef.current.aspect = currentMount.clientWidth / currentMount.clientHeight;
         cameraRef.current.updateProjectionMatrix();
         rendererRef.current.setSize(currentMount.clientWidth, currentMount.clientHeight);
+        handleScroll(); // Re-evaluate scroll positions on resize
       };
       window.addEventListener('resize', handleResize);
       const initialResizeTimeoutId = setTimeout(() => { if (isMounted && currentMount && currentMount.clientWidth > 0 && currentMount.clientHeight > 0) handleResize(); }, 100);
@@ -368,18 +363,20 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       clearTimeout(timeoutId);
       if (animationFrameIdRef.current) cancelAnimationFrame(animationFrameIdRef.current);
 
-      if (currentMountForListeners) {
-        currentMountForListeners.style.cursor = '';
-        currentMountForListeners.removeEventListener('pointerdown', onPointerDown);
-        currentMountForListeners.removeEventListener('click', handleModelClick);
-        currentMountForListeners.removeEventListener('pointermove', onPointerMove);
-        currentMountForListeners.removeEventListener('pointerup', onPointerUp);
-        currentMountForListeners.removeEventListener('pointercancel', onPointerUp);
-      }
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('focus', handleWindowFocus);
+      window.removeEventListener('blur', handleWindowBlur);
       if (deviceOrientationListenerAttached) window.removeEventListener('deviceorientation', handleDeviceOrientation);
+      
+      if (currentMountForClick) {
+        currentMountForClick.removeEventListener('click', handleModelClick);
+      }
+
       initialGyroOffsetRef.current = { beta: null, gamma: null };
-      setIsGyroActive(false); // Ensure gyro is deactivated on cleanup
+      setIsGyroActive(false);
       if (observerRef.current) observerRef.current.disconnect();
+      
       if (modelGroupRef.current && sceneRef.current) {
         sceneRef.current.remove(modelGroupRef.current);
         modelGroupRef.current.traverse(child => {
@@ -399,13 +396,11 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       }
       rendererRef.current?.dispose();
     };
-  // Main dependencies that should trigger re-initialization.
   }, [modelPath, containerRef, onModelErrorOrMissing, handleModelClick]); 
   
-  // Effect to update cursor based on isGyroActive, separate from main setup
   useEffect(() => {
     if (mountRef.current) {
-      mountRef.current.style.cursor = isGyroActive ? '' : 'grab';
+      mountRef.current.style.cursor = isGyroActive ? '' : 'default'; // Changed from 'grab' to 'default'
     }
   }, [isGyroActive]);
 
@@ -414,8 +409,8 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
     <div 
       ref={mountRef} 
       className={cn(
-        "w-full h-full overflow-hidden relative"
-        // Cursor style is now managed by JS depending on isGyroActive and isDragging
+        "w-full h-full overflow-hidden relative",
+        // Cursor style is now 'default' or unset (for gyro)
       )}
     >
       {isLoading && !error && (
