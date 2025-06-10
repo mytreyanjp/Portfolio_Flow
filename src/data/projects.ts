@@ -5,13 +5,14 @@ export type Project = {
   description: string;
   longDescription?: string;
   imageUrl?: string;
-  model?: string;
+  model?: string; // For self-hosted .glb files
+  cloonedOID?: string; // For Clooned embeds
   dataAiHint: string;
-  categories: string[]; // Changed from category: string
+  categories: string[];
   technologies: string[];
   liveLink?: string;
   sourceLink?: string;
-  documentationLink?: string; // Added documentation link
+  documentationLink?: string;
 };
 
 // This list can serve as initial/default categories or suggestions

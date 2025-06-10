@@ -19,7 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { allTechnologies, Project } from '@/data/projects';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Loader2, Save, Edit, X as XIcon, PlusCircle, FileText } from 'lucide-react';
+import { Loader2, Save, Edit, X as XIcon, PlusCircle, FileText, Grid3X3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { addDoc, collection, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/firebase';
@@ -31,6 +31,7 @@ const addProjectSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters.'),
   description: z.string().min(10, 'Short description must be at least 10 characters.'),
   longDescription: z.string().optional(),
+  imageUrl: z.string().url({ message: "Please enter a valid URL for the image." }).or(z.literal('')).optional(),
   modelPath: z.string()
     .refine(val => {
       if (val === '') return true;
@@ -48,6 +49,7 @@ const addProjectSchema = z.object({
       message: "Model path must be a valid HTTP/HTTPS URL ending with .glb (e.g., https://cdn.example.com/model.glb), a local path (e.g., /models/my_model.glb), or empty."
     })
     .optional(),
+  cloonedOID: z.string().optional(), // New field for Clooned Object ID
   dataAiHint: z.string()
     .max(50, "AI hint too long (max 50 chars).")
     .refine(val => val === '' || val.split(' ').length <= 2, {
@@ -58,7 +60,6 @@ const addProjectSchema = z.object({
   liveLink: z.string().url({ message: "Please enter a valid URL." }).or(z.literal('')).optional(),
   sourceLink: z.string().url({ message: "Please enter a valid URL." }).or(z.literal('')).optional(),
   documentationLink: z.string().url({ message: "Please enter a valid URL." }).or(z.literal('')).optional(),
-  imageUrl: z.string().url({ message: "Please enter a valid URL for the image." }).or(z.literal('')).optional(),
 });
 
 export type AddProjectFormValues = z.infer<typeof addProjectSchema>;
@@ -93,14 +94,15 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
       title: '',
       description: '',
       longDescription: '',
+      imageUrl: '',
       modelPath: '',
+      cloonedOID: '', // Default for Clooned OID
       dataAiHint: '',
       categories: [],
       technologies: '',
       liveLink: '',
       sourceLink: '',
       documentationLink: '',
-      imageUrl: '',
     },
   });
 
@@ -110,14 +112,15 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
         title: editingProject.title || '',
         description: editingProject.description || '',
         longDescription: editingProject.longDescription || '',
+        imageUrl: editingProject.imageUrl || '',
         modelPath: editingProject.model || '',
+        cloonedOID: editingProject.cloonedOID || '', // Populate Clooned OID
         dataAiHint: editingProject.dataAiHint || '',
         categories: editingProject.categories || [],
         technologies: editingProject.technologies ? editingProject.technologies.join(', ') : '',
         liveLink: editingProject.liveLink || '',
         sourceLink: editingProject.sourceLink || '',
         documentationLink: editingProject.documentationLink || '',
-        imageUrl: editingProject.imageUrl || '',
       });
       setCurrentProjectCategories(editingProject.categories || []);
     } else {
@@ -125,14 +128,15 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
         title: '',
         description: '',
         longDescription: '',
+        imageUrl: '',
         modelPath: '',
+        cloonedOID: '',
         dataAiHint: '',
         categories: [],
         technologies: '',
         liveLink: '',
         sourceLink: '',
         documentationLink: '',
-        imageUrl: '',
       });
       setCurrentProjectCategories([]);
     }
@@ -168,17 +172,25 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
     try {
       const techArray = data.technologies.split(',').map(tech => tech.trim()).filter(Boolean);
       
+      let defaultAiHint = 'project image';
+      if (data.cloonedOID && data.cloonedOID.trim() !== '') {
+        defaultAiHint = '3d object';
+      } else if (data.modelPath && data.modelPath.trim() !== '') {
+        defaultAiHint = '3d model';
+      }
+
       const projectDataToSave: any = {
         title: data.title,
         description: data.description,
         categories: data.categories, 
         technologies: techArray,
-        dataAiHint: data.dataAiHint || (data.modelPath && data.modelPath.trim() !== '' ? '3d model' : 'project image'),
+        dataAiHint: data.dataAiHint || defaultAiHint,
       };
 
       if (data.longDescription && data.longDescription.trim() !== '') projectDataToSave.longDescription = data.longDescription;
       if (data.imageUrl && data.imageUrl.trim() !== '') projectDataToSave.imageUrl = data.imageUrl;
       if (data.modelPath && data.modelPath.trim() !== '') projectDataToSave.model = data.modelPath;
+      if (data.cloonedOID && data.cloonedOID.trim() !== '') projectDataToSave.cloonedOID = data.cloonedOID; // Save Clooned OID
       if (data.liveLink && data.liveLink.trim() !== '') projectDataToSave.liveLink = data.liveLink;
       if (data.sourceLink && data.sourceLink.trim() !== '') projectDataToSave.sourceLink = data.sourceLink;
       if (data.documentationLink && data.documentationLink.trim() !== '') projectDataToSave.documentationLink = data.documentationLink;
@@ -293,7 +305,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
                 <Input placeholder="https://placehold.co/600x400.png" {...field} />
               </FormControl>
               <FormDescription>
-                A direct link to an image for the project card. If a model path is also provided, the model viewer will be prioritized.
+                Direct link to an image for the project card. Used if no 3D model/Clooned OID is provided, or as a fallback.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -305,12 +317,29 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
           name="modelPath"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>3D Model Path (Optional, .glb format)</FormLabel>
+              <FormLabel>Self-Hosted 3D Model Path (Optional, .glb format)</FormLabel>
               <FormControl>
                 <Input placeholder="/models/your-model.glb or https://example.com/model.glb" {...field} />
               </FormControl>
               <FormDescription>
-                Path to the .glb model file. Can be a local path within your <code>public/models</code> directory (e.g., <code>/models/cool-robot.glb</code>) or a full URL. Leave empty if not using a 3D model.
+                Path to a .glb model file (e.g., <code>/models/cool-robot.glb</code>). Leave empty if using Clooned OID or just an image.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="cloonedOID"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center"><Grid3X3 className="mr-2 h-4 w-4 text-primary"/>Clooned Object ID (Optional)</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g., fda63d4199d848f5bb99d7b766fefb78" {...field} />
+              </FormControl>
+              <FormDescription>
+                Enter the Object ID (OID) from your Clooned embed code. This will use the Clooned viewer.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -327,7 +356,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
                 <Input placeholder="e.g., futuristic city" {...field} />
               </FormControl>
               <FormDescription>
-                One or two keywords for AI image generation/search if a placeholder/fallback image is used. Default is 'project image' or '3d model' based on model path.
+                Keywords for AI image generation if a placeholder/fallback is used. Defaults based on model type.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -447,7 +476,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
                 </PopoverContent>
               </Popover>
               <FormDescription>
-                Add relevant categories for your project. Type to search or add new ones.
+                Add relevant categories. Type to search or add new ones.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -538,4 +567,3 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
     </Form>
   );
 }
-

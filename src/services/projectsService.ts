@@ -13,12 +13,13 @@ const defaultProject: Project = {
   longDescription: 'This sample project demonstrates how 3D models can be displayed in project cards. It includes a title, description, model URL, categories, and technologies. You can replace this with your actual projects from the Firestore database. This model is a simple wooden crate.',
   imageUrl: 'https://placehold.co/600x400.png',
   model: '/models/wooden_crate.glb',
+  // cloonedOID: undefined, // No default Clooned OID
   dataAiHint: '3d crate',
   categories: ['3D Graphics', 'Sample'], 
   technologies: ['Three.js', 'React'],
   liveLink: '#',
   sourceLink: '#',
-  documentationLink: '#', // Added placeholder documentation link
+  documentationLink: '#',
 };
 
 export async function getProjects(): Promise<Project[]> {
@@ -48,12 +49,13 @@ export async function getProjects(): Promise<Project[]> {
         longDescription: data.longDescription || data.description || '',
         imageUrl: data.imageUrl,
         model: data.model,
+        cloonedOID: data.cloonedOID, // Add cloonedOID
         dataAiHint: data.dataAiHint || 'project image',
         categories: projectCategories, 
         technologies: data.technologies || [],
         liveLink: data.liveLink,
         sourceLink: data.sourceLink,
-        documentationLink: data.documentationLink, // Added documentation link
+        documentationLink: data.documentationLink,
       });
     });
 
@@ -64,7 +66,9 @@ export async function getProjects(): Promise<Project[]> {
 
     return projects.map(p => ({
       ...p,
-      imageUrl: p.imageUrl || (!p.model ? 'https://placehold.co/600x400.png' : undefined),
+      // Fallback image if no specific image, no model, and no clooned OID.
+      // If cloonedOID is present, imageUrl might not be primary.
+      imageUrl: p.imageUrl || (!p.model && !p.cloonedOID ? 'https://placehold.co/600x400.png' : undefined),
     }));
 
   } catch (error) {
@@ -72,7 +76,7 @@ export async function getProjects(): Promise<Project[]> {
     console.warn("Falling back to default project due to fetch error.");
     return [{
       ...defaultProject,
-      imageUrl: defaultProject.imageUrl || (!defaultProject.model ? 'https://placehold.co/600x400.png' : undefined),
+      imageUrl: defaultProject.imageUrl || (!defaultProject.model && !defaultProject.cloonedOID ? 'https://placehold.co/600x400.png' : undefined),
     }];
   }
 }
@@ -80,13 +84,11 @@ export async function getProjects(): Promise<Project[]> {
 export async function getUniqueCategoriesFromProjects(): Promise<string[]> {
   try {
     const projectsCollection = collection(db, 'projects');
-    const q = query(projectsCollection); // No orderBy needed here, just fetching data
+    const q = query(projectsCollection);
     const querySnapshot = await getDocs(q);
     const categoriesFromDbProjects = new Set<string>();
 
     if (querySnapshot.empty) {
-      // If there are no projects in Firestore, there are no "existing project categories"
-      // The form will allow adding new ones by typing.
       console.log("No projects in Firestore, so no existing categories to suggest for AddProjectForm.");
       return [];
     }
@@ -99,7 +101,7 @@ export async function getUniqueCategoriesFromProjects(): Promise<string[]> {
             categoriesFromDbProjects.add(cat.trim());
           }
         });
-      } else if (typeof data.category === 'string' && data.category.trim() !== '') { // Legacy support for single category string
+      } else if (typeof data.category === 'string' && data.category.trim() !== '') {
         categoriesFromDbProjects.add(data.category.trim());
       }
     });
@@ -108,8 +110,6 @@ export async function getUniqueCategoriesFromProjects(): Promise<string[]> {
 
   } catch (error) {
     console.error("Error fetching unique categories from projects: ", error);
-    // In case of error, returning empty array is safer for this specific request,
-    // as the admin can still type new categories in the form.
     return [];
   }
 }
