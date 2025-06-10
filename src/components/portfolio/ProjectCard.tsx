@@ -50,7 +50,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
         description: `Could not generate image for "${project.title}". Using placeholder.`,
         variant: "destructive",
       });
-      setEffectiveImageUrl(FALLBACK_IMAGE_URL); 
+      setEffectiveImageUrl(FALLBACK_IMAGE_URL);
     } finally {
       setIsGeneratingAiImage(false);
     }
@@ -76,12 +76,12 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
       setEffectiveImageUrl(project.imageUrl);
     }
   }, [
-    project.cloonedOID, 
-    modelLoadFailedOrMissing, 
-    project.imageUrl, 
-    project.description, 
-    triggerAiImageGeneration, 
-    aiImageGenerated, 
+    project.cloonedOID,
+    modelLoadFailedOrMissing,
+    project.imageUrl,
+    project.description,
+    triggerAiImageGeneration,
+    aiImageGenerated,
     isGeneratingAiImage
   ]);
 
@@ -91,7 +91,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
   }, []);
 
   const projectCategories = project.categories || [];
-  
+
   const useCloonedViewer = !!project.cloonedOID;
   const useThreeJSViewer = !useCloonedViewer && !!project.model && !modelLoadFailedOrMissing;
   const showImageFallback = !useCloonedViewer && !useThreeJSViewer;
@@ -101,14 +101,25 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
       ref={cardRef}
       className={cn(
         "flex flex-col h-full overflow-hidden transform transition-all duration-300 hover:scale-[1.02] animate-fadeInUpScale",
-        "w-full max-w-[363px] mx-auto" 
+        "w-full max-w-[363px] mx-auto"
       )}
       style={{ animationDelay: `${index * 100}ms` }}
     >
       <div className="relative w-full h-48 mb-4 rounded-t-md overflow-hidden group bg-muted/70 dark:bg-muted flex items-center justify-center">
         {useCloonedViewer && (
           <>
-            <Script src={CLOONED_SCRIPT_SRC} strategy="lazyOnload" />
+            <Script
+              src={CLOONED_SCRIPT_SRC}
+              strategy="afterInteractive"
+              onError={(e) => {
+                console.error("Failed to load Clooned script:", e);
+                toast({
+                    title: "3D Viewer Error",
+                    description: "Could not load the Clooned 3D viewer script. The model may not display.",
+                    variant: "destructive"
+                });
+              }}
+            />
             {/* Ensure the clooned-object and its container fill the space */}
             <div className="w-full h-full clooned-object-container">
               <clooned-object features="lsc;dt;fs" oid={project.cloonedOID} style={{ width: '100%', height: '100%', display: 'block' }}></clooned-object>
