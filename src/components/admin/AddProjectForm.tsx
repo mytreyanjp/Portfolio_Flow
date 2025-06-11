@@ -49,7 +49,7 @@ const addProjectSchema = z.object({
       message: "Model path must be a valid HTTP/HTTPS URL ending with .glb (e.g., https://cdn.example.com/model.glb), a local path (e.g., /models/my_model.glb), or empty."
     })
     .optional(),
-  cloonedOID: z.string().optional(), // New field for Clooned Object ID
+  // cloonedOID field removed from schema
   dataAiHint: z.string()
     .max(50, "AI hint too long (max 50 chars).")
     .refine(val => val === '' || val.split(' ').length <= 2, {
@@ -65,7 +65,7 @@ const addProjectSchema = z.object({
 export type AddProjectFormValues = z.infer<typeof addProjectSchema>;
 
 interface AddProjectFormProps {
-  onProjectAdded: (newProjectData: Omit<Project, 'id'> & { id?: string }) => void;
+  onProjectAdded: (newProjectData: Omit<Project, 'id' | 'cloonedOID'> & { id?: string }) => void;
   editingProject?: Project | null;
   onProjectUpdated?: (updatedProjectData: Project) => void;
   availableCategories: string[];
@@ -96,7 +96,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
       longDescription: '',
       imageUrl: '',
       modelPath: '',
-      cloonedOID: '', // Default for Clooned OID
+      // cloonedOID removed from default values
       dataAiHint: '',
       categories: [],
       technologies: '',
@@ -114,7 +114,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
         longDescription: editingProject.longDescription || '',
         imageUrl: editingProject.imageUrl || '',
         modelPath: editingProject.model || '',
-        cloonedOID: editingProject.cloonedOID || '', // Populate Clooned OID
+        // editingProject.cloonedOID is not used here anymore
         dataAiHint: editingProject.dataAiHint || '',
         categories: editingProject.categories || [],
         technologies: editingProject.technologies ? editingProject.technologies.join(', ') : '',
@@ -130,7 +130,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
         longDescription: '',
         imageUrl: '',
         modelPath: '',
-        cloonedOID: '',
+        // cloonedOID removed
         dataAiHint: '',
         categories: [],
         technologies: '',
@@ -173,31 +173,32 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
       const techArray = data.technologies.split(',').map(tech => tech.trim()).filter(Boolean);
       
       let defaultAiHint = 'project image';
-      if (data.cloonedOID && data.cloonedOID.trim() !== '') {
-        defaultAiHint = '3d object';
-      } else if (data.modelPath && data.modelPath.trim() !== '') {
+      // Adjusted defaultAiHint logic as cloonedOID is removed
+      if (data.modelPath && data.modelPath.trim() !== '') {
         defaultAiHint = '3d model';
       }
       
       if (isEditMode && editingProject) {
-        // For updates, ensure all fields from the form are included in the payload
-        // so that clearing a field in the form results in that field being updated
-        // (e.g., to an empty string) in Firestore.
-        const updatePayload = {
+        const updatePayload: any = { // Use 'any' or a more specific type that omits cloonedOID
           title: data.title,
           description: data.description,
-          longDescription: data.longDescription, // Will be "" if cleared by user
-          imageUrl: data.imageUrl,             // Will be "" if cleared
-          model: data.modelPath,               // Will be "" if cleared
-          cloonedOID: data.cloonedOID,         // Will be "" if cleared
-          dataAiHint: data.dataAiHint,         // Will be "" if cleared (defaultAiHint not used for updates)
+          longDescription: data.longDescription,
+          imageUrl: data.imageUrl,
+          model: data.modelPath,
+          // cloonedOID removed from updatePayload
+          dataAiHint: data.dataAiHint,
           categories: data.categories,
           technologies: techArray,
-          liveLink: data.liveLink,             // Will be "" if cleared
-          sourceLink: data.sourceLink,           // Will be "" if cleared
-          documentationLink: data.documentationLink, // Will be "" if cleared
+          liveLink: data.liveLink,
+          sourceLink: data.sourceLink,
+          documentationLink: data.documentationLink,
           updatedAt: serverTimestamp(),
         };
+        // Ensure cloonedOID is explicitly removed if it existed
+        if (editingProject.cloonedOID) {
+            updatePayload.cloonedOID = null; // Or FieldValue.delete() if you prefer to remove the field entirely
+        }
+
 
         const projectRef = doc(db, 'projects', editingProject.id);
         await updateDoc(projectRef, updatePayload);
@@ -208,8 +209,9 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
         });
 
         if (onProjectUpdated) {
-          // Pass the updated project data (merged with existing non-form data)
-          onProjectUpdated({ ...editingProject, ...updatePayload });
+          const updatedProjectData = { ...editingProject, ...updatePayload };
+          delete updatedProjectData.cloonedOID; // Ensure it's not in the callback if set to null
+          onProjectUpdated(updatedProjectData as Project);
         }
 
       } else { // Create mode
@@ -218,14 +220,13 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
           description: data.description,
           categories: data.categories,
           technologies: techArray,
-          dataAiHint: data.dataAiHint || defaultAiHint, // Use default if empty on create
+          dataAiHint: data.dataAiHint || defaultAiHint,
           createdAt: serverTimestamp(),
         };
-        // For create mode, only add optional fields if they have content, to keep Firestore docs cleaner
+        // cloonedOID removed from save logic
         if (data.longDescription && data.longDescription.trim() !== '') projectDataToSave.longDescription = data.longDescription;
         if (data.imageUrl && data.imageUrl.trim() !== '') projectDataToSave.imageUrl = data.imageUrl;
         if (data.modelPath && data.modelPath.trim() !== '') projectDataToSave.model = data.modelPath;
-        if (data.cloonedOID && data.cloonedOID.trim() !== '') projectDataToSave.cloonedOID = data.cloonedOID; // Save Clooned OID
         if (data.liveLink && data.liveLink.trim() !== '') projectDataToSave.liveLink = data.liveLink;
         if (data.sourceLink && data.sourceLink.trim() !== '') projectDataToSave.sourceLink = data.sourceLink;
         if (data.documentationLink && data.documentationLink.trim() !== '') projectDataToSave.documentationLink = data.documentationLink;
@@ -246,7 +247,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
         }
 
         if (onProjectAdded) {
-          const newProjectForCallback: Omit<Project, 'id'> & { id: string } = {
+          const newProjectForCallback: Omit<Project, 'id' | 'cloonedOID'> & { id: string } = { // Adjusted type
               id: docRef.id,
               ...projectDataToSave,
           };
@@ -322,7 +323,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
                 <Input placeholder="https://placehold.co/600x400.png" {...field} />
               </FormControl>
               <FormDescription>
-                Direct link to an image for the project card. Used if no 3D model/Clooned OID is provided, or as a fallback.
+                Direct link to an image for the project card. Used if no 3D model is provided, or as a fallback.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -339,29 +340,14 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
                 <Input placeholder="/models/your-model.glb or https://example.com/model.glb" {...field} />
               </FormControl>
               <FormDescription>
-                Path to a .glb model file (e.g., <code>/models/cool-robot.glb</code>). Leave empty if using Clooned OID or just an image.
+                Path to a .glb model file (e.g., <code>/models/cool-robot.glb</code>). Leave empty if using just an image.
               </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="cloonedOID"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="flex items-center"><Grid3X3 className="mr-2 h-4 w-4 text-primary"/>Clooned Object ID (Optional)</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., fda63d4199d848f5bb99d7b766fefb78" {...field} />
-              </FormControl>
-              <FormDescription>
-                Enter the Object ID (OID) from your Clooned embed code. This will use the Clooned viewer.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* CloonedOID FormField removed */}
         
         <FormField
           control={form.control}
@@ -584,3 +570,4 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
     </Form>
   );
 }
+
