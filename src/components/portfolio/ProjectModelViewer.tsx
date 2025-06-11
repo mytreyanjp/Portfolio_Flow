@@ -33,8 +33,8 @@ gltfLoaderInstance.setCrossOrigin('anonymous');
 
 // Interaction constants
 const SCROLL_OFFSET_Y_FACTOR = 0.3;
-const SCROLL_ZOOM_FACTOR_MIN = 1.5;
-const SCROLL_ZOOM_FACTOR_MAX = 3.5; // Increased max zoom slightly
+const SCROLL_ZOOM_FACTOR_MIN = 1.2; // Adjusted: Closer minimum zoom
+const SCROLL_ZOOM_FACTOR_MAX = 2.8; // Adjusted: Closer maximum zoom
 
 const LERP_SPEED_ROTATION = 0.08;
 const LERP_SPEED_MODEL_Y = 0.05;
@@ -87,9 +87,12 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
     }
   }, []);
 
+  console.log("ProjectModelViewer: Component rendering with modelPath:", modelPath);
+
 
   useEffect(() => {
     const effectModelPath = modelPath;
+    console.log("ProjectModelViewer: useEffect initializing for modelPath:", effectModelPath);
     let isMounted = true;
     let timeoutId: NodeJS.Timeout;
 
@@ -243,14 +246,13 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       lightsRef.current.forEach(light => sceneRef.current?.remove(light));
       lightsRef.current = [];
 
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.8); // Slightly brighter ambient
+      const ambientLight = new THREE.AmbientLight(0xffffff, 1.0); // Increased ambient light
       sceneRef.current.add(ambientLight);
-      const mainDirectionalLight = new THREE.DirectionalLight(0xffffff, 1.5); // Brighter directional
-      mainDirectionalLight.position.set(2, 3, 3); // Adjusted position
+      const mainDirectionalLight = new THREE.DirectionalLight(0xffffff, 2.0); // Increased directional light
+      mainDirectionalLight.position.set(2, 4, 3); // Adjusted position
       sceneRef.current.add(mainDirectionalLight);
 
-      // Optional: Add a light from below or behind if models appear too dark on some faces
-      const fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
+      const fillLight = new THREE.DirectionalLight(0xffffff, 0.8); // Slightly increased fill light
       fillLight.position.set(-2, -1, -2);
       sceneRef.current.add(fillLight);
 
@@ -282,7 +284,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
           const size = box.getSize(new THREE.Vector3());
           const maxDim = Math.max(size.x, size.y, size.z);
           let scaleFactor = 1.0;
-          const targetViewSize = 1.8;
+          const targetViewSize = 2.2; // Adjusted: Increased target view size for larger appearance
           if (maxDim > 0.001) scaleFactor = targetViewSize / maxDim;
           console.log(`ProjectModelViewer: Original Max Dim: ${maxDim}, Scale Factor: ${scaleFactor}`);
           modelGroupRef.current.scale.set(scaleFactor, scaleFactor, scaleFactor);
