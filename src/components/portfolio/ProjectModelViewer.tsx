@@ -25,11 +25,12 @@ dracoLoaderInstance.setDecoderConfig({ type: 'wasm' });
 
 const gltfLoaderInstance = new GLTFLoader();
 gltfLoaderInstance.setDRACOLoader(dracoLoaderInstance);
+gltfLoaderInstance.setCrossOrigin('anonymous'); // Added for better cross-origin loading
 
 // Interaction constants
-const SCROLL_OFFSET_Y_FACTOR = 0.3; // How much model moves up/down with scroll
-const SCROLL_ZOOM_FACTOR_MIN = 1.5; // Camera Z at top of scroll
-const SCROLL_ZOOM_FACTOR_MAX = 2.5; // Camera Z at bottom of scroll
+const SCROLL_OFFSET_Y_FACTOR = 0.3; 
+const SCROLL_ZOOM_FACTOR_MIN = 1.5; 
+const SCROLL_ZOOM_FACTOR_MAX = 2.5; 
 
 const LERP_SPEED_ROTATION = 0.08;
 const LERP_SPEED_MODEL_Y = 0.05;
@@ -53,8 +54,8 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
 
   const modelGroupRef = useRef<THREE.Group | null>(null);
   const targetRotationRef = useRef({ x: 0, y: 0 });
-  const targetModelYOffsetRef = useRef<number>(0); // For scroll-based Y position changes
-  const targetCameraZRef = useRef<number>(SCROLL_ZOOM_FACTOR_MIN); // For scroll-based camera zoom
+  const targetModelYOffsetRef = useRef<number>(0); 
+  const targetCameraZRef = useRef<number>(SCROLL_ZOOM_FACTOR_MIN); 
   
   const initialModelYAfterCenteringRef = useRef<number>(0);
   const isWindowFocusedRef = useRef(true);
@@ -99,6 +100,8 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
     setIsLoading(true);
 
     initialGyroOffsetRef.current = { beta: null, gamma: null };
+    // Do NOT reset isGyroActive here, as it's managed by the deviceorientation events.
+    // If we reset it here, it could flicker off/on if the modelPath changes while gyro is active.
     isJumpingRef.current = false;
     targetRotationRef.current = {x: 0, y: 0}; 
     targetModelYOffsetRef.current = 0;
@@ -123,7 +126,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       if (initialGyroOffsetRef.current.beta === null) {
           initialGyroOffsetRef.current.beta = beta;
           initialGyroOffsetRef.current.gamma = gamma;
-           if (modelGroupRef.current) { // Use current model rotation as base for gyro
+           if (modelGroupRef.current) { 
             targetRotationRef.current.x = modelGroupRef.current.rotation.x;
             targetRotationRef.current.y = modelGroupRef.current.rotation.y;
           }
@@ -144,19 +147,9 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
     let deviceOrientationListenerAttached = false;
     if (typeof window.DeviceOrientationEvent !== 'undefined') {
         if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
-             // For iOS 13+
-             // Consider adding a UI button to trigger this for better UX
-            // (DeviceOrientationEvent as any).requestPermission().then((permissionState: string) => {
-            //    if (permissionState === 'granted') {
-            //        window.addEventListener('deviceorientation', handleDeviceOrientation);
-            //        deviceOrientationListenerAttached = true;
-            //    }
-            // }).catch(console.error);
-            // For now, just try to attach directly, might not work on iOS without user gesture.
             window.addEventListener('deviceorientation', handleDeviceOrientation);
             deviceOrientationListenerAttached = true;
         } else {
-            // For other browsers
             window.addEventListener('deviceorientation', handleDeviceOrientation);
             deviceOrientationListenerAttached = true;
         }
@@ -194,7 +187,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
     }
 
 
-    if (containerRef.current) {
+    if (containerRef.current && !observerRef.current) { // Only create one observer
       const observer = new IntersectionObserver(
         ([entry]) => {
           isIntersectingRef.current = entry.isIntersecting;
@@ -206,7 +199,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
             }
           }
           if (entry.isIntersecting) {
-            handleScroll(); // Update scroll-based positions when it becomes visible
+            handleScroll(); 
           }
         },
         { threshold: 0.01 }
@@ -233,8 +226,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
           cameraRef.current.updateProjectionMatrix();
         }
       }
-      // Initial camera Z position is set by handleScroll via targetCameraZRef
-
+      
       if (!rendererRef.current) {
         rendererRef.current = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         rendererRef.current.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -244,7 +236,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       if (currentMount.clientWidth > 0 && currentMount.clientHeight > 0) {
         rendererRef.current.setSize(currentMount.clientWidth, currentMount.clientHeight);
       } else {
-        rendererRef.current.setSize(300, 150); // Fallback
+        rendererRef.current.setSize(300, 150); 
       }
 
       if (currentMount.contains(rendererRef.current.domElement)) {
@@ -292,21 +284,22 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
           const size = box.getSize(new THREE.Vector3());
           const maxDim = Math.max(size.x, size.y, size.z);
           let scaleFactor = 1.0;
-          const targetViewSize = 1.8; // Scale factor for initial view
+          const targetViewSize = 1.8; 
           if (maxDim > 0.001) scaleFactor = targetViewSize / maxDim;
           modelGroupRef.current.scale.set(scaleFactor, scaleFactor, scaleFactor);
           const scaledBox = new THREE.Box3().setFromObject(modelGroupRef.current);
           const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
-          modelGroupRef.current.position.sub(scaledCenter); // Center the model
-          initialModelYAfterCenteringRef.current = modelGroupRef.current.position.y; // Store centered Y
+          modelGroupRef.current.position.sub(scaledCenter); 
+          initialModelYAfterCenteringRef.current = modelGroupRef.current.position.y; 
 
           if (cameraRef.current) cameraRef.current.lookAt(0, 0, 0);
-          handleScroll(); // Initial call to set scroll-based positions
+          handleScroll(); 
           setIsLoading(false);
         },
         undefined,
         (loadError) => {
           if (!isMounted) return;
+          console.error(`Error loading model from ${effectModelPath}:`, loadError);
           setError(`Failed to load model. ${loadError.message || 'Unknown error'}`);
           setIsLoading(false);
           onModelErrorOrMissing?.();
@@ -351,7 +344,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
         cameraRef.current.aspect = currentMount.clientWidth / currentMount.clientHeight;
         cameraRef.current.updateProjectionMatrix();
         rendererRef.current.setSize(currentMount.clientWidth, currentMount.clientHeight);
-        handleScroll(); // Re-evaluate scroll positions on resize
+        handleScroll(); 
       };
       window.addEventListener('resize', handleResize);
       const initialResizeTimeoutId = setTimeout(() => { if (isMounted && currentMount && currentMount.clientWidth > 0 && currentMount.clientHeight > 0) handleResize(); }, 100);
@@ -374,8 +367,11 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       }
 
       initialGyroOffsetRef.current = { beta: null, gamma: null };
-      setIsGyroActive(false);
-      if (observerRef.current) observerRef.current.disconnect();
+      setIsGyroActive(false); // Explicitly set to false on cleanup
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null; // Clear the ref
+      }
       
       if (modelGroupRef.current && sceneRef.current) {
         sceneRef.current.remove(modelGroupRef.current);
@@ -394,13 +390,18 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       if (mountRef.current && rendererRef.current?.domElement) {
          try { if (mountRef.current.contains(rendererRef.current.domElement)) mountRef.current.removeChild(rendererRef.current.domElement); } catch (e) {}
       }
-      rendererRef.current?.dispose();
+      // Don't dispose renderer, scene, camera here if they are meant to be reused by the same component instance
+      // Only dispose them if the entire ProjectModelViewer component is unmounting.
+      // The refs (rendererRef, sceneRef, cameraRef) are persisted, so this logic is okay.
     };
-  }, [modelPath, containerRef, onModelErrorOrMissing, handleModelClick]); 
+  // Main dependencies: modelPath and onModelErrorOrMissing.
+  // containerRef should be stable. Other refs are internal.
+  // isGyroActive is managed internally based on events.
+  }, [modelPath, onModelErrorOrMissing, containerRef, handleModelClick]); 
   
   useEffect(() => {
     if (mountRef.current) {
-      mountRef.current.style.cursor = isGyroActive ? '' : 'default'; // Changed from 'grab' to 'default'
+      mountRef.current.style.cursor = isGyroActive ? '' : 'default';
     }
   }, [isGyroActive]);
 
@@ -410,7 +411,6 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       ref={mountRef} 
       className={cn(
         "w-full h-full overflow-hidden relative",
-        // Cursor style is now 'default' or unset (for gyro)
       )}
     >
       {isLoading && !error && (
