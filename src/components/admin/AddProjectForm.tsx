@@ -144,7 +144,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
 
   useEffect(() => {
     form.setValue('categories', currentProjectCategories, { shouldValidate: true, shouldDirty: true });
-  }, [currentProjectCategories, form.setValue]);
+  }, [currentProjectCategories, form]);
 
 
   const handleAddCategory = useCallback((category: string) => {
@@ -178,29 +178,29 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
       } else if (data.modelPath && data.modelPath.trim() !== '') {
         defaultAiHint = '3d model';
       }
-
-      const projectDataToSave: any = {
-        title: data.title,
-        description: data.description,
-        categories: data.categories, 
-        technologies: techArray,
-        dataAiHint: data.dataAiHint || defaultAiHint,
-      };
-
-      if (data.longDescription && data.longDescription.trim() !== '') projectDataToSave.longDescription = data.longDescription;
-      if (data.imageUrl && data.imageUrl.trim() !== '') projectDataToSave.imageUrl = data.imageUrl;
-      if (data.modelPath && data.modelPath.trim() !== '') projectDataToSave.model = data.modelPath;
-      if (data.cloonedOID && data.cloonedOID.trim() !== '') projectDataToSave.cloonedOID = data.cloonedOID; // Save Clooned OID
-      if (data.liveLink && data.liveLink.trim() !== '') projectDataToSave.liveLink = data.liveLink;
-      if (data.sourceLink && data.sourceLink.trim() !== '') projectDataToSave.sourceLink = data.sourceLink;
-      if (data.documentationLink && data.documentationLink.trim() !== '') projectDataToSave.documentationLink = data.documentationLink;
       
       if (isEditMode && editingProject) {
-        const projectRef = doc(db, 'projects', editingProject.id);
-        await updateDoc(projectRef, {
-          ...projectDataToSave,
+        // For updates, ensure all fields from the form are included in the payload
+        // so that clearing a field in the form results in that field being updated
+        // (e.g., to an empty string) in Firestore.
+        const updatePayload = {
+          title: data.title,
+          description: data.description,
+          longDescription: data.longDescription, // Will be "" if cleared by user
+          imageUrl: data.imageUrl,             // Will be "" if cleared
+          model: data.modelPath,               // Will be "" if cleared
+          cloonedOID: data.cloonedOID,         // Will be "" if cleared
+          dataAiHint: data.dataAiHint,         // Will be "" if cleared (defaultAiHint not used for updates)
+          categories: data.categories,
+          technologies: techArray,
+          liveLink: data.liveLink,             // Will be "" if cleared
+          sourceLink: data.sourceLink,           // Will be "" if cleared
+          documentationLink: data.documentationLink, // Will be "" if cleared
           updatedAt: serverTimestamp(),
-        });
+        };
+
+        const projectRef = doc(db, 'projects', editingProject.id);
+        await updateDoc(projectRef, updatePayload);
         
         toast({
           title: 'Project Updated!',
@@ -208,11 +208,28 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
         });
 
         if (onProjectUpdated) {
-          onProjectUpdated({ ...editingProject, ...projectDataToSave, id: editingProject.id });
+          // Pass the updated project data (merged with existing non-form data)
+          onProjectUpdated({ ...editingProject, ...updatePayload });
         }
 
-      } else {
-        projectDataToSave.createdAt = serverTimestamp();
+      } else { // Create mode
+        const projectDataToSave: any = {
+          title: data.title,
+          description: data.description,
+          categories: data.categories,
+          technologies: techArray,
+          dataAiHint: data.dataAiHint || defaultAiHint, // Use default if empty on create
+          createdAt: serverTimestamp(),
+        };
+        // For create mode, only add optional fields if they have content, to keep Firestore docs cleaner
+        if (data.longDescription && data.longDescription.trim() !== '') projectDataToSave.longDescription = data.longDescription;
+        if (data.imageUrl && data.imageUrl.trim() !== '') projectDataToSave.imageUrl = data.imageUrl;
+        if (data.modelPath && data.modelPath.trim() !== '') projectDataToSave.model = data.modelPath;
+        if (data.cloonedOID && data.cloonedOID.trim() !== '') projectDataToSave.cloonedOID = data.cloonedOID; // Save Clooned OID
+        if (data.liveLink && data.liveLink.trim() !== '') projectDataToSave.liveLink = data.liveLink;
+        if (data.sourceLink && data.sourceLink.trim() !== '') projectDataToSave.sourceLink = data.sourceLink;
+        if (data.documentationLink && data.documentationLink.trim() !== '') projectDataToSave.documentationLink = data.documentationLink;
+        
         const docRef = await addDoc(collection(db, 'projects'), projectDataToSave);
         
         toast({
