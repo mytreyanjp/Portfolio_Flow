@@ -5,6 +5,8 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import * as _THREE from 'three';
 import { GLTFLoader as _GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader as _DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { OBJLoader as _OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { FBXLoader as _FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle, ZoomInIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -13,6 +15,8 @@ import { Button } from '@/components/ui/button'; // For a potential reset button
 const THREE = _THREE;
 const GLTFLoader = _GLTFLoader;
 const DRACOLoader = _DRACOLoader;
+const OBJLoader = _OBJLoader;
+const FBXLoader = _FBXLoader;
 
 interface ProjectModelViewerProps {
   modelPath: string | undefined | null;
@@ -21,7 +25,7 @@ interface ProjectModelViewerProps {
 }
 
 const DRACO_DECODER_PATH = '/libs/draco/gltf/';
-console.log(`ProjectModelViewer: DRACO decoder path is set to: ${DRACO_DECODER_PATH}. Ensure these files exist in your public folder.`);
+
 
 const dracoLoaderInstance = new DRACOLoader();
 dracoLoaderInstance.setDecoderPath(DRACO_DECODER_PATH);
@@ -33,8 +37,8 @@ gltfLoaderInstance.setCrossOrigin('anonymous');
 
 // Interaction constants
 const SCROLL_OFFSET_Y_FACTOR = 0.3;
-const SCROLL_ZOOM_FACTOR_MIN = 1.2; // Adjusted: Closer minimum zoom
-const SCROLL_ZOOM_FACTOR_MAX = 2.8; // Adjusted: Closer maximum zoom
+const SCROLL_ZOOM_FACTOR_MIN = 1.2;
+const SCROLL_ZOOM_FACTOR_MAX = 2.0; // Kept this closer as per previous adjustment
 
 const LERP_SPEED_ROTATION = 0.08;
 const LERP_SPEED_MODEL_Y = 0.05;
@@ -49,6 +53,9 @@ const GYRO_TARGET_MODEL_MAX_ROT_RAD_Y = 0.6;
 
 const JUMP_HEIGHT = 0.15;
 const JUMP_DURATION = 300;
+
+// Consistent target size for scaling models
+const TARGET_MODEL_VIEW_SIZE = 2.0;
 
 
 const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, containerRef, onModelErrorOrMissing }) => {
@@ -89,7 +96,6 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
 
   console.log("ProjectModelViewer: Component rendering with modelPath:", modelPath);
 
-
   useEffect(() => {
     const effectModelPath = modelPath;
     console.log("ProjectModelViewer: useEffect initializing for modelPath:", effectModelPath);
@@ -104,6 +110,9 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       if (animationFrameIdRef.current) cancelAnimationFrame(animationFrameIdRef.current);
       return;
     }
+    
+    const fileExtension = effectModelPath.split('.').pop()?.toLowerCase();
+    console.log(`ProjectModelViewer: Determined file extension: ${fileExtension}`);
 
     console.log(`ProjectModelViewer: Initializing for modelPath: ${effectModelPath}`);
     setError(null);
@@ -230,11 +239,11 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
         rendererRef.current.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         rendererRef.current.setClearAlpha(0);
       }
-      if (currentMount.clientWidth > 0 && currentMount.clientHeight > 0) {
+       if (currentMount.clientWidth > 0 && currentMount.clientHeight > 0) {
         rendererRef.current.setSize(currentMount.clientWidth, currentMount.clientHeight);
       } else {
         console.warn("ProjectModelViewer: currentMount dimensions are 0,0. Using default size for renderer.");
-        rendererRef.current.setSize(300, 150); // A small default if dimensions are zero
+        rendererRef.current.setSize(300, 150); 
       }
 
 
@@ -246,17 +255,21 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       lightsRef.current.forEach(light => sceneRef.current?.remove(light));
       lightsRef.current = [];
 
-      const ambientLight = new THREE.AmbientLight(0xffffff, 1.0); // Increased ambient light
+      const ambientLight = new THREE.AmbientLight(0xffffff, 1.5); // Brighter ambient
       sceneRef.current.add(ambientLight);
-      const mainDirectionalLight = new THREE.DirectionalLight(0xffffff, 2.0); // Increased directional light
-      mainDirectionalLight.position.set(2, 4, 3); // Adjusted position
+      const mainDirectionalLight = new THREE.DirectionalLight(0xffffff, 2.5); // Brighter main
+      mainDirectionalLight.position.set(3, 5, 4); // Adjusted position for better angles
       sceneRef.current.add(mainDirectionalLight);
 
-      const fillLight = new THREE.DirectionalLight(0xffffff, 0.8); // Slightly increased fill light
-      fillLight.position.set(-2, -1, -2);
+      const fillLight = new THREE.DirectionalLight(0xffffff, 1.0); // Brighter fill
+      fillLight.position.set(-3, -2, -3);
       sceneRef.current.add(fillLight);
+      
+      const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0); // Add hemisphere light
+      hemiLight.position.set(0, 20, 0);
+      sceneRef.current.add(hemiLight);
 
-      lightsRef.current = [ambientLight, mainDirectionalLight, fillLight];
+      lightsRef.current = [ambientLight, mainDirectionalLight, fillLight, hemiLight];
 
       if (modelGroupRef.current && sceneRef.current) {
         sceneRef.current.remove(modelGroupRef.current);
@@ -270,60 +283,87 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
         });
         modelGroupRef.current = null;
       }
+      
+      const onProgress = (xhr: ProgressEvent) => {
+        if (!isMounted) return;
+        const percentLoaded = (xhr.loaded / xhr.total) * 100;
+        console.log(`ProjectModelViewer: Model loading progress: ${percentLoaded.toFixed(2)}% for ${effectModelPath}`);
+      };
+
+      const commonLoadSuccess = (object: THREE.Group) => {
+        if (!isMounted) return;
+        console.log(`ProjectModelViewer: Model loaded successfully (${fileExtension})!`, object);
+        modelGroupRef.current = object;
+        sceneRef.current!.add(modelGroupRef.current);
+
+        const box = new THREE.Box3().setFromObject(modelGroupRef.current);
+        const size = box.getSize(new THREE.Vector3());
+        const maxDim = Math.max(size.x, size.y, size.z);
+        let scaleFactor = 1.0;
+        
+        if (maxDim > 0.001) scaleFactor = TARGET_MODEL_VIEW_SIZE / maxDim;
+        console.log(`ProjectModelViewer: Original Max Dim: ${maxDim}, Scale Factor: ${scaleFactor} for ${fileExtension}`);
+        modelGroupRef.current.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+        const scaledBox = new THREE.Box3().setFromObject(modelGroupRef.current);
+        const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
+        modelGroupRef.current.position.sub(scaledCenter);
+        initialModelYAfterCenteringRef.current = modelGroupRef.current.position.y;
+        console.log(`ProjectModelViewer: Model centered and scaled. Initial Y after centering: ${initialModelYAfterCenteringRef.current}`);
+
+        if (cameraRef.current) cameraRef.current.lookAt(0, 0, 0);
+        handleScroll();
+        setIsLoading(false);
+        setError(null);
+      };
+
+      const commonLoadError = (loaderError: ErrorEvent | any, format: string) => {
+        if (!isMounted) return;
+        console.error(`ProjectModelViewer: Error loading ${format} model from ${effectModelPath}:`, loaderError);
+        let userFriendlyMessage = `Failed to load ${format} model.`;
+        if (loaderError.message?.includes("NetworkError")) {
+          userFriendlyMessage = "Network error: Could not fetch the model. Check URL and CORS.";
+        } else if (loaderError.message?.toLowerCase().includes("parse") || loaderError.message?.toLowerCase().includes("syntaxerror")) {
+          userFriendlyMessage = `Model file .${fileExtension} might be corrupted or in an unsupported format.`;
+        }
+        setError(userFriendlyMessage);
+        setDetailedError(loaderError);
+        setIsLoading(false);
+        onModelErrorOrMissing?.();
+      };
 
       console.log(`ProjectModelViewer: Attempting to load model: ${effectModelPath}`);
-      gltfLoaderInstance.load(
-        effectModelPath,
-        (gltf) => { // onSuccess
-          if (!isMounted) return;
-          console.log("ProjectModelViewer: Model loaded successfully!", gltf);
-          modelGroupRef.current = gltf.scene;
-          sceneRef.current!.add(modelGroupRef.current);
-
-          const box = new THREE.Box3().setFromObject(modelGroupRef.current);
-          const size = box.getSize(new THREE.Vector3());
-          const maxDim = Math.max(size.x, size.y, size.z);
-          let scaleFactor = 1.0;
-          const targetViewSize = 2.2; // Adjusted: Increased target view size for larger appearance
-          if (maxDim > 0.001) scaleFactor = targetViewSize / maxDim;
-          console.log(`ProjectModelViewer: Original Max Dim: ${maxDim}, Scale Factor: ${scaleFactor}`);
-          modelGroupRef.current.scale.set(scaleFactor, scaleFactor, scaleFactor);
-
-          const scaledBox = new THREE.Box3().setFromObject(modelGroupRef.current);
-          const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
-          modelGroupRef.current.position.sub(scaledCenter);
-          initialModelYAfterCenteringRef.current = modelGroupRef.current.position.y;
-          console.log("ProjectModelViewer: Model centered and scaled. Initial Y:", initialModelYAfterCenteringRef.current);
-
-          if (cameraRef.current) cameraRef.current.lookAt(0, 0, 0);
-          handleScroll();
-          setIsLoading(false);
-          setError(null); // Clear any previous errors
-        },
-        (xhr) => { // onProgress
-          if (!isMounted) return;
-          const percentLoaded = (xhr.loaded / xhr.total) * 100;
-          console.log(`ProjectModelViewer: Model loading progress: ${percentLoaded.toFixed(2)}%`);
-          // Optionally update a loading progress UI element here
-        },
-        (loadError) => { // onError
-          if (!isMounted) return;
-          console.error(`ProjectModelViewer: Error loading model from ${effectModelPath}:`, loadError);
-          // Try to provide a more specific error message
-          let userFriendlyMessage = "Failed to load 3D model.";
-          if (loadError.message.includes("NetworkError")) {
-            userFriendlyMessage = "Network error: Could not fetch the model. Check URL and CORS.";
-          } else if (loadError.message.toLowerCase().includes("parse") || loadError.message.toLowerCase().includes("syntaxerror")) {
-            userFriendlyMessage = "Model file might be corrupted or in an unsupported format.";
-          } else if (loadError.message.includes("DRACOLoader")) {
-            userFriendlyMessage = `DRACOLoader error. Ensure decoder files are at ${DRACO_DECODER_PATH}.`;
-          }
-          setError(userFriendlyMessage);
-          setDetailedError(loadError); // Store the raw error for potential display
-          setIsLoading(false);
-          onModelErrorOrMissing?.();
-        }
-      );
+      if (fileExtension === 'glb' || fileExtension === 'gltf') {
+        console.log(`ProjectModelViewer: DRACO decoder path for glTF/GLB: ${DRACO_DECODER_PATH}. Ensure these files exist in your public folder.`);
+        gltfLoaderInstance.load(
+          effectModelPath,
+          (gltf) => commonLoadSuccess(gltf.scene),
+          onProgress,
+          (error) => commonLoadError(error, 'glTF/GLB')
+        );
+      } else if (fileExtension === 'obj') {
+        const objLoader = new OBJLoader();
+        objLoader.load(
+          effectModelPath,
+          (object) => commonLoadSuccess(object),
+          onProgress,
+          (error) => commonLoadError(error, '.obj')
+        );
+      } else if (fileExtension === 'fbx') {
+        const fbxLoader = new FBXLoader();
+        fbxLoader.load(
+          effectModelPath,
+          (object) => commonLoadSuccess(object),
+          onProgress,
+          (error) => commonLoadError(error, '.fbx')
+        );
+      } else {
+        console.warn(`ProjectModelViewer: Unsupported file extension: ${fileExtension}`);
+        setError(`Unsupported model format: .${fileExtension}. Please use .glb, .gltf, .obj, or .fbx.`);
+        setIsLoading(false);
+        onModelErrorOrMissing?.();
+        return;
+      }
 
       const animate = () => {
         if (!isMounted) return;
@@ -426,8 +466,8 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       ref={mountRef}
       className={cn(
         "w-full h-full overflow-hidden relative",
-        (isLoading || error) && "flex items-center justify-center", // Center content if loading or error
-        error && "bg-destructive/10" // Add a background for error state
+        (isLoading || error) && "flex items-center justify-center", 
+        error && "bg-destructive/10" 
       )}
     >
       {isLoading && !error && (
@@ -444,12 +484,11 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
           {detailedError && (
             <details className="text-xs text-destructive/80 mt-1 text-left bg-destructive/5 p-1 rounded max-w-full overflow-auto">
                 <summary className="cursor-pointer">Details</summary>
-                <pre className="whitespace-pre-wrap text-[10px]">{typeof detailedError === 'string' ? detailedError : JSON.stringify(detailedError, Object.getOwnPropertyNames(detailedError), 2)}</pre>
+                <pre className="whitespace-pre-wrap text-[10px]">{typeof detailedError === 'string' ? detailedError : JSON.stringify(detailedError, Object.getOwnPropertyNames(detailedError).filter(key => key !== 'target'), 2)}</pre>
             </details>
            )}
         </div>
       )}
-      {/* The canvas will be appended here by Three.js */}
     </div>
   );
 };
