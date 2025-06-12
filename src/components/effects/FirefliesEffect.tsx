@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 
 const NUM_FIREFLIES_FOREGROUND = 75;
 const NUM_FIREFLIES_BACKGROUND = 60;
-const NUM_FIREFLIES_STARS = 350; // Increased for a denser star field
+const NUM_FIREFLIES_STARS = 700; // Increased for a denser star field (previously 350)
 
 const FIREFLY_BASE_COLOR_HSLA = '270, 80%, 70%';
 const BACKGROUND_FIREFLY_COLOR_HSLA = '280, 70%, 60%';
