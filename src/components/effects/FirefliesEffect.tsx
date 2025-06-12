@@ -7,12 +7,16 @@ import { cn } from '@/lib/utils';
 
 const NUM_FIREFLIES_FOREGROUND = 75;
 const NUM_FIREFLIES_BACKGROUND = 60;
-const NUM_FIREFLIES_STARS = 700; // Increased for a denser star field (previously 350)
+
+// Star count constants based on screen size
+const NUM_FIREFLIES_STARS_LARGE_SCREEN = 700;
+const NUM_FIREFLIES_STARS_SMALL_SCREEN = 350; // Half for smaller screens
+const SMALL_SCREEN_BREAKPOINT_PX = 768; // Breakpoint for adjusting star count
+
 
 const FIREFLY_BASE_COLOR_HSLA = '270, 80%, 70%';
 const BACKGROUND_FIREFLY_COLOR_HSLA = '280, 70%, 60%';
-// Adjusted star color: less saturation, higher lightness for a whiter look
-const STAR_COLOR_HSLA = '240, 20%, 95%'; // Lighter, more white-like
+const STAR_COLOR_HSLA = '240, 20%, 95%';
 
 const MAX_SPEED = 0.3;
 const MIN_RADIUS = 1;
@@ -20,16 +24,14 @@ const MAX_RADIUS = 2.5;
 const MIN_OPACITY = 0.2;
 const MAX_OPACITY = 0.9;
 
-const STAR_MAX_SPEED = 0.015; // Even slower drift for stars
-// Adjusted star radius: smaller on average, with some variation
+const STAR_MAX_SPEED = 0.015;
 const STAR_MIN_RADIUS = 0.2;
 const STAR_MAX_RADIUS = 0.8;
-// Adjusted star opacity: less variation for a more constant star appearance
-const STAR_MIN_OPACITY = 0.4; // Stars are generally more visible
+const STAR_MIN_OPACITY = 0.4;
 const STAR_MAX_OPACITY = 0.8;
 
 
-const BACKGROUND_BLUR_PX = '2px'; // Blur for the mid-ground fireflies
+const BACKGROUND_BLUR_PX = '2px';
 
 const CURSOR_ATTRACTION_RADIUS = 250;
 const ATTRACTION_STRENGTH = 0.03;
@@ -53,12 +55,12 @@ interface Firefly {
 const FirefliesEffect: React.FC = () => {
   const foregroundCanvasRef = useRef<HTMLCanvasElement>(null);
   const backgroundCanvasRef = useRef<HTMLCanvasElement>(null);
-  const starCanvasRef = useRef<HTMLCanvasElement>(null); // New canvas for stars
+  const starCanvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameIdRef = useRef<number | null>(null);
   
   const foregroundFirefliesRef = useRef<Firefly[]>([]);
   const backgroundFirefliesRef = useRef<Firefly[]>([]);
-  const starFirefliesRef = useRef<Firefly[]>([]); // New ref for stars
+  const starFirefliesRef = useRef<Firefly[]>([]);
   
   const mousePositionRef = useRef<{ x: number; y: number }>({ x: -1000, y: -1000 });
   const [isClient, setIsClient] = useState(false);
@@ -78,7 +80,7 @@ const FirefliesEffect: React.FC = () => {
         particleVx = (Math.random() - 0.5) * STAR_MAX_SPEED;
         particleVy = (Math.random() - 0.5) * STAR_MAX_SPEED;
         particleColor = STAR_COLOR_HSLA;
-        particleOpacitySpeed = 0.001 + Math.random() * 0.002; // Very slow, subtle twinkle
+        particleOpacitySpeed = 0.001 + Math.random() * 0.002;
         break;
       case 'background':
         particleRadius = MIN_RADIUS + Math.random() * (MAX_RADIUS - MIN_RADIUS);
@@ -117,7 +119,11 @@ const FirefliesEffect: React.FC = () => {
   const initializeParticles = useCallback((width: number, height: number) => {
     foregroundFirefliesRef.current = Array.from({ length: NUM_FIREFLIES_FOREGROUND }, () => createParticle(width, height, 'foreground'));
     backgroundFirefliesRef.current = Array.from({ length: NUM_FIREFLIES_BACKGROUND }, () => createParticle(width, height, 'background'));
-    starFirefliesRef.current = Array.from({ length: NUM_FIREFLIES_STARS }, () => createParticle(width, height, 'star'));
+    
+    const currentNumStars = width < SMALL_SCREEN_BREAKPOINT_PX 
+      ? NUM_FIREFLIES_STARS_SMALL_SCREEN 
+      : NUM_FIREFLIES_STARS_LARGE_SCREEN;
+    starFirefliesRef.current = Array.from({ length: currentNumStars }, () => createParticle(width, height, 'star'));
   }, [createParticle]);
 
   useEffect(() => {
@@ -126,20 +132,20 @@ const FirefliesEffect: React.FC = () => {
     const isActuallyDark = resolvedTheme === 'dark';
     const fgCanvas = foregroundCanvasRef.current;
     const bgCanvas = backgroundCanvasRef.current;
-    const starCanvas = starCanvasRef.current; // Get star canvas
+    const starCanvas = starCanvasRef.current;
 
     if (!fgCanvas || !bgCanvas || !starCanvas) return;
 
     const fgCtx = fgCanvas.getContext('2d');
     const bgCtx = bgCanvas.getContext('2d');
-    const starCtx = starCanvas.getContext('2d'); // Get star canvas context
+    const starCtx = starCanvas.getContext('2d');
 
     if (!fgCtx || !bgCtx || !starCtx) return;
 
     const setupCanvasDisplay = (display: boolean) => {
         fgCanvas.style.display = display ? 'block' : 'none';
         bgCanvas.style.display = display ? 'block' : 'none';
-        starCanvas.style.display = display ? 'block' : 'none'; // Manage star canvas display
+        starCanvas.style.display = display ? 'block' : 'none';
         if(!display) {
             if (animationFrameIdRef.current) {
                 cancelAnimationFrame(animationFrameIdRef.current);
@@ -147,7 +153,7 @@ const FirefliesEffect: React.FC = () => {
             }
             fgCtx.clearRect(0, 0, fgCanvas.width, fgCanvas.height);
             bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-            starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height); // Clear star canvas
+            starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
         }
     };
     
@@ -168,8 +174,8 @@ const FirefliesEffect: React.FC = () => {
       const height = window.innerHeight;
       fgCanvas.width = width; fgCanvas.height = height;
       bgCanvas.width = width; bgCanvas.height = height;
-      starCanvas.width = width; starCanvas.height = height; // Resize star canvas
-      initializeParticles(width, height);
+      starCanvas.width = width; starCanvas.height = height;
+      initializeParticles(width, height); // This will now use the correct star count
     };
 
     resizeCanvases(); 
@@ -182,13 +188,12 @@ const FirefliesEffect: React.FC = () => {
 
       fgCtx.clearRect(0, 0, foregroundCanvasRef.current.width, foregroundCanvasRef.current.height);
       bgCtx.clearRect(0, 0, backgroundCanvasRef.current.width, backgroundCanvasRef.current.height);
-      starCtx.clearRect(0, 0, starCanvasRef.current.width, starCanvasRef.current.height); // Clear star context
+      starCtx.clearRect(0, 0, starCanvasRef.current.width, starCanvasRef.current.height);
       
       const { x: mouseX, y: mouseY } = mousePositionRef.current;
 
-      // Animate star fireflies (very slow drift, no cursor interaction)
       starFirefliesRef.current.forEach((star) => {
-        star.vx += (Math.random() - 0.5) * 0.0005; // Very minimal random drift for stars
+        star.vx += (Math.random() - 0.5) * 0.0005;
         star.vy += (Math.random() - 0.5) * 0.0005;
 
         const speed = Math.sqrt(star.vx * star.vx + star.vy * star.vy);
@@ -213,7 +218,6 @@ const FirefliesEffect: React.FC = () => {
           if (star.y > starCanvasRef.current.height + star.radius) star.y = -star.radius;
         }
         
-        // Draw stars as simple filled circles for a more point-like appearance
         starCtx.beginPath();
         starCtx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
         starCtx.fillStyle = `hsla(${star.colorHsla}, ${star.opacity})`;
@@ -221,7 +225,6 @@ const FirefliesEffect: React.FC = () => {
       });
 
 
-      // Animate background fireflies (no cursor interaction, blurred)
       backgroundFirefliesRef.current.forEach((firefly) => {
         firefly.vx += (Math.random() - 0.5) * 0.06;
         firefly.vy += (Math.random() - 0.5) * 0.06;
@@ -258,7 +261,6 @@ const FirefliesEffect: React.FC = () => {
         bgCtx.fill();
       });
 
-      // Animate foreground fireflies (with cursor interaction)
       foregroundFirefliesRef.current.forEach((firefly) => {
         let current_vx = firefly.vx + (Math.random() - 0.5) * 0.08;
         let current_vy = firefly.vy + (Math.random() - 0.5) * 0.08;
@@ -354,10 +356,10 @@ const FirefliesEffect: React.FC = () => {
   return (
     <>
       <canvas
-        ref={starCanvasRef} // Add star canvas
+        ref={starCanvasRef}
         style={{
           ...commonCanvasStyle,
-          zIndex: 0, // Deepest background layer
+          zIndex: 0, 
         }}
         aria-hidden="true"
       />
@@ -365,7 +367,7 @@ const FirefliesEffect: React.FC = () => {
         ref={backgroundCanvasRef}
         style={{
           ...commonCanvasStyle,
-          zIndex: 1, // Behind foreground fireflies
+          zIndex: 1, 
           filter: `blur(${BACKGROUND_BLUR_PX})`,
         }}
         aria-hidden="true"
@@ -374,7 +376,7 @@ const FirefliesEffect: React.FC = () => {
         ref={foregroundCanvasRef}
         style={{
           ...commonCanvasStyle,
-          zIndex: 2, // In front of background fireflies, behind cursor tail
+          zIndex: 2, 
         }}
         aria-hidden="true"
       />
