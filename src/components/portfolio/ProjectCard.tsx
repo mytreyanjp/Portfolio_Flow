@@ -4,7 +4,7 @@ import type { Project } from '@/data/projects';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowUpRight, Github, Image as ImageIcon, Loader2, FileText, Grid3X3 } from 'lucide-react';
+import { ArrowUpRight, Github, Image as ImageIcon, Loader2, FileText, Grid3X3, Bot } from 'lucide-react';
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 // Script component is no longer directly used here, it's moved to CloonedViewer
@@ -40,6 +40,9 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
   const [isGeneratingAiImage, setIsGeneratingAiImage] = useState(false);
   const [modelLoadFailedOrMissing, setModelLoadFailedOrMissing] = useState(!project.model && !project.cloonedOID); // Adjusted initial state
   const [aiImageGenerated, setAiImageGenerated] = useState(false);
+
+  console.log(`ProjectCard rendering for ${project.title}: model=${project.model}, cloonedOID=${project.cloonedOID}, imageUrl=${project.imageUrl}`);
+
 
   const triggerAiImageGeneration = useCallback(async () => {
     if (!project.description || aiImageGenerated) return;
@@ -230,10 +233,22 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
             </Link>
           </Button>
         )}
-         {!project.liveLink && !project.sourceLink && !project.documentationLink && (
+        <Button
+          asChild
+          variant="outline"
+          size="sm"
+          className="flex-grow sm:flex-grow-0 transition-transform duration-200 ease-out hover:scale-105 hover:bg-accent hover:text-accent-foreground"
+          title={`Chat with Mr.M about ${project.title}`}
+        >
+          <Link href={`/mr-m?projectId=${project.id}`}>
+            <Bot className="mr-1 h-4 w-4" /> Ask Mr.M
+          </Link>
+        </Button>
+         {!project.liveLink && !project.sourceLink && !project.documentationLink && !project.id && (
            <Button variant="ghost" size="sm" disabled className="w-full sm:w-auto">No links available</Button>
          )}
       </CardFooter>
     </Card>
   );
 }
+

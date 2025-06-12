@@ -14,7 +14,8 @@ import { getProjects } from '@/services/projectsService';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { useName } from '@/contexts/NameContext'; // Import useName
+import { useName } from '@/contexts/NameContext';
+import { useSearchParams, useRouter } from 'next/navigation'; // Added useRouter
 
 interface Message {
   id: string;
@@ -23,7 +24,7 @@ interface Message {
   timestamp: Date;
 }
 
-const ALL_CATEGORIES_FILTER_VALUE = "_ALL_CATEGORIES_"; // Special value for "All Categories"
+const ALL_CATEGORIES_FILTER_VALUE = "_ALL_CATEGORIES_";
 
 export default function MrMChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -32,7 +33,9 @@ export default function MrMChatInterface() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  const { userName } = useName(); // Get userName from context
+  const { userName } = useName();
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   const [projectsList, setProjectsList] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -40,7 +43,7 @@ export default function MrMChatInterface() {
   const [projectFetchError, setProjectFetchError] = useState<string | null>(null);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState(''); // Empty string means all
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('');
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
 
   const fetchProjectsList = useCallback(async () => {
@@ -54,12 +57,25 @@ export default function MrMChatInterface() {
       } else if (fetched.length === 1 && fetched[0].id === 'default-project-1' && fetched[0].title.includes('Sample Project')) {
         processedProjects = fetched;
       }
-      setProjectsList(processedProjects.sort((a,b) => a.title.localeCompare(b.title)));
+      const sortedProjects = processedProjects.sort((a,b) => a.title.localeCompare(b.title));
+      setProjectsList(sortedProjects);
 
       const categories = Array.from(
         new Set(processedProjects.flatMap(p => p.categories || []).filter(Boolean))
       ).sort();
       setAvailableCategories(categories);
+
+      // Check for projectId in URL after projects are loaded
+      const projectIdFromUrl = searchParams.get('projectId');
+      if (projectIdFromUrl) {
+        const projectToSelect = sortedProjects.find(p => p.id === projectIdFromUrl);
+        if (projectToSelect && !selectedProject) { // Only select if not already selected
+          handleSelectProject(projectToSelect, true); // Pass true to indicate it's from URL
+        } else if (!projectToSelect) {
+            toast({title: "Project Not Found", description: "The project specified in the URL could not be found.", variant: "destructive"});
+            router.replace('/mr-m'); // Remove invalid query param
+        }
+      }
 
     } catch (error) {
       console.error("Failed to fetch projects for Mr.M:", error);
@@ -68,11 +84,12 @@ export default function MrMChatInterface() {
     } finally {
       setIsLoadingProjects(false);
     }
-  }, [toast]);
+  }, [toast, searchParams, router, selectedProject]); // Added selectedProject to dependencies
 
   useEffect(() => {
     fetchProjectsList();
   }, [fetchProjectsList]);
+
 
   const filteredProjects = useMemo(() => {
     if (!projectsList) return [];
@@ -98,7 +115,7 @@ export default function MrMChatInterface() {
     scrollToBottom();
   }, [messages]);
 
-  const handleSelectProject = (project: Project) => {
+  const handleSelectProject = (project: Project, fromUrl: boolean = false) => {
     setSelectedProject(project);
     const greetingName = userName ? `${userName}, ` : '';
     setMessages([
@@ -111,12 +128,20 @@ export default function MrMChatInterface() {
     ]);
     setInputValue('');
     setTimeout(() => inputRef.current?.focus(), 0);
+
+    // If selected from UI, update URL, unless it was already selected from URL
+    if (!fromUrl && searchParams.get('projectId') !== project.id) {
+        router.replace(`/mr-m?projectId=${project.id}`, { scroll: false });
+    }
   };
 
   const handleChangeProject = () => {
     setSelectedProject(null);
     setMessages([]);
     setInputValue('');
+    if (searchParams.get('projectId')) {
+      router.replace('/mr-m', { scroll: false }); // Clear projectId from URL
+    }
   };
 
   const handleSendMessage = async (e?: React.FormEvent<HTMLFormElement>) => {
@@ -135,18 +160,15 @@ export default function MrMChatInterface() {
     setIsLoadingAnswer(true);
 
     const chatHistoryForAI = messages
-      // Filter out the initial contextual greeting if it contains the project selection part
       .filter(msg => msg.sender !== 'mrm' || !msg.text.includes(`We're now discussing "${selectedProject.title}"`))
       .map(msg => ({
         role: msg.sender === 'user' ? 'user' : 'model',
         parts: [{ text: msg.text }]
     }));
     
-    // Add the current user's question to history if it's not already there through setMessages
     if (!chatHistoryForAI.some(m => m.parts[0].text === question && m.role === 'user')) {
         chatHistoryForAI.push({ role: 'user', parts: [{ text: question }]});
     }
-
 
     const projectContextForAI: ProjectZod = {
         id: selectedProject.id,
@@ -195,7 +217,7 @@ export default function MrMChatInterface() {
   };
 
 
-  if (isLoadingProjects) {
+  if (isLoadingProjects && !selectedProject) { // Only show main loader if no project selected yet
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] max-h-[700px]">
         <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
@@ -204,7 +226,7 @@ export default function MrMChatInterface() {
     );
   }
 
-  if (projectFetchError) {
+  if (projectFetchError && !selectedProject) { // Only show main error if no project selected
     return (
       <Card className="h-[60vh] max-h-[700px] flex flex-col items-center justify-center text-center">
         <CardHeader>
@@ -289,7 +311,7 @@ export default function MrMChatInterface() {
   return (
     <div className="flex flex-col h-[60vh] max-h-[700px] bg-background rounded-lg">
       <div className="p-3 border-b border-border bg-muted/30 flex items-center justify-between rounded-t-lg">
-        <div className="flex items-center min-w-0"> {/* Ensure parent can shrink */}
+        <div className="flex items-center min-w-0"> 
             <Button variant="ghost" size="sm" onClick={handleChangeProject} className="mr-2 text-muted-foreground hover:text-foreground">
                 <ChevronLeft className="h-4 w-4 mr-1" /> Back
             </Button>
