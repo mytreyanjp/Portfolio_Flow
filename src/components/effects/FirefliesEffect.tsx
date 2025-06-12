@@ -7,11 +7,12 @@ import { cn } from '@/lib/utils';
 
 const NUM_FIREFLIES_FOREGROUND = 75;
 const NUM_FIREFLIES_BACKGROUND = 60;
-const NUM_FIREFLIES_STARS = 150; // More numerous for star effect
+const NUM_FIREFLIES_STARS = 350; // Increased for a denser star field
 
 const FIREFLY_BASE_COLOR_HSLA = '270, 80%, 70%';
 const BACKGROUND_FIREFLY_COLOR_HSLA = '280, 70%, 60%';
-const STAR_COLOR_HSLA = '240, 70%, 90%'; // Lighter, more star-like
+// Adjusted star color: less saturation, higher lightness for a whiter look
+const STAR_COLOR_HSLA = '240, 20%, 95%'; // Lighter, more white-like
 
 const MAX_SPEED = 0.3;
 const MIN_RADIUS = 1;
@@ -19,11 +20,13 @@ const MAX_RADIUS = 2.5;
 const MIN_OPACITY = 0.2;
 const MAX_OPACITY = 0.9;
 
-const STAR_MAX_SPEED = 0.03; // Very slow drift for stars
-const STAR_MIN_RADIUS = 0.4;
-const STAR_MAX_RADIUS = 1.0;
-const STAR_MIN_OPACITY = 0.1;
-const STAR_MAX_OPACITY = 0.6;
+const STAR_MAX_SPEED = 0.015; // Even slower drift for stars
+// Adjusted star radius: smaller on average, with some variation
+const STAR_MIN_RADIUS = 0.2;
+const STAR_MAX_RADIUS = 0.8;
+// Adjusted star opacity: less variation for a more constant star appearance
+const STAR_MIN_OPACITY = 0.4; // Stars are generally more visible
+const STAR_MAX_OPACITY = 0.8;
 
 
 const BACKGROUND_BLUR_PX = '2px'; // Blur for the mid-ground fireflies
@@ -75,7 +78,7 @@ const FirefliesEffect: React.FC = () => {
         particleVx = (Math.random() - 0.5) * STAR_MAX_SPEED;
         particleVy = (Math.random() - 0.5) * STAR_MAX_SPEED;
         particleColor = STAR_COLOR_HSLA;
-        particleOpacitySpeed = 0.002 + Math.random() * 0.005; // Slower twinkle for stars
+        particleOpacitySpeed = 0.001 + Math.random() * 0.002; // Very slow, subtle twinkle
         break;
       case 'background':
         particleRadius = MIN_RADIUS + Math.random() * (MAX_RADIUS - MIN_RADIUS);
@@ -185,8 +188,8 @@ const FirefliesEffect: React.FC = () => {
 
       // Animate star fireflies (very slow drift, no cursor interaction)
       starFirefliesRef.current.forEach((star) => {
-        star.vx += (Math.random() - 0.5) * 0.005; // Minimal random drift
-        star.vy += (Math.random() - 0.5) * 0.005;
+        star.vx += (Math.random() - 0.5) * 0.0005; // Very minimal random drift for stars
+        star.vy += (Math.random() - 0.5) * 0.0005;
 
         const speed = Math.sqrt(star.vx * star.vx + star.vy * star.vy);
         if (speed > STAR_MAX_SPEED) {
@@ -209,14 +212,11 @@ const FirefliesEffect: React.FC = () => {
           if (star.y < -star.radius) star.y = starCanvasRef.current.height + star.radius;
           if (star.y > starCanvasRef.current.height + star.radius) star.y = -star.radius;
         }
-
+        
+        // Draw stars as simple filled circles for a more point-like appearance
         starCtx.beginPath();
-        const gradient = starCtx.createRadialGradient(star.x, star.y, 0, star.x, star.y, star.radius);
-        gradient.addColorStop(0, `hsla(${star.colorHsla}, ${star.opacity * 0.8})`); // Stars slightly less intense center
-        gradient.addColorStop(0.4, `hsla(${star.colorHsla}, ${star.opacity * 0.5})`);
-        gradient.addColorStop(1, `hsla(${star.colorHsla}, 0)`);
-        starCtx.fillStyle = gradient;
         starCtx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+        starCtx.fillStyle = `hsla(${star.colorHsla}, ${star.opacity})`;
         starCtx.fill();
       });
 
