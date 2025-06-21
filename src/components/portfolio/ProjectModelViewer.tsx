@@ -67,8 +67,8 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
   const modelGroupRef = useRef<THREE.Group | null>(null);
   const targetRotationRef = useRef({ x: 0, y: 0 });
   const targetModelYOffsetRef = useRef<number>(0);
-  const targetCameraZRef = useRef<number>(SCROLL_ZOOM_FACTOR_MIN);
-  const targetCameraXRef = useRef<number>(-1.2);
+  const targetCameraZRef = useRef<number>(3.0);
+  const targetCameraXRef = useRef<number>(1.2);
 
   const initialModelYAfterCenteringRef = useRef<number>(0);
   const isWindowFocusedRef = useRef(true);
