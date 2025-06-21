@@ -37,8 +37,8 @@ gltfLoaderInstance.setCrossOrigin('anonymous');
 
 // Interaction constants
 const SCROLL_OFFSET_Y_FACTOR = 0.3;
-const SCROLL_ZOOM_FACTOR_MIN = 1.0;
-const SCROLL_ZOOM_FACTOR_MAX = 1.8; 
+const SCROLL_ZOOM_FACTOR_MIN = 1.3;
+const SCROLL_ZOOM_FACTOR_MAX = 2.0; 
 
 const LERP_SPEED_ROTATION = 0.08;
 const LERP_SPEED_MODEL_Y = 0.05;
@@ -55,7 +55,7 @@ const JUMP_HEIGHT = 0.15;
 const JUMP_DURATION = 300;
 
 // Consistent target size for scaling models
-const TARGET_MODEL_VIEW_SIZE = 2.2;
+const TARGET_MODEL_VIEW_SIZE = 2.5;
 
 
 const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, containerRef, onModelErrorOrMissing }) => {
@@ -263,24 +263,37 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
         console.log(`ProjectModelViewer: Model loading progress: ${(xhr.loaded / xhr.total) * 100}% for ${effectModelPath}`);
     };
 
-    const commonLoadSuccess = (object: THREE.Group) => {
-        if (!isMounted) return;
-        console.log(`ProjectModelViewer: Model loaded successfully (${fileExtension})!`, object);
-        modelGroupRef.current = object;
-        sceneRef.current!.add(modelGroupRef.current);
-        const box = new THREE.Box3().setFromObject(modelGroupRef.current);
-        const size = box.getSize(new THREE.Vector3());
-        const maxDim = Math.max(size.x, size.y, size.z);
-        let scaleFactor = (maxDim > 0.001) ? TARGET_MODEL_VIEW_SIZE / maxDim : 1.0;
-        modelGroupRef.current.scale.set(scaleFactor, scaleFactor, scaleFactor);
-        const scaledBox = new THREE.Box3().setFromObject(modelGroupRef.current);
-        const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
-        modelGroupRef.current.position.sub(scaledCenter);
-        initialModelYAfterCenteringRef.current = modelGroupRef.current.position.y;
-        if (cameraRef.current) cameraRef.current.lookAt(0, 0, 0);
-        handleScroll();
+    const commonLoadSuccess = (loadedAsset: any) => {
+      if (!isMounted) return;
+
+      const objectToAdd = loadedAsset.scene || loadedAsset;
+      if (!objectToAdd || typeof objectToAdd.isObject3D !== 'boolean' || !objectToAdd.isObject3D) {
+        const errorMessage = 'Loaded asset does not contain a valid 3D object.';
+        console.error(`ProjectModelViewer: ${errorMessage}`, loadedAsset);
+        setError(errorMessage);
+        setDetailedError(loadedAsset);
         setIsLoading(false);
-        setError(null);
+        onModelErrorOrMissing?.();
+        return;
+      }
+      
+      console.log(`ProjectModelViewer: Model loaded successfully (${fileExtension})!`, loadedAsset);
+      modelGroupRef.current = objectToAdd as THREE.Group;
+      sceneRef.current!.add(modelGroupRef.current);
+      const box = new THREE.Box3().setFromObject(modelGroupRef.current);
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
+      console.log(`ProjectModelViewer: Original Max Dim: ${maxDim}, Scale Factor: ${TARGET_MODEL_VIEW_SIZE / maxDim}`);
+      let scaleFactor = (maxDim > 0.001) ? TARGET_MODEL_VIEW_SIZE / maxDim : 1.0;
+      modelGroupRef.current.scale.set(scaleFactor, scaleFactor, scaleFactor);
+      const scaledBox = new THREE.Box3().setFromObject(modelGroupRef.current);
+      const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
+      modelGroupRef.current.position.sub(scaledCenter);
+      initialModelYAfterCenteringRef.current = modelGroupRef.current.position.y;
+      if (cameraRef.current) cameraRef.current.lookAt(0, 0, 0);
+      handleScroll();
+      setIsLoading(false);
+      setError(null);
     };
 
     const commonLoadError = (loaderError: ErrorEvent | any, format: string) => {
@@ -297,7 +310,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
 
     console.log(`ProjectModelViewer: Attempting to load model: ${effectModelPath}`);
     if (fileExtension === 'glb' || fileExtension === 'gltf') {
-        console.log(`ProjectModelViewer: DRACO decoder path for glTF/GLB: ${DRACO_DECODER_PATH}.`);
+        console.log(`ProjectModelViewer: DRACO decoder path is set to: ${DRACO_DECODER_PATH}.`);
         gltfLoaderInstance.load(effectModelPath, commonLoadSuccess, onProgress, (error) => commonLoadError(error, 'glTF/GLB'));
     } else if (fileExtension === 'obj') {
         new OBJLoader().load(effectModelPath, commonLoadSuccess, onProgress, (error) => commonLoadError(error, '.obj'));
@@ -328,7 +341,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
             const canvas = renderer.domElement;
             if (canvas.width !== width || canvas.height !== height) {
                 if (width > 0 && height > 0) { // Only resize if dimensions are valid
-                    renderer.setSize(width, height);
+                    renderer.setSize(width, height, false); // Set third arg to false
                     camera.aspect = width / height;
                     camera.updateProjectionMatrix();
                 }
