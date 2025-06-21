@@ -37,8 +37,8 @@ gltfLoaderInstance.setCrossOrigin('anonymous');
 
 // Interaction constants
 const SCROLL_OFFSET_Y_FACTOR = 0.3;
-const SCROLL_ZOOM_FACTOR_MIN = 3.5;
-const SCROLL_ZOOM_FACTOR_MAX = 4.5; 
+const SCROLL_ZOOM_FACTOR_MIN = 4.5;
+const SCROLL_ZOOM_FACTOR_MAX = 5.5; 
 
 const LERP_SPEED_ROTATION = 0.08;
 const LERP_SPEED_MODEL_Y = 0.05;
@@ -68,7 +68,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
   const targetRotationRef = useRef({ x: 0, y: 0 });
   const targetModelYOffsetRef = useRef<number>(0);
   const targetCameraZRef = useRef<number>(SCROLL_ZOOM_FACTOR_MIN);
-  const targetCameraXRef = useRef<number>(-0.5);
+  const targetCameraXRef = useRef<number>(-0.8);
 
   const initialModelYAfterCenteringRef = useRef<number>(0);
   const isWindowFocusedRef = useRef(true);
@@ -339,12 +339,10 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
             const width = currentMount.clientWidth;
             const height = currentMount.clientHeight;
             const canvas = renderer.domElement;
-            if (canvas.width !== width || canvas.height !== height) {
-                if (width > 0 && height > 0) { // Only resize if dimensions are valid
-                    renderer.setSize(width, height, false); // Set third arg to false
-                    camera.aspect = width / height;
-                    camera.updateProjectionMatrix();
-                }
+            if (width > 0 && height > 0 && (canvas.width !== width || canvas.height !== height)) {
+                renderer.setSize(width, height, false); // Set third arg to false
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
             }
 
             if (model && isIntersectingRef.current) {
@@ -364,7 +362,9 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
                 camera.position.x += (targetCameraXRef.current - camera.position.x) * LERP_SPEED_CAMERA_Z;
                 camera.position.z += (targetCameraZRef.current - camera.position.z) * LERP_SPEED_CAMERA_Z;
             }
-            renderer.render(scene, camera);
+            if (width > 0 && height > 0) {
+                renderer.render(scene, camera);
+            }
         }
     };
     
