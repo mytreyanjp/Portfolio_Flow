@@ -37,8 +37,8 @@ gltfLoaderInstance.setCrossOrigin('anonymous');
 
 // Interaction constants
 const SCROLL_OFFSET_Y_FACTOR = 0.3;
-const SCROLL_ZOOM_FACTOR_MIN = 1.2;
-const SCROLL_ZOOM_FACTOR_MAX = 2.0; // Kept this closer as per previous adjustment
+const SCROLL_ZOOM_FACTOR_MIN = 1.0;
+const SCROLL_ZOOM_FACTOR_MAX = 1.8; 
 
 const LERP_SPEED_ROTATION = 0.08;
 const LERP_SPEED_MODEL_Y = 0.05;
@@ -55,7 +55,7 @@ const JUMP_HEIGHT = 0.15;
 const JUMP_DURATION = 300;
 
 // Consistent target size for scaling models
-const TARGET_MODEL_VIEW_SIZE = 2.0;
+const TARGET_MODEL_VIEW_SIZE = 2.2;
 
 
 const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, containerRef, onModelErrorOrMissing }) => {
@@ -100,7 +100,6 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
     const effectModelPath = modelPath;
     console.log("ProjectModelViewer: useEffect initializing for modelPath:", effectModelPath);
     let isMounted = true;
-    let timeoutId: NodeJS.Timeout;
 
     if (!effectModelPath || typeof effectModelPath !== 'string' || effectModelPath.trim() === '') {
       console.warn("ProjectModelViewer: No valid model path provided.");
@@ -155,12 +154,8 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
     let deviceOrientationListenerAttached = false;
     if (typeof window.DeviceOrientationEvent !== 'undefined') {
         if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
-            // (DeviceOrientationEvent as any).requestPermission().then((response: string) => {
-            // if (response == 'granted') {
             window.addEventListener('deviceorientation', handleDeviceOrientation);
             deviceOrientationListenerAttached = true;
-            // }
-            // }).catch(console.error);
         } else {
             window.addEventListener('deviceorientation', handleDeviceOrientation);
             deviceOrientationListenerAttached = true;
@@ -215,205 +210,156 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       observerRef.current = observer;
     }
 
-    timeoutId = setTimeout(() => {
-      if (!isMounted || !mountRef.current) {
+    // --- Renderer and Scene setup ---
+    const currentMount = mountRef.current;
+    if (!currentMount) {
         setError("Initialization failed: Mounting point not ready.");
         setIsLoading(false);
         onModelErrorOrMissing?.();
         return;
-      }
-      const currentMount = mountRef.current;
+    }
 
-      if (!sceneRef.current) sceneRef.current = new THREE.Scene();
-      if (!cameraRef.current) {
+    if (!sceneRef.current) sceneRef.current = new THREE.Scene();
+    if (!cameraRef.current) {
         cameraRef.current = new THREE.PerspectiveCamera(50, currentMount.clientWidth > 0 ? currentMount.clientWidth / currentMount.clientHeight : 1, 0.1, 100);
-      } else {
-         if (currentMount.clientWidth > 0 && currentMount.clientHeight > 0) {
-            cameraRef.current.aspect = currentMount.clientWidth / currentMount.clientHeight;
-            cameraRef.current.updateProjectionMatrix();
-        }
-      }
+    }
 
-      if (!rendererRef.current) {
+    if (!rendererRef.current) {
         rendererRef.current = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         rendererRef.current.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         rendererRef.current.setClearAlpha(0);
-      }
-       if (currentMount.clientWidth > 0 && currentMount.clientHeight > 0) {
-        rendererRef.current.setSize(currentMount.clientWidth, currentMount.clientHeight);
-      } else {
-        console.warn("ProjectModelViewer: currentMount dimensions are 0,0. Using default size for renderer.");
-        rendererRef.current.setSize(300, 150); 
-      }
+    }
 
-
-      if (currentMount.contains(rendererRef.current.domElement)) {
+    if (currentMount.contains(rendererRef.current.domElement)) {
         currentMount.removeChild(rendererRef.current.domElement);
-      }
-      currentMount.appendChild(rendererRef.current.domElement);
+    }
+    currentMount.appendChild(rendererRef.current.domElement);
+    
+    // --- Lighting setup ---
+    lightsRef.current.forEach(light => sceneRef.current?.remove(light));
+    lightsRef.current = [];
 
-      lightsRef.current.forEach(light => sceneRef.current?.remove(light));
-      lightsRef.current = [];
-
-      const ambientLight = new THREE.AmbientLight(0xffffff, 1.5); // Brighter ambient
-      sceneRef.current.add(ambientLight);
-      const mainDirectionalLight = new THREE.DirectionalLight(0xffffff, 2.5); // Brighter main
-      mainDirectionalLight.position.set(3, 5, 4); // Adjusted position for better angles
-      sceneRef.current.add(mainDirectionalLight);
-
-      const fillLight = new THREE.DirectionalLight(0xffffff, 1.0); // Brighter fill
-      fillLight.position.set(-3, -2, -3);
-      sceneRef.current.add(fillLight);
-      
-      const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0); // Add hemisphere light
-      hemiLight.position.set(0, 20, 0);
-      sceneRef.current.add(hemiLight);
-
-      lightsRef.current = [ambientLight, mainDirectionalLight, fillLight, hemiLight];
-
-      if (modelGroupRef.current && sceneRef.current) {
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
+    sceneRef.current.add(ambientLight);
+    const mainDirectionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
+    mainDirectionalLight.position.set(3, 5, 4);
+    sceneRef.current.add(mainDirectionalLight);
+    const fillLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    fillLight.position.set(-3, -2, -3);
+    sceneRef.current.add(fillLight);
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0);
+    hemiLight.position.set(0, 20, 0);
+    sceneRef.current.add(hemiLight);
+    lightsRef.current = [ambientLight, mainDirectionalLight, fillLight, hemiLight];
+    
+    // --- Model loading setup ---
+    if (modelGroupRef.current && sceneRef.current) {
         sceneRef.current.remove(modelGroupRef.current);
-        modelGroupRef.current.traverse(child => {
-          if ((child as THREE.Mesh).isMesh) {
-            (child as THREE.Mesh).geometry?.dispose();
-            const material = (child as THREE.Mesh).material;
-            if (Array.isArray(material)) material.forEach(m => m?.dispose());
-            else if (material) material?.dispose();
-          }
-        });
         modelGroupRef.current = null;
-      }
-      
-      const onProgress = (xhr: ProgressEvent) => {
+    }
+    
+    const onProgress = (xhr: ProgressEvent) => {
         if (!isMounted) return;
-        const percentLoaded = (xhr.loaded / xhr.total) * 100;
-        console.log(`ProjectModelViewer: Model loading progress: ${percentLoaded.toFixed(2)}% for ${effectModelPath}`);
-      };
+        console.log(`ProjectModelViewer: Model loading progress: ${(xhr.loaded / xhr.total) * 100}% for ${effectModelPath}`);
+    };
 
-      const commonLoadSuccess = (object: THREE.Group) => {
+    const commonLoadSuccess = (object: THREE.Group) => {
         if (!isMounted) return;
         console.log(`ProjectModelViewer: Model loaded successfully (${fileExtension})!`, object);
         modelGroupRef.current = object;
         sceneRef.current!.add(modelGroupRef.current);
-
         const box = new THREE.Box3().setFromObject(modelGroupRef.current);
         const size = box.getSize(new THREE.Vector3());
         const maxDim = Math.max(size.x, size.y, size.z);
-        let scaleFactor = 1.0;
-        
-        if (maxDim > 0.001) scaleFactor = TARGET_MODEL_VIEW_SIZE / maxDim;
-        console.log(`ProjectModelViewer: Original Max Dim: ${maxDim}, Scale Factor: ${scaleFactor} for ${fileExtension}`);
+        let scaleFactor = (maxDim > 0.001) ? TARGET_MODEL_VIEW_SIZE / maxDim : 1.0;
         modelGroupRef.current.scale.set(scaleFactor, scaleFactor, scaleFactor);
-
         const scaledBox = new THREE.Box3().setFromObject(modelGroupRef.current);
         const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
         modelGroupRef.current.position.sub(scaledCenter);
         initialModelYAfterCenteringRef.current = modelGroupRef.current.position.y;
-        console.log(`ProjectModelViewer: Model centered and scaled. Initial Y after centering: ${initialModelYAfterCenteringRef.current}`);
-
         if (cameraRef.current) cameraRef.current.lookAt(0, 0, 0);
         handleScroll();
         setIsLoading(false);
         setError(null);
-      };
+    };
 
-      const commonLoadError = (loaderError: ErrorEvent | any, format: string) => {
+    const commonLoadError = (loaderError: ErrorEvent | any, format: string) => {
         if (!isMounted) return;
         console.error(`ProjectModelViewer: Error loading ${format} model from ${effectModelPath}:`, loaderError);
         let userFriendlyMessage = `Failed to load ${format} model.`;
-        if (loaderError.message?.includes("NetworkError")) {
-          userFriendlyMessage = "Network error: Could not fetch the model. Check URL and CORS.";
-        } else if (loaderError.message?.toLowerCase().includes("parse") || loaderError.message?.toLowerCase().includes("syntaxerror")) {
-          userFriendlyMessage = `Model file .${fileExtension} might be corrupted or in an unsupported format.`;
-        }
+        if (loaderError.message?.includes("NetworkError")) userFriendlyMessage = "Network error: Could not fetch the model. Check URL and CORS.";
+        else if (loaderError.message?.toLowerCase().includes("parse") || loaderError.message?.toLowerCase().includes("syntaxerror")) userFriendlyMessage = `Model file .${fileExtension} might be corrupted or in an unsupported format.`;
         setError(userFriendlyMessage);
         setDetailedError(loaderError);
         setIsLoading(false);
         onModelErrorOrMissing?.();
-      };
+    };
 
-      console.log(`ProjectModelViewer: Attempting to load model: ${effectModelPath}`);
-      if (fileExtension === 'glb' || fileExtension === 'gltf') {
-        console.log(`ProjectModelViewer: DRACO decoder path for glTF/GLB: ${DRACO_DECODER_PATH}. Ensure these files exist in your public folder.`);
-        gltfLoaderInstance.load(
-          effectModelPath,
-          (gltf) => commonLoadSuccess(gltf.scene),
-          onProgress,
-          (error) => commonLoadError(error, 'glTF/GLB')
-        );
-      } else if (fileExtension === 'obj') {
-        const objLoader = new OBJLoader();
-        objLoader.load(
-          effectModelPath,
-          (object) => commonLoadSuccess(object),
-          onProgress,
-          (error) => commonLoadError(error, '.obj')
-        );
-      } else if (fileExtension === 'fbx') {
-        const fbxLoader = new FBXLoader();
-        fbxLoader.load(
-          effectModelPath,
-          (object) => commonLoadSuccess(object),
-          onProgress,
-          (error) => commonLoadError(error, '.fbx')
-        );
-      } else {
+    console.log(`ProjectModelViewer: Attempting to load model: ${effectModelPath}`);
+    if (fileExtension === 'glb' || fileExtension === 'gltf') {
+        console.log(`ProjectModelViewer: DRACO decoder path for glTF/GLB: ${DRACO_DECODER_PATH}.`);
+        gltfLoaderInstance.load(effectModelPath, commonLoadSuccess, onProgress, (error) => commonLoadError(error, 'glTF/GLB'));
+    } else if (fileExtension === 'obj') {
+        new OBJLoader().load(effectModelPath, commonLoadSuccess, onProgress, (error) => commonLoadError(error, '.obj'));
+    } else if (fileExtension === 'fbx') {
+        new FBXLoader().load(effectModelPath, commonLoadSuccess, onProgress, (error) => commonLoadError(error, '.fbx'));
+    } else {
         console.warn(`ProjectModelViewer: Unsupported file extension: ${fileExtension}`);
         setError(`Unsupported model format: .${fileExtension}. Please use .glb, .gltf, .obj, or .fbx.`);
         setIsLoading(false);
         onModelErrorOrMissing?.();
         return;
-      }
-
-      const animate = () => {
+    }
+    
+    // --- Animation loop ---
+    const animate = () => {
         if (!isMounted) return;
         animationFrameIdRef.current = requestAnimationFrame(animate);
-        if (modelGroupRef.current && rendererRef.current && sceneRef.current && cameraRef.current) {
-          if (isIntersectingRef.current) {
-            modelGroupRef.current.rotation.x += (targetRotationRef.current.x - modelGroupRef.current.rotation.x) * LERP_SPEED_ROTATION;
-            modelGroupRef.current.rotation.y += (targetRotationRef.current.y - modelGroupRef.current.rotation.y) * LERP_SPEED_ROTATION;
 
-            let currentBaseY = initialModelYAfterCenteringRef.current + targetModelYOffsetRef.current;
-            let finalTargetModelY = currentBaseY;
+        const renderer = rendererRef.current;
+        const camera = cameraRef.current;
+        const scene = sceneRef.current;
+        const model = modelGroupRef.current;
 
-            if (isJumpingRef.current) {
-              const elapsedJumpTime = Date.now() - jumpStartTimeRef.current;
-              if (elapsedJumpTime < JUMP_DURATION) {
-                const progress = elapsedJumpTime / JUMP_DURATION;
-                const jumpOffset = JUMP_HEIGHT * Math.sin(progress * Math.PI);
-                finalTargetModelY += jumpOffset;
-              } else {
-                isJumpingRef.current = false;
-              }
+        if (renderer && camera && scene && currentMount) {
+             // Dynamic Resizing Check
+            const width = currentMount.clientWidth;
+            const height = currentMount.clientHeight;
+            const canvas = renderer.domElement;
+            if (canvas.width !== width || canvas.height !== height) {
+                if (width > 0 && height > 0) { // Only resize if dimensions are valid
+                    renderer.setSize(width, height);
+                    camera.aspect = width / height;
+                    camera.updateProjectionMatrix();
+                }
             }
-            modelGroupRef.current.position.y += (finalTargetModelY - modelGroupRef.current.position.y) * LERP_SPEED_MODEL_Y;
 
-            cameraRef.current.position.z += (targetCameraZRef.current - cameraRef.current.position.z) * LERP_SPEED_CAMERA_Z;
-          }
-          rendererRef.current.render(sceneRef.current, cameraRef.current);
-        }
-      };
-      if (animationFrameIdRef.current) cancelAnimationFrame(animationFrameIdRef.current);
-      animate();
+            if (model && isIntersectingRef.current) {
+                model.rotation.x += (targetRotationRef.current.x - model.rotation.x) * LERP_SPEED_ROTATION;
+                model.rotation.y += (targetRotationRef.current.y - model.rotation.y) * LERP_SPEED_ROTATION;
 
-      const handleResize = () => {
-        if (!isMounted || !currentMount || !rendererRef.current || !cameraRef.current || currentMount.clientWidth === 0 || currentMount.clientHeight === 0) {
-          return;
+                let finalTargetModelY = initialModelYAfterCenteringRef.current + targetModelYOffsetRef.current;
+                if (isJumpingRef.current) {
+                    const elapsedJumpTime = Date.now() - jumpStartTimeRef.current;
+                    if (elapsedJumpTime < JUMP_DURATION) {
+                        finalTargetModelY += JUMP_HEIGHT * Math.sin((elapsedJumpTime / JUMP_DURATION) * Math.PI);
+                    } else {
+                        isJumpingRef.current = false;
+                    }
+                }
+                model.position.y += (finalTargetModelY - model.position.y) * LERP_SPEED_MODEL_Y;
+                camera.position.z += (targetCameraZRef.current - camera.position.z) * LERP_SPEED_CAMERA_Z;
+            }
+            renderer.render(scene, camera);
         }
-        cameraRef.current.aspect = currentMount.clientWidth / currentMount.clientHeight;
-        cameraRef.current.updateProjectionMatrix();
-        rendererRef.current.setSize(currentMount.clientWidth, currentMount.clientHeight);
-        handleScroll();
-      };
-      window.addEventListener('resize', handleResize);
-      const initialResizeTimeoutId = setTimeout(() => { if (isMounted && currentMount && currentMount.clientWidth > 0 && currentMount.clientHeight > 0) handleResize(); }, 100);
-      return () => { clearTimeout(initialResizeTimeoutId); window.removeEventListener('resize', handleResize); };
-    }, 0);
+    };
+    
+    if (animationFrameIdRef.current) cancelAnimationFrame(animationFrameIdRef.current);
+    animate();
 
     return () => {
       console.log(`ProjectModelViewer: Cleanup for modelPath: ${effectModelPath}`);
       isMounted = false;
-      clearTimeout(timeoutId);
       if (animationFrameIdRef.current) cancelAnimationFrame(animationFrameIdRef.current);
 
       window.removeEventListener('mousemove', handleGlobalMouseMove);
@@ -431,24 +377,6 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       if (observerRef.current) {
         observerRef.current.disconnect();
         observerRef.current = null;
-      }
-
-      if (modelGroupRef.current && sceneRef.current) {
-        sceneRef.current.remove(modelGroupRef.current);
-        modelGroupRef.current.traverse(child => {
-          if ((child as THREE.Mesh).isMesh) {
-            (child as THREE.Mesh).geometry?.dispose();
-            const material = (child as THREE.Mesh).material;
-            if (Array.isArray(material)) material.forEach(m => m?.dispose());
-            else if (material) material?.dispose();
-          }
-        });
-        modelGroupRef.current = null;
-      }
-      lightsRef.current.forEach(light => { sceneRef.current?.remove(light); (light as any).dispose?.(); });
-      lightsRef.current = [];
-      if (mountRef.current && rendererRef.current?.domElement) {
-         try { if (mountRef.current.contains(rendererRef.current.domElement)) mountRef.current.removeChild(rendererRef.current.domElement); } catch (e) {}
       }
     };
   }, [modelPath, onModelErrorOrMissing, containerRef, handleModelClick]);
