@@ -37,8 +37,8 @@ gltfLoaderInstance.setCrossOrigin('anonymous');
 
 // Interaction constants
 const SCROLL_OFFSET_Y_FACTOR = 0.3;
-const SCROLL_ZOOM_FACTOR_MIN = 4.5;
-const SCROLL_ZOOM_FACTOR_MAX = 5.5; 
+const SCROLL_ZOOM_FACTOR_MIN = 3.0;
+const SCROLL_ZOOM_FACTOR_MAX = 4.0;
 
 const LERP_SPEED_ROTATION = 0.08;
 const LERP_SPEED_MODEL_Y = 0.05;
@@ -68,7 +68,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
   const targetRotationRef = useRef({ x: 0, y: 0 });
   const targetModelYOffsetRef = useRef<number>(0);
   const targetCameraZRef = useRef<number>(SCROLL_ZOOM_FACTOR_MIN);
-  const targetCameraXRef = useRef<number>(-0.8);
+  const targetCameraXRef = useRef<number>(-1.2);
 
   const initialModelYAfterCenteringRef = useRef<number>(0);
   const isWindowFocusedRef = useRef(true);
