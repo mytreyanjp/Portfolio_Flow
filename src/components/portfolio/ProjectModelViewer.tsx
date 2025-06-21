@@ -37,8 +37,8 @@ gltfLoaderInstance.setCrossOrigin('anonymous');
 
 // Interaction constants
 const SCROLL_OFFSET_Y_FACTOR = 0.3;
-const SCROLL_ZOOM_FACTOR_MIN = 1.3;
-const SCROLL_ZOOM_FACTOR_MAX = 2.0; 
+const SCROLL_ZOOM_FACTOR_MIN = 2.2;
+const SCROLL_ZOOM_FACTOR_MAX = 3.0; 
 
 const LERP_SPEED_ROTATION = 0.08;
 const LERP_SPEED_MODEL_Y = 0.05;
@@ -68,6 +68,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
   const targetRotationRef = useRef({ x: 0, y: 0 });
   const targetModelYOffsetRef = useRef<number>(0);
   const targetCameraZRef = useRef<number>(SCROLL_ZOOM_FACTOR_MIN);
+  const targetCameraXRef = useRef<number>(-0.5);
 
   const initialModelYAfterCenteringRef = useRef<number>(0);
   const isWindowFocusedRef = useRef(true);
@@ -123,7 +124,6 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
     targetRotationRef.current = {x: 0, y: 0};
     targetModelYOffsetRef.current = 0;
     targetCameraZRef.current = SCROLL_ZOOM_FACTOR_MIN;
-    initialModelYAfterCenteringRef.current = 0;
     isWindowFocusedRef.current = (typeof document !== 'undefined' && document.hasFocus());
     scrollPercentageRef.current = 0;
 
@@ -361,6 +361,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
                     }
                 }
                 model.position.y += (finalTargetModelY - model.position.y) * LERP_SPEED_MODEL_Y;
+                camera.position.x += (targetCameraXRef.current - camera.position.x) * LERP_SPEED_CAMERA_Z;
                 camera.position.z += (targetCameraZRef.current - camera.position.z) * LERP_SPEED_CAMERA_Z;
             }
             renderer.render(scene, camera);
