@@ -37,8 +37,8 @@ gltfLoaderInstance.setCrossOrigin('anonymous');
 
 // Interaction constants
 const SCROLL_OFFSET_Y_FACTOR = 0.3;
-const SCROLL_ZOOM_FACTOR_MIN = 2.5;
-const SCROLL_ZOOM_FACTOR_MAX = 3.5;
+const SCROLL_ZOOM_FACTOR_MIN = 3.0;
+const SCROLL_ZOOM_FACTOR_MAX = 4.0;
 
 const LERP_SPEED_ROTATION = 0.08;
 const LERP_SPEED_MODEL_Y = 0.05;
@@ -122,6 +122,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
     isJumpingRef.current = false;
     targetRotationRef.current = {x: 0, y: 0};
     targetCameraZRef.current = SCROLL_ZOOM_FACTOR_MIN;
+    targetCameraXRef.current = 0; // Reset horizontal offset to center the model
     isWindowFocusedRef.current = (typeof document !== 'undefined' && document.hasFocus());
     scrollPercentageRef.current = 0;
 
@@ -234,6 +235,12 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
         currentMount.removeChild(rendererRef.current.domElement);
     }
     currentMount.appendChild(rendererRef.current.domElement);
+    // Set initial size explicitly after appending
+    if (currentMount.clientWidth > 0 && currentMount.clientHeight > 0) {
+        rendererRef.current.setSize(currentMount.clientWidth, currentMount.clientHeight, false);
+        cameraRef.current.aspect = currentMount.clientWidth / currentMount.clientHeight;
+        cameraRef.current.updateProjectionMatrix();
+    }
     
     // --- Lighting setup ---
     lightsRef.current.forEach(light => sceneRef.current?.remove(light));
@@ -291,9 +298,6 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
       modelGroupRef.current.position.sub(scaledCenter);
 
-      // Manual adjustment for visual centering of this specific model
-      modelGroupRef.current.position.x -= 0.6;
-
       initialModelYAfterCenteringRef.current = modelGroupRef.current.position.y;
       if (cameraRef.current) cameraRef.current.lookAt(0, 0, 0);
       handleScroll();
@@ -345,12 +349,11 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
             const height = currentMount.clientHeight;
             if (width > 0 && height > 0) {
               const canvas = renderer.domElement;
-              const devicePixelRatio = Math.min(window.devicePixelRatio, 2);
-              const newWidth = Math.floor(width * devicePixelRatio);
-              const newHeight = Math.floor(height * devicePixelRatio);
+              const needResize = canvas.width !== Math.floor(width * renderer.getPixelRatio()) || 
+                                 canvas.height !== Math.floor(height * renderer.getPixelRatio());
 
-              if (canvas.width !== newWidth || canvas.height !== newHeight) {
-                  renderer.setSize(width, height, false); // Set third arg to false
+              if (needResize) {
+                  renderer.setSize(width, height, false);
                   camera.aspect = width / height;
                   camera.updateProjectionMatrix();
               }
