@@ -21,7 +21,6 @@ const JUMP_DURATION = 300;
 const TARGET_MODEL_VIEW_SIZE = 2.5;
 
 // --- Singleton Loaders ---
-// It's more efficient to create loaders once and reuse them.
 let gltfLoader: GLTFLoader | null = null;
 if (typeof window !== 'undefined') {
   gltfLoader = new GLTFLoader();
@@ -42,8 +41,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
   const [error, setError] = useState<string | null>(null);
   const [isInView, setIsInView] = useState(false);
   
-  // We use a single state to manage the loading status
-  const [status, setStatus] = useState<'idle' | 'loading' | 'loaded' | 'error'>('idle');
+  const isLoading = isInView && !error;
 
   // --- Intersection Observer to manage visibility ---
   useEffect(() => {
@@ -56,8 +54,8 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
       },
       {
         root: null, // viewport
-        rootMargin: '0px', // No margin
-        threshold: 0.1, // Fire when 10% of the item is visible
+        rootMargin: '200px', // Start loading when it's 200px away from the viewport
+        threshold: 0.01, 
       }
     );
 
@@ -73,28 +71,22 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
 
   // --- Main Three.js setup and teardown effect ---
   useEffect(() => {
-    // If not in view or no model path, do nothing and ensure cleanup happens.
+    // If not in view or no model path, do nothing.
+    // The return function will handle teardown from the previous effect run.
     if (!isInView || !modelPath) {
-      // The return function will handle teardown if it was previously visible
       return;
     }
     
-    // Guard against multiple initializations
-    if (status !== 'idle' && status !== 'error') return;
-
     const currentMount = mountRef.current;
     if (!currentMount) return;
     
     let isMounted = true;
     let renderer: THREE.WebGLRenderer | null = null;
     let animationFrameId: number | null = null;
-    let scene: THREE.Scene | null = null;
+    let scene: THREE.Scene | null = new THREE.Scene();
 
     const setupScene = () => {
-      setStatus('loading');
       setError(null);
-      
-      scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(50, currentMount.clientWidth / currentMount.clientHeight, 0.1, 100);
       camera.position.z = SCROLL_ZOOM_FACTOR_MIN;
 
@@ -103,7 +95,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
       const directionalLight = new THREE.DirectionalLight(0xffffff, 2.0);
       directionalLight.position.set(2, 5, 3);
       const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8);
-      scene.add(ambientLight, directionalLight, hemiLight);
+      scene!.add(ambientLight, directionalLight, hemiLight);
       
       // --- Renderer ---
       try {
@@ -112,7 +104,6 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
         console.error("Failed to create WebGLRenderer:", e);
         if (isMounted) {
             setError('Could not initialize 3D viewer.');
-            setStatus('error');
             onModelErrorOrMissing?.();
         }
         return;
@@ -145,6 +136,12 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
             jumpStartTime = Date.now();
         }
       };
+      const handleDeviceMotion = (event: DeviceMotionEvent) => {
+          if (event.rotationRate && event.rotationRate.beta && event.rotationRate.alpha) {
+            targetRotation.y -= event.rotationRate.beta * 0.002;
+            targetRotation.x -= event.rotationRate.alpha * 0.002;
+          }
+      };
 
       // --- Model Loading ---
       if (gltfLoader) {
@@ -152,8 +149,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
           (gltf) => {
             if (!isMounted || !scene) return;
             const model = gltf.scene;
-            scene.add(model);
-
+            
             const box = new THREE.Box3().setFromObject(model);
             const size = box.getSize(new THREE.Vector3());
             const maxDim = Math.max(size.x, size.y, size.z);
@@ -166,14 +162,13 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
             initialModelYAfterCentering = model.position.y;
             
             modelGroup = model;
-            setStatus('loaded');
+            scene.add(model);
           },
           undefined,
           (loadError) => {
             if (!isMounted) return;
             console.error(`Error loading model ${modelPath}:`, loadError);
             setError('Failed to load model.');
-            setStatus('error');
             onModelErrorOrMissing?.();
           }
         );
@@ -219,6 +214,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
       // --- Attach Event Listeners ---
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('scroll', handleScroll, { passive: true });
+      window.addEventListener('devicemotion', handleDeviceMotion, true);
       currentMount.addEventListener('click', handleModelClick);
       
       animate();
@@ -227,9 +223,9 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
       return () => {
         isMounted = false;
         
-        // --- Detach Event Listeners ---
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('scroll', handleScroll);
+        window.removeEventListener('devicemotion', handleDeviceMotion, true);
         currentMount.removeEventListener('click', handleModelClick);
         resizeObserver.disconnect();
         
@@ -237,7 +233,6 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
           cancelAnimationFrame(animationFrameId);
         }
         
-        // --- Full Scene Teardown ---
         if (scene) {
             scene.traverse(object => {
                 if ((object as THREE.Mesh).isMesh) {
@@ -252,6 +247,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
             });
             scene.clear();
         }
+        scene = null;
         
         if (renderer) {
           // Force context loss is a strong way to ensure resources are freed
@@ -261,28 +257,27 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
             currentMount.removeChild(renderer.domElement);
           }
         }
-
         renderer = null;
-        scene = null;
       };
     };
 
     const cleanup = setupScene();
 
-    // The actual cleanup function that useEffect will run
     return () => {
       if (cleanup) {
         cleanup();
       }
-      setStatus('idle');
     };
 
-  }, [isInView, modelPath, onModelErrorOrMissing, status]); // Rerun effect when visibility or model changes
+  }, [isInView, modelPath, onModelErrorOrMissing]);
 
-  const handleRetry = () => {
-    setStatus('idle'); // Reset status to allow re-initialization
-    setError(null);
-  };
+  const handleRetry = useCallback(() => {
+    setError(null); 
+    setIsInView(false);
+    setTimeout(() => {
+      setIsInView(true);
+    }, 50);
+  }, []);
 
   return (
     <div
@@ -292,8 +287,8 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
         error && "bg-destructive/10"
       )}
     >
-      {(status === 'idle' || status === 'loading') && !error && <Skeleton className="w-full h-full" />}
-      {status === 'error' && (
+      {isLoading && <Skeleton className="w-full h-full" />}
+      {error && (
         <div className="flex flex-col items-center justify-center text-destructive p-2 text-center">
             <AlertTriangle className="h-10 w-10 mb-2"/>
             <p className="text-sm font-semibold mb-3">{error}</p>
