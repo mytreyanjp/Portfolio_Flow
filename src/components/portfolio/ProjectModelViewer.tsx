@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
@@ -30,6 +29,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isInView, setIsInView] = useState(false);
+  const mousePosRef = useRef({ x: 0, y: 0 }); // Stores normalized mouse position relative to the component
 
   // --- Intersection Observer to manage visibility ---
   useEffect(() => {
@@ -42,7 +42,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
       },
       {
         root: null,
-        rootMargin: '200px',
+        rootMargin: '200px', // A bit of margin to load before it's fully on screen
         threshold: 0.01,
       }
     );
@@ -74,10 +74,12 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
     let camera: THREE.PerspectiveCamera | null;
     let renderer: THREE.WebGLRenderer | null;
     let modelGroup: THREE.Group | null;
-    
+    let finalScale = new THREE.Vector3(1, 1, 1);
+
+    // --- Scene Setup ---
     try {
       camera = new THREE.PerspectiveCamera(50, currentMount.clientWidth / currentMount.clientHeight, 0.1, 100);
-      camera.position.z = 3;
+      camera.position.z = 3.5; // Start camera a bit further for a subtle zoom-in
 
       const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
       const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
@@ -101,6 +103,25 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
       return;
     }
 
+    // --- Mouse Listeners for Interaction ---
+    const handleMouseMove = (event: MouseEvent) => {
+      if (!currentMount) return;
+      const rect = currentMount.getBoundingClientRect();
+      // Normalize mouse position from -0.5 to 0.5
+      mousePosRef.current.x = (event.clientX - rect.left) / rect.width - 0.5;
+      mousePosRef.current.y = (event.clientY - rect.top) / rect.height - 0.5;
+    };
+
+    const handleMouseLeave = () => {
+      // Reset mouse position to center the model when mouse leaves
+      mousePosRef.current.x = 0;
+      mousePosRef.current.y = 0;
+    };
+
+    currentMount.addEventListener('mousemove', handleMouseMove);
+    currentMount.addEventListener('mouseleave', handleMouseLeave);
+
+    // --- Model Loading ---
     if (gltfLoader) {
       gltfLoader.load(
         modelPath,
@@ -112,12 +133,13 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
           const box = new THREE.Box3().setFromObject(modelGroup);
           const size = box.getSize(new THREE.Vector3());
           const maxDim = Math.max(size.x, size.y, size.z);
-          const scale = maxDim > 0 ? 2.5 / maxDim : 1;
-          modelGroup.scale.set(scale, scale, scale);
+          const scaleFactor = maxDim > 0 ? 2.5 / maxDim : 1;
+          finalScale = new THREE.Vector3(scaleFactor, scaleFactor, scaleFactor);
           
           const center = box.getCenter(new THREE.Vector3());
           modelGroup.position.sub(center);
           
+          modelGroup.scale.set(0, 0, 0); // Start scale at 0 for pop-in effect
           scene.add(modelGroup);
         },
         undefined, // onProgress callback
@@ -131,13 +153,38 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
       );
     }
 
+    let initialAnimationDone = false;
+    const targetCameraZ = 3;
+
+    // --- Animation Loop ---
     const animate = () => {
       if (!isMounted) return;
       animationFrameId = requestAnimationFrame(animate);
       
       if (renderer && scene && camera) {
+        // Initial zoom-in animation for the camera
+        if (camera.position.z > targetCameraZ) {
+          camera.position.z -= (camera.position.z - targetCameraZ) * 0.04;
+        } else if (!initialAnimationDone) {
+          camera.position.z = targetCameraZ;
+          initialAnimationDone = true;
+        }
+
         if (modelGroup) {
-          modelGroup.rotation.y += 0.005; // Simple auto-rotation
+          // Model scale-up "pop-in" animation
+          if (modelGroup.scale.distanceTo(finalScale) > 0.001) {
+            modelGroup.scale.lerp(finalScale, 0.08);
+          } else {
+             // Ensure it lands exactly on the final scale
+            if(modelGroup.scale.x !== finalScale.x) modelGroup.scale.copy(finalScale);
+          }
+
+          // Smooth rotation based on mouse position
+          const targetRotationY = mousePosRef.current.x * Math.PI * 0.4;
+          const targetRotationX = mousePosRef.current.y * Math.PI * 0.2;
+
+          modelGroup.rotation.y += (targetRotationY - modelGroup.rotation.y) * 0.05;
+          modelGroup.rotation.x += (targetRotationX - modelGroup.rotation.x) * 0.05;
         }
         renderer.render(scene, camera);
       }
@@ -155,10 +202,14 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
     });
     resizeObserver.observe(currentMount);
 
+    // --- Cleanup ---
     return () => {
       isMounted = false;
       resizeObserver.disconnect();
       cancelAnimationFrame(animationFrameId);
+
+      currentMount.removeEventListener('mousemove', handleMouseMove);
+      currentMount.removeEventListener('mouseleave', handleMouseLeave);
 
       if (scene) {
         scene.traverse(object => {
@@ -191,16 +242,16 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
 
   const handleRetry = useCallback(() => {
     setError(null);
-    setIsInView(false);
-    setTimeout(() => setIsInView(true), 50);
+    setIsInView(false); // This will trigger the observer to re-check
+    setTimeout(() => setIsInView(true), 50); // A small delay to ensure state change is processed
   }, []);
 
   return (
     <div
       ref={mountRef}
       className={cn(
-        "w-full h-full overflow-hidden flex items-center justify-center",
-        error && "bg-destructive/10"
+        "w-full h-full overflow-hidden flex items-center justify-center cursor-grab",
+        error && "bg-destructive/10 cursor-default"
       )}
     >
       {isLoading && !error && <Skeleton className="w-full h-full" />}
