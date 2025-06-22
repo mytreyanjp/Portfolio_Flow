@@ -66,7 +66,6 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
 
   const modelGroupRef = useRef<THREE.Group | null>(null);
   const targetRotationRef = useRef({ x: 0, y: 0 });
-  const targetModelYOffsetRef = useRef<number>(0);
   const targetCameraZRef = useRef<number>(3.0);
   const targetCameraXRef = useRef<number>(0);
 
@@ -122,7 +121,6 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
     initialGyroOffsetRef.current = { beta: null, gamma: null };
     isJumpingRef.current = false;
     targetRotationRef.current = {x: 0, y: 0};
-    targetModelYOffsetRef.current = 0;
     targetCameraZRef.current = SCROLL_ZOOM_FACTOR_MIN;
     isWindowFocusedRef.current = (typeof document !== 'undefined' && document.hasFocus());
     scrollPercentageRef.current = 0;
@@ -175,7 +173,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
         const currentScroll = window.scrollY;
         const totalScrollableHeight = document.documentElement.scrollHeight - window.innerHeight;
         scrollPercentageRef.current = totalScrollableHeight > 0 ? Math.max(0, Math.min(1, currentScroll / totalScrollableHeight)) : 0;
-        targetModelYOffsetRef.current = scrollPercentageRef.current * SCROLL_OFFSET_Y_FACTOR * -2;
+        // The model will no longer move vertically. Only zoom is affected.
         targetCameraZRef.current = SCROLL_ZOOM_FACTOR_MIN + (SCROLL_ZOOM_FACTOR_MAX - SCROLL_ZOOM_FACTOR_MIN) * scrollPercentageRef.current;
     };
 
@@ -362,7 +360,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
                 model.rotation.x += (targetRotationRef.current.x - model.rotation.x) * LERP_SPEED_ROTATION;
                 model.rotation.y += (targetRotationRef.current.y - model.rotation.y) * LERP_SPEED_ROTATION;
 
-                let finalTargetModelY = initialModelYAfterCenteringRef.current + targetModelYOffsetRef.current;
+                let finalTargetModelY = initialModelYAfterCenteringRef.current;
                 if (isJumpingRef.current) {
                     const elapsedJumpTime = Date.now() - jumpStartTimeRef.current;
                     if (elapsedJumpTime < JUMP_DURATION) {
