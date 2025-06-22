@@ -2,8 +2,8 @@
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle, LucideRotateCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -29,7 +29,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isInView, setIsInView] = useState(false);
-  const mousePosRef = useRef({ x: 0, y: 0 }); // Stores normalized mouse position relative to the component
+  const mousePosRef = useRef({ x: 0, y: 0 }); // Stores normalized mouse position relative to the WINDOW
 
   // --- Intersection Observer to manage visibility ---
   useEffect(() => {
@@ -103,23 +103,14 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
       return;
     }
 
-    // --- Mouse Listeners for Interaction ---
+    // --- GLOBAL Mouse Listener for Interaction ---
     const handleMouseMove = (event: MouseEvent) => {
-      if (!currentMount) return;
-      const rect = currentMount.getBoundingClientRect();
-      // Normalize mouse position from -0.5 to 0.5
-      mousePosRef.current.x = (event.clientX - rect.left) / rect.width - 0.5;
-      mousePosRef.current.y = (event.clientY - rect.top) / rect.height - 0.5;
+      // Normalize mouse position from -0.5 to 0.5 based on the window's dimensions
+      mousePosRef.current.x = (event.clientX / window.innerWidth) - 0.5;
+      mousePosRef.current.y = (event.clientY / window.innerHeight) - 0.5;
     };
-
-    const handleMouseLeave = () => {
-      // Reset mouse position to center the model when mouse leaves
-      mousePosRef.current.x = 0;
-      mousePosRef.current.y = 0;
-    };
-
-    currentMount.addEventListener('mousemove', handleMouseMove);
-    currentMount.addEventListener('mouseleave', handleMouseLeave);
+    
+    window.addEventListener('mousemove', handleMouseMove);
 
     // --- Model Loading ---
     if (gltfLoader) {
@@ -179,7 +170,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
             if(modelGroup.scale.x !== finalScale.x) modelGroup.scale.copy(finalScale);
           }
 
-          // Smooth rotation based on mouse position
+          // Smooth rotation based on GLOBAL mouse position
           const targetRotationY = mousePosRef.current.x * Math.PI * 0.4;
           const targetRotationX = mousePosRef.current.y * Math.PI * 0.2;
 
@@ -208,8 +199,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
       resizeObserver.disconnect();
       cancelAnimationFrame(animationFrameId);
 
-      currentMount.removeEventListener('mousemove', handleMouseMove);
-      currentMount.removeEventListener('mouseleave', handleMouseLeave);
+      window.removeEventListener('mousemove', handleMouseMove);
 
       if (scene) {
         scene.traverse(object => {
