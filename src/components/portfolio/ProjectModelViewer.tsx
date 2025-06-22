@@ -29,7 +29,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isInView, setIsInView] = useState(false);
-  const mousePosRef = useRef({ x: 0, y: 0 }); // Stores normalized mouse position relative to the WINDOW
+  const targetRotationRef = useRef({ x: 0, y: 0 }); // Unified target for rotation from either mouse or gyro
 
   // --- Intersection Observer to manage visibility ---
   useEffect(() => {
@@ -103,14 +103,33 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
       return;
     }
 
-    // --- GLOBAL Mouse Listener for Interaction ---
+    // --- Interaction Handlers ---
     const handleMouseMove = (event: MouseEvent) => {
       // Normalize mouse position from -0.5 to 0.5 based on the window's dimensions
-      mousePosRef.current.x = (event.clientX / window.innerWidth) - 0.5;
-      mousePosRef.current.y = (event.clientY / window.innerHeight) - 0.5;
+      targetRotationRef.current.y = (event.clientX / window.innerWidth - 0.5) * Math.PI * 0.4;
+      targetRotationRef.current.x = (event.clientY / window.innerHeight - 0.5) * Math.PI * 0.2;
     };
     
-    window.addEventListener('mousemove', handleMouseMove);
+    const handleDeviceOrientation = (event: DeviceOrientationEvent) => {
+        if (event.gamma === null || event.beta === null) return;
+        
+        // Normalize gamma (left-right tilt, -90 to 90) for y-rotation
+        const yRotation = (event.gamma / 90) * (Math.PI * 0.3); // Max tilt -> ~54 deg rotation
+        
+        // Normalize beta (front-back tilt, -180 to 180), centering on a comfortable holding angle (e.g., 45 deg)
+        const xRotation = ((event.beta - 45) / 90) * (Math.PI * 0.2); // Max tilt -> ~36 deg rotation
+
+        targetRotationRef.current.y = yRotation;
+        targetRotationRef.current.x = xRotation;
+    };
+
+    // Check for mobile and add appropriate listener
+    const isMobileDevice = 'ontouchstart' in window;
+    if (isMobileDevice) {
+        window.addEventListener('deviceorientation', handleDeviceOrientation);
+    } else {
+        window.addEventListener('mousemove', handleMouseMove);
+    }
 
     // --- Model Loading ---
     if (gltfLoader) {
@@ -171,12 +190,9 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
             if(modelGroup.scale.x !== finalScale.x) modelGroup.scale.copy(finalScale);
           }
 
-          // Smooth rotation based on GLOBAL mouse position
-          const targetRotationY = mousePosRef.current.x * Math.PI * 0.4;
-          const targetRotationX = mousePosRef.current.y * Math.PI * 0.2;
-
-          modelGroup.rotation.y += (targetRotationY - modelGroup.rotation.y) * 0.05;
-          modelGroup.rotation.x += (targetRotationX - modelGroup.rotation.x) * 0.05;
+          // Smooth rotation based on unified target from either mouse or gyro
+          modelGroup.rotation.y += (targetRotationRef.current.y - modelGroup.rotation.y) * 0.05;
+          modelGroup.rotation.x += (targetRotationRef.current.x - modelGroup.rotation.x) * 0.05;
         }
         renderer.render(scene, camera);
       }
@@ -200,7 +216,9 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
       resizeObserver.disconnect();
       cancelAnimationFrame(animationFrameId);
 
+      // Clean up BOTH listeners to be safe, as the device type won't change during component life
       window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('deviceorientation', handleDeviceOrientation);
 
       if (scene) {
         scene.traverse(object => {
