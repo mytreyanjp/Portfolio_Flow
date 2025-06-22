@@ -129,6 +129,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
           
           const center = box.getCenter(new THREE.Vector3());
           modelGroup.position.sub(center);
+          modelGroup.position.y -= 0.2; // Move the model down slightly
           
           modelGroup.scale.set(0, 0, 0); // Start scale at 0 for pop-in effect
           scene.add(modelGroup);
