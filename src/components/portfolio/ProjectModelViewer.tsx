@@ -24,11 +24,18 @@ const JUMP_HEIGHT = 0.15;
 const JUMP_DURATION = 300;
 const TARGET_MODEL_VIEW_SIZE = 2.5;
 
-// --- Loader Instances (created once) ---
-const dracoLoaderInstance = new DRACOLoader();
-dracoLoaderInstance.setDecoderPath(DRACO_DECODER_PATH);
-const gltfLoaderInstance = new GLTFLoader();
-gltfLoaderInstance.setDRACOLoader(dracoLoaderInstance);
+// --- Loader Instances (created once and shared) ---
+let dracoLoaderInstance: DRACOLoader | null = null;
+let gltfLoaderInstance: GLTFLoader | null = null;
+
+// This check ensures these are only created in a browser environment.
+if (typeof window !== 'undefined') {
+  dracoLoaderInstance = new DRACOLoader();
+  dracoLoaderInstance.setDecoderPath(DRACO_DECODER_PATH);
+  gltfLoaderInstance = new GLTFLoader();
+  gltfLoaderInstance.setDRACOLoader(dracoLoaderInstance);
+}
+
 
 // --- Component Props ---
 interface ProjectModelViewerProps {
@@ -43,7 +50,6 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const modelGroupRef = useRef<THREE.Group | null>(null);
   const animationFrameIdRef = useRef<number | null>(null);
-  const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,42 +80,6 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
     };
   }, []);
 
-  const cleanupScene = useCallback(() => {
-    if (animationFrameIdRef.current) cancelAnimationFrame(animationFrameIdRef.current);
-    if (resizeObserverRef.current) resizeObserverRef.current.disconnect();
-
-    const model = modelGroupRef.current;
-    if (model && sceneRef.current) {
-      sceneRef.current.remove(model);
-      model.traverse(child => {
-        if ((child as THREE.Mesh).isMesh) {
-          (child as THREE.Mesh).geometry.dispose();
-          const material = (child as THREE.Mesh).material;
-          if (Array.isArray(material)) {
-            material.forEach(m => m.dispose());
-          } else if (material) {
-            material.dispose();
-          }
-        }
-      });
-      modelGroupRef.current = null;
-    }
-    
-    const renderer = rendererRef.current;
-    if (renderer) {
-      renderer.dispose();
-      const currentMount = mountRef.current;
-      if (currentMount && currentMount.contains(renderer.domElement)) {
-        currentMount.removeChild(renderer.domElement);
-      }
-      rendererRef.current = null;
-    }
-    
-    sceneRef.current = null;
-    cameraRef.current = null;
-  }, []);
-
-
   const handleDeviceOrientation = useCallback((event: DeviceOrientationEvent) => {
     const { beta, gamma } = event;
     if (beta === null || gamma === null) return;
@@ -122,7 +92,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
     targetRotationRef.current.x = (Math.min(Math.max(deltaBeta, -GYRO_MAX_INPUT_DEG), GYRO_MAX_INPUT_DEG) / GYRO_MAX_INPUT_DEG) * GYRO_TARGET_MODEL_MAX_ROT_RAD_X;
     targetRotationRef.current.y = (Math.min(Math.max(deltaGamma, -GYRO_MAX_INPUT_DEG), GYRO_MAX_INPUT_DEG) / GYRO_MAX_INPUT_DEG) * GYRO_TARGET_MODEL_MAX_ROT_RAD_Y;
   }, []);
-
+  
   const requestGyroPermission = useCallback(async () => {
     if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
       try {
@@ -139,88 +109,158 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
     }
   }, [handleDeviceOrientation]);
 
-  // Main Three.js setup effect
+  // Main Three.js setup and cleanup effect
   useEffect(() => {
     const currentMount = mountRef.current;
-    if (!isIntersecting || !currentMount || !modelPath) {
-      cleanupScene();
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
+    let resizeObserver: ResizeObserver | null = null;
     let isMounted = true;
 
-    // --- Scene, camera, renderer, and lights ---
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
-
-    const camera = new THREE.PerspectiveCamera(50, currentMount.clientWidth / currentMount.clientHeight, 0.1, 100);
-    camera.position.z = SCROLL_ZOOM_FACTOR_MIN;
-    cameraRef.current = camera;
-    
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 2.0);
-    directionalLight.position.set(2, 5, 3);
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8);
-    scene.add(ambientLight, directionalLight, hemiLight);
-    
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "low-power" });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
-    renderer.setClearAlpha(0);
-    currentMount.appendChild(renderer.domElement);
-    rendererRef.current = renderer;
-
-    gltfLoaderInstance.load(modelPath,
-      (gltf) => {
-        if (!isMounted || !sceneRef.current) return;
-        const model = gltf.scene;
-        sceneRef.current.add(model);
-        const box = new THREE.Box3().setFromObject(model);
-        const size = box.getSize(new THREE.Vector3());
-        const maxDim = Math.max(size.x, size.y, size.z);
-        model.scale.setScalar(maxDim > 0 ? TARGET_MODEL_VIEW_SIZE / maxDim : 1);
-        const newBox = new THREE.Box3().setFromObject(model);
-        const center = newBox.getCenter(new THREE.Vector3());
-        model.position.sub(center);
-        initialModelYAfterCenteringRef.current = model.position.y;
-        modelGroupRef.current = model;
-        setIsLoading(false);
-      },
-      undefined,
-      (loadError) => {
-        if (!isMounted) return;
-        console.error(`Error loading model ${modelPath}:`, loadError);
-        setError(`Failed to load model.`);
-        setIsLoading(false);
-        onModelErrorOrMissing?.();
+    const cleanupScene = () => {
+      isMounted = false;
+      if (animationFrameIdRef.current) {
+        cancelAnimationFrame(animationFrameIdRef.current);
+        animationFrameIdRef.current = null;
       }
-    );
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+        resizeObserver = null;
+      }
 
-    const animate = () => {
-      if (!isMounted) return;
-      animationFrameIdRef.current = requestAnimationFrame(animate);
       const model = modelGroupRef.current;
-      if (renderer && camera && scene && model) {
-        model.rotation.x += (targetRotationRef.current.x - model.rotation.x) * LERP_SPEED;
-        model.rotation.y += (targetRotationRef.current.y - model.rotation.y) * LERP_SPEED;
-        camera.position.z += (targetCameraZRef.current - camera.position.z) * LERP_SPEED;
-        let finalTargetModelY = initialModelYAfterCenteringRef.current;
-        if (isJumpingRef.current) {
-          const elapsed = Date.now() - jumpStartTimeRef.current;
-          if (elapsed < JUMP_DURATION) {
-            finalTargetModelY += JUMP_HEIGHT * Math.sin((elapsed / JUMP_DURATION) * Math.PI);
-          } else {
-            isJumpingRef.current = false;
+      if (model && sceneRef.current) {
+        sceneRef.current.remove(model);
+        model.traverse(child => {
+          if ((child as THREE.Mesh).isMesh) {
+            (child as THREE.Mesh).geometry.dispose();
+            const material = (child as THREE.Mesh).material;
+            if (Array.isArray(material)) {
+              material.forEach(m => m.dispose());
+            } else if (material) {
+              material.dispose();
+            }
           }
-        }
-        model.position.y += (finalTargetModelY - model.position.y) * LERP_SPEED;
-        renderer.render(scene, camera);
+        });
+        modelGroupRef.current = null;
       }
+      
+      const renderer = rendererRef.current;
+      if (renderer) {
+        // Forcefully release the WebGL context
+        renderer.forceContextLoss();
+        renderer.dispose();
+        if (currentMount && currentMount.contains(renderer.domElement)) {
+          currentMount.removeChild(renderer.domElement);
+        }
+        rendererRef.current = null;
+      }
+      
+      sceneRef.current = null;
+      cameraRef.current = null;
     };
-    animate();
 
+    if (isIntersecting && currentMount && modelPath) {
+      setIsLoading(true);
+      setError(null);
+      // --- Scene, camera, renderer, and lights ---
+      const scene = new THREE.Scene();
+      sceneRef.current = scene;
+      const camera = new THREE.PerspectiveCamera(50, currentMount.clientWidth / currentMount.clientHeight, 0.1, 100);
+      camera.position.z = SCROLL_ZOOM_FACTOR_MIN;
+      cameraRef.current = camera;
+      
+      const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 2.0);
+      directionalLight.position.set(2, 5, 3);
+      const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8);
+      scene.add(ambientLight, directionalLight, hemiLight);
+      
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "low-power" });
+      rendererRef.current = renderer;
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      if (currentMount.clientWidth > 0 && currentMount.clientHeight > 0) {
+        renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
+      }
+      renderer.setClearAlpha(0);
+      currentMount.appendChild(renderer.domElement);
+      
+      if (gltfLoaderInstance) {
+        gltfLoaderInstance.load(modelPath,
+          (gltf) => {
+            if (!isMounted || !sceneRef.current) return;
+            const model = gltf.scene;
+            sceneRef.current.add(model);
+            const box = new THREE.Box3().setFromObject(model);
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            model.scale.setScalar(maxDim > 0 ? TARGET_MODEL_VIEW_SIZE / maxDim : 1);
+            const newBox = new THREE.Box3().setFromObject(model);
+            const center = newBox.getCenter(new THREE.Vector3());
+            model.position.sub(center);
+            initialModelYAfterCenteringRef.current = model.position.y;
+            modelGroupRef.current = model;
+            setIsLoading(false);
+          },
+          undefined,
+          (loadError) => {
+            if (!isMounted) return;
+            console.error(`Error loading model ${modelPath}:`, loadError);
+            setError(`Failed to load model.`);
+            setIsLoading(false);
+            onModelErrorOrMissing?.();
+          }
+        );
+      } else {
+         setError('3D loader not available.');
+         setIsLoading(false);
+         onModelErrorOrMissing?.();
+      }
+
+      const animate = () => {
+        if (!isMounted) return;
+        animationFrameIdRef.current = requestAnimationFrame(animate);
+        const model = modelGroupRef.current;
+        if (rendererRef.current && cameraRef.current && sceneRef.current && model) {
+          model.rotation.x += (targetRotationRef.current.x - model.rotation.x) * LERP_SPEED;
+          model.rotation.y += (targetRotationRef.current.y - model.rotation.y) * LERP_SPEED;
+          cameraRef.current.position.z += (targetCameraZRef.current - cameraRef.current.position.z) * LERP_SPEED;
+          let finalTargetModelY = initialModelYAfterCenteringRef.current;
+          if (isJumpingRef.current) {
+            const elapsed = Date.now() - jumpStartTimeRef.current;
+            if (elapsed < JUMP_DURATION) {
+              finalTargetModelY += JUMP_HEIGHT * Math.sin((elapsed / JUMP_DURATION) * Math.PI);
+            } else {
+              isJumpingRef.current = false;
+            }
+          }
+          model.position.y += (finalTargetModelY - model.position.y) * LERP_SPEED;
+          rendererRef.current.render(sceneRef.current, cameraRef.current);
+        }
+      };
+      animate();
+
+      if ('DeviceOrientationEvent' in window && typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+        setGyroPermissionNeeded(true);
+      }
+      
+      resizeObserver = new ResizeObserver(entries => {
+        if (!isMounted || !entries || entries.length === 0 || !cameraRef.current || !rendererRef.current) return;
+        const { width, height } = entries[0].contentRect;
+        if (width > 0 && height > 0) {
+          cameraRef.current.aspect = width / height;
+          cameraRef.current.updateProjectionMatrix();
+          rendererRef.current.setSize(width, height);
+        }
+      });
+      resizeObserver.observe(currentMount);
+    }
+    
+    return cleanupScene;
+  }, [isIntersecting, modelPath, onModelErrorOrMissing]);
+  
+  // This separate effect correctly manages the global event listeners
+  useEffect(() => {
+    const currentMount = mountRef.current;
+    
     const handleMouseMove = (event: MouseEvent) => {
       if (isGyroActiveRef.current) return;
       targetRotationRef.current.y = (event.clientX / window.innerWidth - 0.5) * MOUSE_ROTATION_SENSITIVITY_X * 2;
@@ -237,38 +277,23 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
       }
     };
     
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    currentMount.addEventListener('click', handleModelClick);
-    
-    if ('DeviceOrientationEvent' in window) {
-      if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
-        setGyroPermissionNeeded(true);
-      } else {
-        window.addEventListener('deviceorientation', handleDeviceOrientation);
-      }
+    if (isIntersecting) {
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        currentMount?.addEventListener('click', handleModelClick);
+        if ('DeviceOrientationEvent' in window && typeof (DeviceOrientationEvent as any).requestPermission !== 'function') {
+          window.addEventListener('deviceorientation', handleDeviceOrientation);
+        }
     }
 
-    resizeObserverRef.current = new ResizeObserver(entries => {
-      if (!entries || entries.length === 0 || !cameraRef.current || !rendererRef.current) return;
-      const { width, height } = entries[0].contentRect;
-      if (width > 0 && height > 0) {
-        cameraRef.current.aspect = width / height;
-        cameraRef.current.updateProjectionMatrix();
-        rendererRef.current.setSize(width, height);
-      }
-    });
-    if (currentMount) resizeObserverRef.current.observe(currentMount);
-    
     return () => {
-      isMounted = false;
-      cleanupScene();
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('deviceorientation', handleDeviceOrientation);
-      if (currentMount) currentMount.removeEventListener('click', handleModelClick);
-    };
-  }, [isIntersecting, modelPath, onModelErrorOrMissing, cleanupScene, handleDeviceOrientation]);
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('scroll', handleScroll);
+        currentMount?.removeEventListener('click', handleModelClick);
+        window.removeEventListener('deviceorientation', handleDeviceOrientation);
+    }
+  }, [isIntersecting, handleDeviceOrientation]);
+
 
   return (
     <div
