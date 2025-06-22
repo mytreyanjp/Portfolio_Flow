@@ -114,10 +114,10 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
         if (event.gamma === null || event.beta === null) return;
         
         // Normalize gamma (left-right tilt, -90 to 90) for y-rotation
-        const yRotation = (event.gamma / 90) * (Math.PI * 0.3); // Max tilt -> ~54 deg rotation
+        const yRotation = (event.gamma / 90) * (Math.PI * 0.5); // Increased from 0.3 for more sensitivity
         
         // Normalize beta (front-back tilt, -180 to 180), centering on a comfortable holding angle (e.g., 45 deg)
-        const xRotation = ((event.beta - 45) / 90) * (Math.PI * 0.2); // Max tilt -> ~36 deg rotation
+        const xRotation = ((event.beta - 45) / 90) * (Math.PI * 0.4); // Increased from 0.2 for more sensitivity
 
         targetRotationRef.current.y = yRotation;
         targetRotationRef.current.x = xRotation;
