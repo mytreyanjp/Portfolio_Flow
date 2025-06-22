@@ -68,7 +68,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
   const targetRotationRef = useRef({ x: 0, y: 0 });
   const targetModelYOffsetRef = useRef<number>(0);
   const targetCameraZRef = useRef<number>(3.0);
-  const targetCameraXRef = useRef<number>(0.5);
+  const targetCameraXRef = useRef<number>(0);
 
   const initialModelYAfterCenteringRef = useRef<number>(0);
   const isWindowFocusedRef = useRef(true);
@@ -338,11 +338,17 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
              // Dynamic Resizing Check
             const width = currentMount.clientWidth;
             const height = currentMount.clientHeight;
-            const canvas = renderer.domElement;
-            if (width > 0 && height > 0 && (canvas.width !== width || canvas.height !== height)) {
-                renderer.setSize(width, height, false); // Set third arg to false
-                camera.aspect = width / height;
-                camera.updateProjectionMatrix();
+            if (width > 0 && height > 0) {
+              const canvas = renderer.domElement;
+              const devicePixelRatio = Math.min(window.devicePixelRatio, 2);
+              const newWidth = Math.floor(width * devicePixelRatio);
+              const newHeight = Math.floor(height * devicePixelRatio);
+
+              if (canvas.width !== newWidth || canvas.height !== newHeight) {
+                  renderer.setSize(width, height, false); // Set third arg to false
+                  camera.aspect = width / height;
+                  camera.updateProjectionMatrix();
+              }
             }
 
             if (model && isIntersectingRef.current) {
@@ -362,7 +368,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
                 camera.position.x += (targetCameraXRef.current - camera.position.x) * LERP_SPEED_CAMERA_Z;
                 camera.position.z += (targetCameraZRef.current - camera.position.z) * LERP_SPEED_CAMERA_Z;
             }
-            if (width > 0 && height > 0) {
+            if (currentMount.clientWidth > 0 && currentMount.clientHeight > 0) {
                 renderer.render(scene, camera);
             }
         }
