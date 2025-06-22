@@ -17,6 +17,10 @@ const CloonedViewer = dynamic(() => import('./CloonedViewer'), {
   loading: () => <div className="w-full h-48 bg-muted rounded-t-md animate-pulse" />,
 });
 
+const ProjectModelViewer = dynamic(() => import('./ProjectModelViewer'), {
+  ssr: false,
+  loading: () => <div className="w-full h-48 bg-muted rounded-t-md animate-pulse" />,
+});
 
 interface ProjectCardProps {
   project: Project;
@@ -32,9 +36,16 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
   const [effectiveImageUrl, setEffectiveImageUrl] = useState<string | null>(project.imageUrl || null);
   const [isGeneratingAiImage, setIsGeneratingAiImage] = useState(false);
   const [aiImageGenerated, setAiImageGenerated] = useState(false);
+  const [modelFailedToLoad, setModelFailedToLoad] = useState(false);
 
-  console.log(`ProjectCard rendering for ${project.title}: cloonedOID=${project.cloonedOID}, imageUrl=${project.imageUrl}`);
-
+  const handleModelError = useCallback(() => {
+    toast({
+      title: "3D Model Error",
+      description: `Could not load model for "${project.title}". Displaying fallback image.`,
+      variant: "destructive",
+    });
+    setModelFailedToLoad(true);
+  }, [project.title, toast]);
 
   const triggerAiImageGeneration = useCallback(async () => {
     if (!project.description || aiImageGenerated) return;
@@ -61,11 +72,12 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
     // Reset states when project prop changes
     setEffectiveImageUrl(project.imageUrl || null);
     setAiImageGenerated(false);
+    setModelFailedToLoad(false);
   }, [project]);
 
   useEffect(() => {
-    // This effect handles image fallback logic if NOT using Clooned.
-    if (project.cloonedOID) return;
+    // This effect handles image fallback logic if NOT using a self-hosted model or clooned.
+    if (project.model || project.cloonedOID) return;
 
     if (!project.imageUrl && project.description && !aiImageGenerated && !isGeneratingAiImage) {
       triggerAiImageGeneration();
@@ -75,6 +87,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
       setEffectiveImageUrl(project.imageUrl);
     }
   }, [
+    project.model,
     project.cloonedOID,
     project.imageUrl,
     project.description,
@@ -85,8 +98,9 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
 
   const projectCategories = project.categories || [];
 
-  const useCloonedViewer = !!project.cloonedOID;
-  const showImageFallback = !useCloonedViewer;
+  const useSelfHostedModel = !!project.model && !modelFailedToLoad;
+  const useCloonedViewer = !useSelfHostedModel && !!project.cloonedOID;
+  const showImageFallback = !useSelfHostedModel && !useCloonedViewer;
 
   return (
     <Card
@@ -98,10 +112,11 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
       style={{ animationDelay: `${index * 100}ms` }}
     >
       <div className="relative w-full h-48 mb-4 rounded-t-md overflow-hidden group bg-muted/70 dark:bg-muted flex items-center justify-center">
-        {useCloonedViewer && project.cloonedOID && (
+        {useSelfHostedModel ? (
+          <ProjectModelViewer modelPath={project.model} onModelErrorOrMissing={handleModelError} />
+        ) : useCloonedViewer ? (
           <CloonedViewer oid={project.cloonedOID} />
-        )}
-        {showImageFallback && (
+        ) : (
           isGeneratingAiImage ? (
             <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground text-sm bg-muted/50 dark:bg-muted/80">
               <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
@@ -130,7 +145,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
       <CardHeader className="pt-0">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-semibold">{project.title}</CardTitle>
-          {useCloonedViewer && <Grid3X3 className="h-5 w-5 text-primary" title="Clooned 3D View" />}
+          {(useSelfHostedModel || useCloonedViewer) && <Grid3X3 className="h-5 w-5 text-primary" title="Interactive 3D View" />}
         </div>
         <CardDescription className="text-sm h-16 overflow-hidden">{project.description}</CardDescription>
       </CardHeader>
