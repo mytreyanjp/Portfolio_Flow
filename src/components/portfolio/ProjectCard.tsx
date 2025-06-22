@@ -7,16 +7,10 @@ import { Button } from '@/components/ui/button';
 import { ArrowUpRight, Github, Image as ImageIcon, Loader2, FileText, Grid3X3, Bot, Youtube } from 'lucide-react';
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-// Script component is no longer directly used here, it's moved to CloonedViewer
 import { cn } from '@/lib/utils';
 import { generateProjectImage } from '@/ai/flows/generate-project-image-flow';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
-
-const ProjectModelViewer = dynamic(() => import('./ProjectModelViewer'), {
-  ssr: false,
-  loading: () => <div className="w-full h-48 bg-muted rounded-t-md flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>,
-});
 
 const CloonedViewer = dynamic(() => import('./CloonedViewer'), {
   ssr: false,
@@ -30,7 +24,6 @@ interface ProjectCardProps {
 }
 
 const FALLBACK_IMAGE_URL = 'https://placehold.co/600x400.png?text=Preview+Unavailable';
-// CLOONED_SCRIPT_SRC is now in CloonedViewer.tsx
 
 export default function ProjectCard({ project, index }: ProjectCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -38,10 +31,9 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
 
   const [effectiveImageUrl, setEffectiveImageUrl] = useState<string | null>(project.imageUrl || null);
   const [isGeneratingAiImage, setIsGeneratingAiImage] = useState(false);
-  const [modelLoadFailedOrMissing, setModelLoadFailedOrMissing] = useState(!project.model && !project.cloonedOID); // Adjusted initial state
   const [aiImageGenerated, setAiImageGenerated] = useState(false);
 
-  console.log(`ProjectCard rendering for ${project.title}: model=${project.model}, cloonedOID=${project.cloonedOID}, imageUrl=${project.imageUrl}`);
+  console.log(`ProjectCard rendering for ${project.title}: cloonedOID=${project.cloonedOID}, imageUrl=${project.imageUrl}`);
 
 
   const triggerAiImageGeneration = useCallback(async () => {
@@ -67,25 +59,23 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
 
   useEffect(() => {
     // Reset states when project prop changes
-    setModelLoadFailedOrMissing(!project.model && !project.cloonedOID);
     setEffectiveImageUrl(project.imageUrl || null);
     setAiImageGenerated(false);
   }, [project]);
 
   useEffect(() => {
-    // This effect handles image fallback logic if NOT using Clooned and NOT using ThreeJS model
-    if (project.cloonedOID || project.model) return; // Skip if Clooned or ThreeJS model is used
+    // This effect handles image fallback logic if NOT using Clooned.
+    if (project.cloonedOID) return;
 
     if (!project.imageUrl && project.description && !aiImageGenerated && !isGeneratingAiImage) {
       triggerAiImageGeneration();
     } else if (!project.imageUrl && !project.description) {
       setEffectiveImageUrl(FALLBACK_IMAGE_URL);
-    } else if (project.imageUrl) { // If there's an image URL, but no model/clooned, use it
+    } else if (project.imageUrl) {
       setEffectiveImageUrl(project.imageUrl);
     }
   }, [
     project.cloonedOID,
-    project.model,
     project.imageUrl,
     project.description,
     triggerAiImageGeneration,
@@ -93,23 +83,10 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
     isGeneratingAiImage
   ]);
 
-
-  const handleModelErrorOrMissing = useCallback(() => {
-    // This is specifically for ThreeJS model errors
-    setModelLoadFailedOrMissing(true); 
-    // Fallback logic for image will be handled by the useEffect above if no project.imageUrl
-    if (!project.imageUrl && project.description && !aiImageGenerated && !project.cloonedOID) {
-        triggerAiImageGeneration();
-    } else if (!project.imageUrl && !project.cloonedOID) {
-        setEffectiveImageUrl(FALLBACK_IMAGE_URL);
-    }
-  }, [project.imageUrl, project.description, aiImageGenerated, triggerAiImageGeneration, project.cloonedOID]);
-
   const projectCategories = project.categories || [];
 
   const useCloonedViewer = !!project.cloonedOID;
-  const useThreeJSViewer = !useCloonedViewer && !!project.model; // modelLoadFailedOrMissing will be handled by its own error state
-  const showImageFallback = !useCloonedViewer && !useThreeJSViewer;
+  const showImageFallback = !useCloonedViewer;
 
   return (
     <Card
@@ -124,14 +101,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
         {useCloonedViewer && project.cloonedOID && (
           <CloonedViewer oid={project.cloonedOID} />
         )}
-        {useThreeJSViewer && project.model && ( // Check project.model again for clarity
-          <ProjectModelViewer
-            modelPath={project.model}
-            containerRef={cardRef}
-            onModelErrorOrMissing={handleModelErrorOrMissing}
-          />
-        )}
-        {showImageFallback && ( // This condition means neither Clooned nor ThreeJS is being used
+        {showImageFallback && (
           isGeneratingAiImage ? (
             <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground text-sm bg-muted/50 dark:bg-muted/80">
               <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
