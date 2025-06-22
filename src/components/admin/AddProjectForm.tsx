@@ -60,6 +60,7 @@ const addProjectSchema = z.object({
   liveLink: z.string().url({ message: "Please enter a valid URL." }).or(z.literal('')).optional(),
   sourceLink: z.string().url({ message: "Please enter a valid URL." }).or(z.literal('')).optional(),
   documentationLink: z.string().url({ message: "Please enter a valid URL." }).or(z.literal('')).optional(),
+  videoLink: z.string().url({ message: "Please enter a valid URL." }).or(z.literal('')).optional(),
 });
 
 export type AddProjectFormValues = z.infer<typeof addProjectSchema>;
@@ -103,6 +104,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
       liveLink: '',
       sourceLink: '',
       documentationLink: '',
+      videoLink: '',
     },
   });
 
@@ -121,6 +123,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
         liveLink: editingProject.liveLink || '',
         sourceLink: editingProject.sourceLink || '',
         documentationLink: editingProject.documentationLink || '',
+        videoLink: editingProject.videoLink || '',
       });
       setCurrentProjectCategories(editingProject.categories || []);
     } else {
@@ -137,6 +140,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
         liveLink: '',
         sourceLink: '',
         documentationLink: '',
+        videoLink: '',
       });
       setCurrentProjectCategories([]);
     }
@@ -192,6 +196,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
           liveLink: data.liveLink,
           sourceLink: data.sourceLink,
           documentationLink: data.documentationLink,
+          videoLink: data.videoLink,
           updatedAt: serverTimestamp(),
         };
         // Ensure cloonedOID is explicitly removed if it existed
@@ -230,6 +235,7 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
         if (data.liveLink && data.liveLink.trim() !== '') projectDataToSave.liveLink = data.liveLink;
         if (data.sourceLink && data.sourceLink.trim() !== '') projectDataToSave.sourceLink = data.sourceLink;
         if (data.documentationLink && data.documentationLink.trim() !== '') projectDataToSave.documentationLink = data.documentationLink;
+        if (data.videoLink && data.videoLink.trim() !== '') projectDataToSave.videoLink = data.videoLink;
         
         const docRef = await addDoc(collection(db, 'projects'), projectDataToSave);
         
@@ -544,6 +550,19 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
               </FormItem>
             )}
           />
+          <FormField
+            control={form.control}
+            name="videoLink"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Video Link (Optional)</FormLabel>
+                <FormControl>
+                  <Input type="url" placeholder="https://youtube.com/watch?v=..." {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
         <Button
@@ -570,4 +589,3 @@ export default function AddProjectForm({ onProjectAdded, editingProject, onProje
     </Form>
   );
 }
-

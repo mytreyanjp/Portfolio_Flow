@@ -4,7 +4,7 @@ import type { Project } from '@/data/projects';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowUpRight, Github, Image as ImageIcon, Loader2, FileText, Grid3X3, Bot } from 'lucide-react';
+import { ArrowUpRight, Github, Image as ImageIcon, Loader2, FileText, Grid3X3, Bot, Youtube } from 'lucide-react';
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 // Script component is no longer directly used here, it's moved to CloonedViewer
@@ -15,7 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 const ProjectModelViewer = dynamic(() => import('./ProjectModelViewer'), {
   ssr: false,
-  loading: () => <div className="w-full h-48 bg-muted rounded-t-md animate-pulse" />,
+  loading: () => <div className="w-full h-48 bg-muted rounded-t-md flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>,
 });
 
 const CloonedViewer = dynamic(() => import('./CloonedViewer'), {
@@ -233,6 +233,21 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
             </Link>
           </Button>
         )}
+        {project.videoLink && (
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="flex-grow sm:flex-grow-0 transition-transform duration-200 ease-out hover:scale-105"
+            title={`Watch video for ${project.title}`}
+          >
+            <Link href={project.videoLink} target="_blank" rel="noopener noreferrer">
+              <span className="flex items-center">
+                <Youtube className="mr-1 h-4 w-4" /> Video
+              </span>
+            </Link>
+          </Button>
+        )}
         <Button
           asChild
           variant="outline"
@@ -251,4 +266,3 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
     </Card>
   );
 }
-

@@ -20,6 +20,7 @@ const defaultProject: Project = {
   liveLink: '#',
   sourceLink: '#',
   documentationLink: '#',
+  videoLink: undefined,
 };
 
 export async function getProjects(): Promise<Project[]> {
@@ -56,6 +57,7 @@ export async function getProjects(): Promise<Project[]> {
         liveLink: data.liveLink,
         sourceLink: data.sourceLink,
         documentationLink: data.documentationLink,
+        videoLink: data.videoLink,
       });
     });
 
