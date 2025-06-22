@@ -123,7 +123,9 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('focus', handleWindowFocus);
       window.removeEventListener('blur', handleWindowBlur);
-      currentMount.removeEventListener('click', handleModelClick);
+      if (currentMount) {
+        currentMount.removeEventListener('click', handleModelClick);
+      }
       if (deviceOrientationListenerAttached) window.removeEventListener('deviceorientation', handleDeviceOrientation);
 
       if (modelGroupRef.current && sceneRef.current) {
@@ -143,7 +145,8 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
 
       if (rendererRef.current) {
         rendererRef.current.dispose();
-        if (currentMount.contains(rendererRef.current.domElement)) {
+        // This check is important to prevent the "not a child" error.
+        if (currentMount && currentMount.contains(rendererRef.current.domElement)) {
           currentMount.removeChild(rendererRef.current.domElement);
         }
       }
@@ -184,7 +187,6 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       renderer.setClearAlpha(0);
       rendererRef.current = renderer;
 
-      if (currentMount.firstChild) currentMount.removeChild(currentMount.firstChild);
       currentMount.appendChild(renderer.domElement);
 
       const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
