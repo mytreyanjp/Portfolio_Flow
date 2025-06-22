@@ -63,7 +63,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => setIsIntersecting(entry.isIntersecting),
-      { rootMargin: '100px' } // Load when it's 100px away from the viewport
+      { rootMargin: '0px' } // Only load when it's actually in the viewport
     );
     const currentMount = mountRef.current;
     if (currentMount) {
@@ -165,7 +165,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
     const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8);
     scene.add(ambientLight, directionalLight, hemiLight);
     
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "low-power" });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
     renderer.setClearAlpha(0);
