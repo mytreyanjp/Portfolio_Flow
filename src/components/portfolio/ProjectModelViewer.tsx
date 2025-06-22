@@ -2,376 +2,268 @@
 'use client';
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import * as _THREE from 'three';
-import { GLTFLoader as _GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { DRACOLoader as _DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
-import { OBJLoader as _OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
-import { FBXLoader as _FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle, Orbit } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 
-const THREE = _THREE;
-const GLTFLoader = _GLTFLoader;
-const DRACOLoader = _DRACOLoader;
-const OBJLoader = _OBJLoader;
-const FBXLoader = _FBXLoader;
-
-interface ProjectModelViewerProps {
-  modelPath: string | undefined | null;
-  containerRef: React.RefObject<HTMLDivElement>;
-  onModelErrorOrMissing?: () => void;
-}
-
+// --- Constants ---
 const DRACO_DECODER_PATH = '/libs/draco/gltf/';
-
-
-const dracoLoaderInstance = new DRACOLoader();
-dracoLoaderInstance.setDecoderPath(DRACO_DECODER_PATH);
-dracoLoaderInstance.setDecoderConfig({ type: 'wasm' });
-
-const gltfLoaderInstance = new GLTFLoader();
-gltfLoaderInstance.setDRACOLoader(dracoLoaderInstance);
-gltfLoaderInstance.setCrossOrigin('anonymous');
-
-// Interaction constants
 const SCROLL_ZOOM_FACTOR_MIN = 2.0;
 const SCROLL_ZOOM_FACTOR_MAX = 3.5;
-
-const LERP_SPEED_ROTATION = 0.08;
-const LERP_SPEED_MODEL_Y = 0.05;
-const LERP_SPEED_CAMERA_Z = 0.05;
-
+const LERP_SPEED = 0.08;
 const MOUSE_ROTATION_SENSITIVITY_X = 0.4;
 const MOUSE_ROTATION_SENSITIVITY_Y = 0.3;
-
 const GYRO_MAX_INPUT_DEG = 30;
 const GYRO_TARGET_MODEL_MAX_ROT_RAD_X = 0.45;
 const GYRO_TARGET_MODEL_MAX_ROT_RAD_Y = 0.6;
-
 const JUMP_HEIGHT = 0.15;
 const JUMP_DURATION = 300;
-
-// Consistent target size for scaling models
 const TARGET_MODEL_VIEW_SIZE = 2.5;
 
+// --- Loader Instances (created once) ---
+const dracoLoaderInstance = new DRACOLoader();
+dracoLoaderInstance.setDecoderPath(DRACO_DECODER_PATH);
+const gltfLoaderInstance = new GLTFLoader();
+gltfLoaderInstance.setDRACOLoader(dracoLoaderInstance);
 
-const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, containerRef, onModelErrorOrMissing }) => {
+// --- Component Props ---
+interface ProjectModelViewerProps {
+  modelPath: string | undefined | null;
+  onModelErrorOrMissing?: () => void;
+}
+
+const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onModelErrorOrMissing }) => {
   const mountRef = useRef<HTMLDivElement>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [detailedError, setDetailedError] = useState<any>(null);
-  const [showGyroButton, setShowGyroButton] = useState(false);
-  const [gyroPermissionState, setGyroPermissionState] = useState<'prompt' | 'granted' | 'denied' | 'unsupported'>('prompt');
-
-
-  // State refs for animation
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const modelGroupRef = useRef<THREE.Group | null>(null);
-  const lightsRef = useRef<THREE.Light[]>([]);
+  const animationFrameIdRef = useRef<number | null>(null);
+  const interactionListenersAdded = useRef(false);
 
-  // Interaction refs
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Interaction state refs
   const targetRotationRef = useRef({ x: 0, y: 0 });
   const targetCameraZRef = useRef<number>(SCROLL_ZOOM_FACTOR_MIN);
   const initialModelYAfterCenteringRef = useRef<number>(0);
-  const isWindowFocusedRef = useRef(true);
-  const [isGyroActive, setIsGyroActive] = useState(false);
-  const initialGyroOffsetRef = useRef<{ beta: number | null; gamma: number | null }>({ beta: null, gamma: null });
   const isJumpingRef = useRef(false);
   const jumpStartTimeRef = useRef(0);
+  const isGyroActiveRef = useRef(false);
+  const initialGyroOffsetRef = useRef<{ beta: number | null; gamma: number | null }>({ beta: null, gamma: null });
 
-  const handleModelClick = useCallback(() => {
-    if (!isJumpingRef.current && modelGroupRef.current) {
-        isJumpingRef.current = true;
-        jumpStartTimeRef.current = Date.now();
-    }
-  }, []);
-
-  const handleGyroRequest = useCallback(async () => {
-      if (typeof (DeviceOrientationEvent as any).requestPermission !== 'function') {
-        // This case handles non-iOS browsers that don't need explicit permission.
-        setGyroPermissionState('granted');
-        return;
-      }
-      // This handles iOS 13+
-      try {
-        const permission = await (DeviceOrientationEvent as any).requestPermission();
-        if (permission === 'granted') {
-          setGyroPermissionState('granted');
-        } else {
-          setGyroPermissionState('denied');
+  const cleanupModel = useCallback(() => {
+    const model = modelGroupRef.current;
+    if (model && sceneRef.current) {
+      sceneRef.current.remove(model);
+      model.traverse(child => {
+        if ((child as THREE.Mesh).isMesh) {
+          (child as THREE.Mesh).geometry.dispose();
+          const material = (child as THREE.Mesh).material;
+          if (Array.isArray(material)) {
+            material.forEach(m => m.dispose());
+          } else if (material) {
+            material.dispose();
+          }
         }
-      } catch (err) {
-        console.error("Gyro permission request error:", err);
-        setGyroPermissionState('denied');
-      }
+      });
+      modelGroupRef.current = null;
+    }
   }, []);
 
   useEffect(() => {
     let isMounted = true;
-    let animationFrameId: number | null = null;
-    let deviceOrientationListenerAttached = false;
-    let isIntersecting = false;
-    
-    const intersectionObs = new IntersectionObserver(([entry]) => { isIntersecting = entry.isIntersecting; }, { threshold: 0.01 });
-
-    const effectModelPath = modelPath;
     const currentMount = mountRef.current;
-    const parentContainer = containerRef.current;
+    if (!currentMount) return;
 
-    if (!effectModelPath || !currentMount || !parentContainer) {
-      setError(effectModelPath ? "Initialization failed: Mounting point not ready." : "No model path provided.");
-      setIsLoading(false);
-      onModelErrorOrMissing?.();
-      return;
-    }
-    
-    setError(null);
-    setDetailedError(null);
-    setIsLoading(true);
-
-    const handleDeviceOrientation = (event: DeviceOrientationEvent) => {
-        if (!isWindowFocusedRef.current || !isMounted || !isIntersecting) return;
-        const { beta, gamma } = event;
-        if (beta === null || gamma === null) return;
-        if (initialGyroOffsetRef.current.beta === null) initialGyroOffsetRef.current = { beta, gamma };
-        const deltaBeta = beta - initialGyroOffsetRef.current.beta;
-        const deltaGamma = gamma - initialGyroOffsetRef.current.gamma;
-        targetRotationRef.current.x = (Math.min(Math.max(deltaBeta, -GYRO_MAX_INPUT_DEG), GYRO_MAX_INPUT_DEG) / GYRO_MAX_INPUT_DEG) * GYRO_TARGET_MODEL_MAX_ROT_RAD_X;
-        targetRotationRef.current.y = ((Math.min(Math.max(deltaGamma, -GYRO_MAX_INPUT_DEG), GYRO_MAX_INPUT_DEG) / GYRO_MAX_INPUT_DEG) * GYRO_TARGET_MODEL_MAX_ROT_RAD_Y);
-    };
-    
-    const handleGlobalMouseMove = (event: MouseEvent) => {
-        if (isGyroActive || !isWindowFocusedRef.current || !isMounted || !isIntersecting) return;
-        const normalizedX = (event.clientX / window.innerWidth) * 2 - 1;
-        const normalizedY = (event.clientY / window.innerHeight) * 2 - 1;
-        targetRotationRef.current.y = normalizedX * MOUSE_ROTATION_SENSITIVITY_X;
-        targetRotationRef.current.x = normalizedY * MOUSE_ROTATION_SENSITIVITY_Y;
-    };
-    
-    const handleScroll = () => {
-        if (!isWindowFocusedRef.current || !isMounted || !isIntersecting) return;
-        const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
-        targetCameraZRef.current = SCROLL_ZOOM_FACTOR_MIN + (SCROLL_ZOOM_FACTOR_MAX - SCROLL_ZOOM_FACTOR_MIN) * scrollPercent;
-    };
-
-    const handleWindowFocus = () => { isWindowFocusedRef.current = true; };
-    const handleWindowBlur = () => { isWindowFocusedRef.current = false; };
-    
-    const initThree = () => {
-      if (!isMounted || !currentMount) return;
-      
-      isWindowFocusedRef.current = (typeof document !== 'undefined' && document.hasFocus());
-      targetRotationRef.current = { x: 0, y: 0 };
-      targetCameraZRef.current = SCROLL_ZOOM_FACTOR_MIN;
-      initialGyroOffsetRef.current = { beta: null, gamma: null };
-      isJumpingRef.current = false;
-
-      if ('DeviceOrientationEvent' in window) {
-        setShowGyroButton(true);
-      } else {
-        setGyroPermissionState('unsupported');
-      }
-
+    // --- One-time setup of scene, camera, renderer, and lights ---
+    if (!rendererRef.current) {
       const scene = new THREE.Scene();
       sceneRef.current = scene;
-      
+
       const camera = new THREE.PerspectiveCamera(50, currentMount.clientWidth > 0 ? currentMount.clientWidth / currentMount.clientHeight : 1, 0.1, 100);
-      camera.position.set(0, 0, targetCameraZRef.current);
+      camera.position.set(0, 0, SCROLL_ZOOM_FACTOR_MIN);
       cameraRef.current = camera;
-
+      
+      const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 2.0);
+      directionalLight.position.set(2, 5, 3);
+      const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8);
+      scene.add(ambientLight, directionalLight, hemiLight);
+      
       const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.setSize(currentMount.clientWidth, currentMount.clientHeight, false);
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
       renderer.setClearAlpha(0);
-      rendererRef.current = renderer;
-
       currentMount.appendChild(renderer.domElement);
-
-      const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
-      const mainDirectionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
-      mainDirectionalLight.position.set(3, 5, 4);
-      const fillLight = new THREE.DirectionalLight(0xffffff, 1.0);
-      fillLight.position.set(-3, -2, -3);
-      const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0);
-      hemiLight.position.set(0, 20, 0);
-      scene.add(ambientLight, mainDirectionalLight, fillLight, hemiLight);
-      lightsRef.current = [ambientLight, mainDirectionalLight, fillLight, hemiLight];
-
-      const fileExtension = effectModelPath.split('.').pop()?.toLowerCase();
-      const commonLoadSuccess = (loadedAsset: any) => {
-        if (!isMounted || !sceneRef.current || !modelGroupRef) return;
-        const objectToAdd = loadedAsset.scene || loadedAsset;
-        if (!objectToAdd || typeof objectToAdd.isObject3D !== 'boolean' || !objectToAdd.isObject3D) {
-          setError('Loaded asset does not contain a valid 3D object.');
-          setIsLoading(false); onModelErrorOrMissing?.(); return;
-        }
-        modelGroupRef.current = objectToAdd as THREE.Group;
-        scene.add(modelGroupRef.current);
-        const box = new THREE.Box3().setFromObject(modelGroupRef.current);
-        const size = box.getSize(new THREE.Vector3());
-        const maxDim = Math.max(size.x, size.y, size.z);
-        let scaleFactor = (maxDim > 0.001) ? TARGET_MODEL_VIEW_SIZE / maxDim : 1.0;
-        modelGroupRef.current.scale.set(scaleFactor, scaleFactor, scaleFactor);
-        const scaledBox = new THREE.Box3().setFromObject(modelGroupRef.current);
-        const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
-        modelGroupRef.current.position.sub(scaledCenter);
-        initialModelYAfterCenteringRef.current = modelGroupRef.current.position.y;
-        if (cameraRef.current) cameraRef.current.lookAt(0, 0, 0);
-        setIsLoading(false); setError(null);
-      };
-      const commonLoadError = (err: any, format: string) => {
-        if (!isMounted) return;
-        setError(`Failed to load ${format} model.`);
-        setDetailedError(err); setIsLoading(false); onModelErrorOrMissing?.();
-      };
-      if (fileExtension === 'glb' || fileExtension === 'gltf') gltfLoaderInstance.load(effectModelPath, commonLoadSuccess, undefined, (e) => commonLoadError(e, 'glTF/GLB'));
-      else if (fileExtension === 'obj') new OBJLoader().load(effectModelPath, commonLoadSuccess, undefined, (e) => commonLoadError(e, '.obj'));
-      else if (fileExtension === 'fbx') new FBXLoader().load(effectModelPath, commonLoadSuccess, undefined, (e) => commonLoadError(e, '.fbx'));
-      else { setError(`Unsupported format: .${fileExtension}`); setIsLoading(false); onModelErrorOrMissing?.(); return; }
-
-      const resizeRendererToDisplaySize = (renderer: THREE.WebGLRenderer) => {
-        const canvas = renderer.domElement;
-        const pixelRatio = window.devicePixelRatio;
-        const width = Math.floor(canvas.clientWidth * pixelRatio);
-        const height = Math.floor(canvas.clientHeight * pixelRatio);
-        const needResize = canvas.width !== width || canvas.height !== height;
-        if (needResize) {
-          renderer.setSize(width, height, false);
-        }
-        return needResize;
-      };
+      rendererRef.current = renderer;
 
       const animate = () => {
         if (!isMounted) return;
-        animationFrameId = requestAnimationFrame(animate);
-        const localRenderer = rendererRef.current;
-        const localCamera = cameraRef.current;
-        const localScene = sceneRef.current;
-        const model = modelGroupRef.current;
-        if (localRenderer && localCamera && localScene && currentMount) {
-          if (resizeRendererToDisplaySize(localRenderer)) {
-            const canvas = localRenderer.domElement;
-            localCamera.aspect = canvas.clientWidth / canvas.clientHeight;
-            localCamera.updateProjectionMatrix();
-          }
+        animationFrameIdRef.current = requestAnimationFrame(animate);
 
-          if (model && isIntersecting) {
-            model.rotation.x += (targetRotationRef.current.x - model.rotation.x) * LERP_SPEED_ROTATION;
-            model.rotation.y += (targetRotationRef.current.y - model.rotation.y) * LERP_SPEED_ROTATION;
+        const renderer = rendererRef.current;
+        const camera = cameraRef.current;
+        const scene = sceneRef.current;
+        const model = modelGroupRef.current;
+
+        if (renderer && camera && scene) {
+          if (mountRef.current) {
+             const { clientWidth, clientHeight } = mountRef.current;
+             if (renderer.domElement.width !== clientWidth || renderer.domElement.height !== clientHeight) {
+                if (clientWidth > 0 && clientHeight > 0) {
+                    renderer.setSize(clientWidth, clientHeight);
+                    camera.aspect = clientWidth / clientHeight;
+                    camera.updateProjectionMatrix();
+                }
+             }
+          }
+          if(model) {
+            model.rotation.x += (targetRotationRef.current.x - model.rotation.x) * LERP_SPEED;
+            model.rotation.y += (targetRotationRef.current.y - model.rotation.y) * LERP_SPEED;
+            camera.position.z += (targetCameraZRef.current - camera.position.z) * LERP_SPEED;
+            
             let finalTargetModelY = initialModelYAfterCenteringRef.current;
             if (isJumpingRef.current) {
-              const elapsedJumpTime = Date.now() - jumpStartTimeRef.current;
-              if (elapsedJumpTime < JUMP_DURATION) finalTargetModelY += JUMP_HEIGHT * Math.sin((elapsedJumpTime / JUMP_DURATION) * Math.PI);
-              else isJumpingRef.current = false;
+              const elapsed = Date.now() - jumpStartTimeRef.current;
+              if (elapsed < JUMP_DURATION) {
+                finalTargetModelY += JUMP_HEIGHT * Math.sin((elapsed / JUMP_DURATION) * Math.PI);
+              } else {
+                isJumpingRef.current = false;
+              }
             }
-            model.position.y += (finalTargetModelY - model.position.y) * LERP_SPEED_MODEL_Y;
-            localCamera.position.z += (targetCameraZRef.current - localCamera.position.z) * LERP_SPEED_CAMERA_Z;
+            model.position.y += (finalTargetModelY - model.position.y) * LERP_SPEED;
           }
-          if (currentMount.clientWidth > 0 && currentMount.clientHeight > 0) {
-            localRenderer.render(localScene, localCamera);
-          }
+          renderer.render(scene, camera);
         }
       };
-      
       animate();
-      window.addEventListener('mousemove', handleGlobalMouseMove);
-      window.addEventListener('scroll', handleScroll, { passive: true });
-      window.addEventListener('focus', handleWindowFocus);
-      window.addEventListener('blur', handleWindowBlur);
-      currentMount.addEventListener('click', handleModelClick);
-      
-      if (gyroPermissionState === 'granted' && !deviceOrientationListenerAttached) {
-        window.addEventListener('deviceorientation', handleDeviceOrientation);
-        deviceOrientationListenerAttached = true;
-        setIsGyroActive(true);
-      }
-    };
+    }
     
-    initThree();
-    intersectionObs.observe(parentContainer);
+    // --- Add interaction listeners only once ---
+    if (!interactionListenersAdded.current) {
+      const handleMouseMove = (event: MouseEvent) => {
+        if (isGyroActiveRef.current || !isMounted) return;
+        targetRotationRef.current.y = (event.clientX / window.innerWidth - 0.5) * MOUSE_ROTATION_SENSITIVITY_X * 2;
+        targetRotationRef.current.x = (event.clientY / window.innerHeight - 0.5) * MOUSE_ROTATION_SENSITIVITY_Y * 2;
+      };
 
-    return () => {
-      isMounted = false;
-      if (animationFrameId) cancelAnimationFrame(animationFrameId);
-      intersectionObs.disconnect();
-      
-      window.removeEventListener('mousemove', handleGlobalMouseMove);
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('focus', handleWindowFocus);
-      window.removeEventListener('blur', handleWindowBlur);
-      if (currentMount) {
-        currentMount.removeEventListener('click', handleModelClick);
-      }
-      if (deviceOrientationListenerAttached) window.removeEventListener('deviceorientation', handleDeviceOrientation);
+      const handleScroll = () => {
+        if(!isMounted) return;
+        const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
+        targetCameraZRef.current = SCROLL_ZOOM_FACTOR_MIN + scrollPercent * (SCROLL_ZOOM_FACTOR_MAX - SCROLL_ZOOM_FACTOR_MIN);
+      };
 
-      if (modelGroupRef.current && sceneRef.current) {
-        sceneRef.current.remove(modelGroupRef.current);
-        modelGroupRef.current.traverse(child => {
-          if ((child as THREE.Mesh).isMesh) {
-            (child as THREE.Mesh).geometry.dispose();
-            const material = (child as THREE.Mesh).material;
-            if (Array.isArray(material)) material.forEach(m => m.dispose());
-            else if (material) material.dispose();
-          }
-        });
-        modelGroupRef.current = null;
-      }
-      
-      lightsRef.current.forEach(l => sceneRef.current?.remove(l));
-      lightsRef.current.forEach(l => l.dispose?.());
-      lightsRef.current = [];
-
-      if (rendererRef.current) {
-        rendererRef.current.dispose();
-        if (currentMount && rendererRef.current.domElement && currentMount.contains(rendererRef.current.domElement)) {
-          currentMount.removeChild(rendererRef.current.domElement);
+      const handleModelClick = () => {
+        if (!isJumpingRef.current && isMounted) {
+          isJumpingRef.current = true;
+          jumpStartTimeRef.current = Date.now();
         }
-        rendererRef.current = null;
-      }
-      sceneRef.current = null;
-      cameraRef.current = null;
-    };
-  }, [modelPath, onModelErrorOrMissing, containerRef, handleModelClick, gyroPermissionState, isGyroActive]);
+      };
 
+      const handleDeviceOrientation = (event: DeviceOrientationEvent) => {
+        if(!isMounted) return;
+        const { beta, gamma } = event;
+        if (beta === null || gamma === null) return;
+
+        if (initialGyroOffsetRef.current.beta === null) {
+          initialGyroOffsetRef.current = { beta, gamma };
+        }
+        const deltaBeta = beta - initialGyroOffsetRef.current.beta;
+        const deltaGamma = gamma - initialGyroOffsetRef.current.gamma;
+
+        targetRotationRef.current.x = (Math.min(Math.max(deltaBeta, -GYRO_MAX_INPUT_DEG), GYRO_MAX_INPUT_DEG) / GYRO_MAX_INPUT_DEG) * GYRO_TARGET_MODEL_MAX_ROT_RAD_X;
+        targetRotationRef.current.y = (Math.min(Math.max(deltaGamma, -GYRO_MAX_INPUT_DEG), GYRO_MAX_INPUT_DEG) / GYRO_MAX_INPUT_DEG) * GYRO_TARGET_MODEL_MAX_ROT_RAD_Y;
+      };
+      
+      if ('DeviceOrientationEvent' in window && typeof (DeviceOrientationEvent as any).requestPermission !== 'function') {
+        window.addEventListener('deviceorientation', handleDeviceOrientation);
+        isGyroActiveRef.current = true;
+      }
+      
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('scroll', handleScroll, { passive: true });
+      currentMount.addEventListener('click', handleModelClick);
+      interactionListenersAdded.current = true;
+    }
+
+    // --- Load new model when modelPath changes ---
+    if (modelPath) {
+      cleanupModel();
+      setIsLoading(true);
+      setError(null);
+      
+      gltfLoaderInstance.load(modelPath,
+        (gltf) => {
+          if (!isMounted || !sceneRef.current) return;
+          const model = gltf.scene;
+          sceneRef.current.add(model);
+          
+          const box = new THREE.Box3().setFromObject(model);
+          const size = box.getSize(new THREE.Vector3());
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const scaleFactor = maxDim > 0 ? TARGET_MODEL_VIEW_SIZE / maxDim : 1;
+          model.scale.setScalar(scaleFactor);
+          
+          const newBox = new THREE.Box3().setFromObject(model);
+          const center = newBox.getCenter(new THREE.Vector3());
+          model.position.sub(center);
+          initialModelYAfterCenteringRef.current = model.position.y;
+          
+          modelGroupRef.current = model;
+          setIsLoading(false);
+        },
+        undefined,
+        (loadError) => {
+          if (!isMounted) return;
+          console.error(`Error loading model ${modelPath}:`, loadError);
+          setError(`Failed to load model.`);
+          setIsLoading(false);
+          onModelErrorOrMissing?.();
+        }
+      );
+    } else {
+      cleanupModel();
+      setIsLoading(false);
+      if(onModelErrorOrMissing) onModelErrorOrMissing();
+    }
+    
+    return () => { isMounted = false; };
+  }, [modelPath, cleanupModel, onModelErrorOrMissing]);
+  
+  useEffect(() => {
+    const currentRenderer = rendererRef.current;
+    const currentMount = mountRef.current;
+    return () => {
+      if (animationFrameIdRef.current) cancelAnimationFrame(animationFrameIdRef.current);
+      if(currentRenderer) {
+        currentRenderer.dispose();
+         if (currentMount && currentMount.contains(currentRenderer.domElement)) {
+            currentMount.removeChild(currentRenderer.domElement);
+         }
+      }
+      // Note: interaction listeners are not removed as they are added once to the window
+    }
+  }, []);
 
   return (
     <div
       ref={mountRef}
       className={cn(
-        "w-full h-full overflow-hidden relative",
-        (isLoading || error) && "flex items-center justify-center", 
-        error && "bg-destructive/10" 
+        "w-full h-full overflow-hidden",
+        (isLoading || error) && "flex items-center justify-center",
+        error && "bg-destructive/10"
       )}
     >
-      {isLoading && !error && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted/10 z-10 pointer-events-none">
-          <Skeleton className="w-full h-full" />
-          <p className="absolute text-xs text-muted-foreground bottom-2">Loading 3D Model...</p>
-        </div>
-      )}
+      {isLoading && <Skeleton className="w-full h-full" />}
       {error && (
-        <div className="flex flex-col items-center justify-center text-destructive p-2 text-center z-10">
+        <div className="flex flex-col items-center justify-center text-destructive p-2 text-center">
           <AlertTriangle className="h-10 w-10 mb-2" />
-          <p className="text-sm font-semibold">Model Error</p>
-          <p className="text-xs mb-1">{error}</p>
-          {detailedError && (
-            <details className="text-xs text-destructive/80 mt-1 text-left bg-destructive/5 p-1 rounded max-w-full overflow-auto">
-                <summary className="cursor-pointer">Details</summary>
-                <pre className="whitespace-pre-wrap text-[10px]">{typeof detailedError === 'string' ? detailedError : JSON.stringify(detailedError, Object.getOwnPropertyNames(detailedError).filter(key => key !== 'target'), 2)}</pre>
-            </details>
-           )}
-        </div>
-      )}
-      {showGyroButton && gyroPermissionState === 'prompt' && !isLoading && !error && (
-        <div className="absolute inset-0 flex items-center justify-center z-20">
-            <Button variant="outline" size="sm" onClick={handleGyroRequest} className="bg-background/70 backdrop-blur-sm">
-                <Orbit className="mr-2 h-4 w-4" />
-                Enable Gyro Control
-            </Button>
+          <p className="text-sm font-semibold">{error}</p>
         </div>
       )}
     </div>
