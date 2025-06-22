@@ -99,7 +99,6 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
     const currentMount = mountRef.current;
     const parentContainer = containerRef.current;
 
-    // --- Initial validation ---
     if (!effectModelPath || !currentMount || !parentContainer) {
       setError(effectModelPath ? "Initialization failed: Mounting point not ready." : "No model path provided.");
       setIsLoading(false);
@@ -107,64 +106,38 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       return;
     }
     
-    // --- Reset state for new model ---
     setError(null);
     setDetailedError(null);
     setIsLoading(true);
 
-    // --- Cleanup function for the entire effect ---
-    const cleanup = () => {
-      isMounted = false;
-      if (animationFrameId) cancelAnimationFrame(animationFrameId);
-      resizeObs?.disconnect();
-      intersecObs?.disconnect();
-      
-      window.removeEventListener('mousemove', handleGlobalMouseMove);
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('focus', handleWindowFocus);
-      window.removeEventListener('blur', handleWindowBlur);
-      if (currentMount) {
-        currentMount.removeEventListener('click', handleModelClick);
-      }
-      if (deviceOrientationListenerAttached) window.removeEventListener('deviceorientation', handleDeviceOrientation);
-
-      if (modelGroupRef.current && sceneRef.current) {
-        sceneRef.current.remove(modelGroupRef.current);
-        modelGroupRef.current.traverse(child => {
-          if ((child as THREE.Mesh).isMesh) {
-            (child as THREE.Mesh).geometry.dispose();
-            const material = (child as THREE.Mesh).material;
-            if (Array.isArray(material)) material.forEach(m => m.dispose());
-            else if (material) material.dispose();
-          }
-        });
-      }
-      
-      lightsRef.current.forEach(l => sceneRef.current?.remove(l));
-      lightsRef.current.forEach(l => l.dispose?.());
-
-      if (rendererRef.current) {
-        rendererRef.current.dispose();
-        // This check is important to prevent the "not a child" error.
-        if (currentMount && currentMount.contains(rendererRef.current.domElement)) {
-          currentMount.removeChild(rendererRef.current.domElement);
-        }
-      }
-      
-      rendererRef.current = null;
-      sceneRef.current = null;
-      cameraRef.current = null;
-      modelGroupRef.current = null;
-      lightsRef.current = [];
+    const handleDeviceOrientation = (event: DeviceOrientationEvent) => {
+        if (!isWindowFocusedRef.current || !isMounted || !isIntersecting) return;
+        const { beta, gamma } = event;
+        if (beta === null || gamma === null) return;
+        if (initialGyroOffsetRef.current.beta === null) initialGyroOffsetRef.current = { beta, gamma };
+        const deltaBeta = beta - initialGyroOffsetRef.current.beta;
+        const deltaGamma = gamma - initialGyroOffsetRef.current.gamma;
+        targetRotationRef.current.x = (Math.min(Math.max(deltaBeta, -GYRO_MAX_INPUT_DEG), GYRO_MAX_INPUT_DEG) / GYRO_MAX_INPUT_DEG) * GYRO_TARGET_MODEL_MAX_ROT_RAD_X;
+        targetRotationRef.current.y = ((Math.min(Math.max(deltaGamma, -GYRO_MAX_INPUT_DEG), GYRO_MAX_INPUT_DEG) / GYRO_MAX_INPUT_DEG) * GYRO_TARGET_MODEL_MAX_ROT_RAD_Y);
+    };
+    
+    const handleGlobalMouseMove = (event: MouseEvent) => {
+        if (isGyroActive || !isWindowFocusedRef.current || !isMounted || !isIntersecting) return;
+        const normalizedX = (event.clientX / window.innerWidth) * 2 - 1;
+        const normalizedY = (event.clientY / window.innerHeight) * 2 - 1;
+        targetRotationRef.current.y = normalizedX * MOUSE_ROTATION_SENSITIVITY_X;
+        targetRotationRef.current.x = normalizedY * MOUSE_ROTATION_SENSITIVITY_Y;
+    };
+    
+    const handleScroll = () => {
+        if (!isWindowFocusedRef.current || !isMounted || !isIntersecting) return;
+        const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
+        targetCameraZRef.current = SCROLL_ZOOM_FACTOR_MIN + (SCROLL_ZOOM_FACTOR_MAX - SCROLL_ZOOM_FACTOR_MIN) * scrollPercent;
     };
 
-    const handleDeviceOrientation = (event: DeviceOrientationEvent) => { /* ... */ };
-    const handleGlobalMouseMove = (event: MouseEvent) => { /* ... */ };
-    const handleScroll = () => { /* ... */ };
-    const handleWindowFocus = () => isWindowFocusedRef.current = true;
-    const handleWindowBlur = () => isWindowFocusedRef.current = false;
+    const handleWindowFocus = () => { isWindowFocusedRef.current = true; };
+    const handleWindowBlur = () => { isWindowFocusedRef.current = false; };
     
-    // --- Main initialization logic ---
     const initThree = () => {
       if (!isMounted || !currentMount) return;
       
@@ -267,12 +240,61 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       animate();
     };
 
+    const cleanup = () => {
+      isMounted = false;
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      resizeObs?.disconnect();
+      intersecObs?.disconnect();
+      
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('focus', handleWindowFocus);
+      window.removeEventListener('blur', handleWindowBlur);
+      if (currentMount) {
+        currentMount.removeEventListener('click', handleModelClick);
+      }
+      if (deviceOrientationListenerAttached) window.removeEventListener('deviceorientation', handleDeviceOrientation);
+
+      if (modelGroupRef.current && sceneRef.current) {
+        sceneRef.current.remove(modelGroupRef.current);
+        modelGroupRef.current.traverse(child => {
+          if ((child as THREE.Mesh).isMesh) {
+            (child as THREE.Mesh).geometry.dispose();
+            const material = (child as THREE.Mesh).material;
+            if (Array.isArray(material)) material.forEach(m => m.dispose());
+            else if (material) material.dispose();
+          }
+        });
+        modelGroupRef.current = null;
+      }
+      
+      lightsRef.current.forEach(l => sceneRef.current?.remove(l));
+      lightsRef.current.forEach(l => l.dispose?.());
+      lightsRef.current = [];
+
+      if (rendererRef.current) {
+        rendererRef.current.dispose();
+        if (currentMount && currentMount.contains(rendererRef.current.domElement)) {
+          currentMount.removeChild(rendererRef.current.domElement);
+        }
+        rendererRef.current = null;
+      }
+      sceneRef.current = null;
+      cameraRef.current = null;
+    };
+
     let initCalled = false;
     resizeObs = new ResizeObserver(entries => {
       if (initCalled) return;
       for (const entry of entries) {
         if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
           initThree();
+          // Attach listeners after init
+          window.addEventListener('mousemove', handleGlobalMouseMove);
+          window.addEventListener('scroll', handleScroll, { passive: true });
+          window.addEventListener('focus', handleWindowFocus);
+          window.addEventListener('blur', handleWindowBlur);
+          currentMount.addEventListener('click', handleModelClick);
           initCalled = true;
           resizeObs?.disconnect();
         }
