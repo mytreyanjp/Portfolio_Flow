@@ -223,6 +223,8 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
     if (!cameraRef.current) {
         cameraRef.current = new THREE.PerspectiveCamera(50, currentMount.clientWidth > 0 ? currentMount.clientWidth / currentMount.clientHeight : 1, 0.1, 100);
     }
+    cameraRef.current.position.set(targetCameraXRef.current, 0, targetCameraZRef.current);
+
 
     if (!rendererRef.current) {
         rendererRef.current = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -286,9 +288,14 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, cont
       console.log(`ProjectModelViewer: Original Max Dim: ${maxDim}, Scale Factor: ${TARGET_MODEL_VIEW_SIZE / maxDim}`);
       let scaleFactor = (maxDim > 0.001) ? TARGET_MODEL_VIEW_SIZE / maxDim : 1.0;
       modelGroupRef.current.scale.set(scaleFactor, scaleFactor, scaleFactor);
+      
       const scaledBox = new THREE.Box3().setFromObject(modelGroupRef.current);
       const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
       modelGroupRef.current.position.sub(scaledCenter);
+
+      // Manual adjustment for visual centering of this specific model
+      modelGroupRef.current.position.x -= 0.6;
+
       initialModelYAfterCenteringRef.current = modelGroupRef.current.position.y;
       if (cameraRef.current) cameraRef.current.lookAt(0, 0, 0);
       handleScroll();
