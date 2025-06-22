@@ -11,11 +11,12 @@ import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
 
 // --- Singleton Loaders ---
-// Create loaders once and reuse them.
+// To avoid re-creating loaders on every component instance, we define them once.
 let gltfLoader: GLTFLoader | null = null;
 if (typeof window !== 'undefined') {
   gltfLoader = new GLTFLoader();
   const dracoLoader = new DRACOLoader();
+  // Ensure the draco decoder files are available in your public folder
   dracoLoader.setDecoderPath('/libs/draco/gltf/');
   gltfLoader.setDRACOLoader(dracoLoader);
 }
@@ -33,18 +34,23 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
   const [isInView, setIsInView] = useState(false);
 
   // --- Intersection Observer to manage visibility ---
+  // This is crucial for performance. We only render the 3D scene when the
+  // component is visible, and destroy it when it's not.
   useEffect(() => {
     const currentMount = mountRef.current;
     if (!currentMount) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setIsInView(entry.isIntersecting);
+        // Update state only when it changes to avoid unnecessary re-renders
+        if (entry.isIntersecting !== isInView) {
+          setIsInView(entry.isIntersecting);
+        }
       },
       {
-        root: null,
-        rootMargin: '100px', // A smaller margin to reduce simultaneous loads
-        threshold: 0.01,
+        root: null, // observes intersections relative to the viewport
+        rootMargin: '200px', // Start loading when it's 200px away from viewport
+        threshold: 0.01,   // Fire as soon as 1% is visible
       }
     );
 
@@ -55,7 +61,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
         observer.unobserve(currentMount);
       }
     };
-  }, []);
+  }, [isInView]); // Re-run observer setup if isInView changes (it shouldn't, but for safety)
 
   // --- Main Three.js setup and teardown effect ---
   useEffect(() => {
@@ -72,17 +78,12 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
     
     let isMounted = true;
     let animationFrameId: number;
-
-    // All Three.js objects are contained within this effect scope
     let scene: THREE.Scene | null = new THREE.Scene();
     let camera: THREE.PerspectiveCamera | null;
     let renderer: THREE.WebGLRenderer | null;
     let modelGroup: THREE.Group | null;
     
-    const targetRotation = { x: 0, y: 0 };
-    const LERP_SPEED = 0.08;
-
-    // --- Setup ---
+    // --- Scene Setup ---
     try {
       camera = new THREE.PerspectiveCamera(50, currentMount.clientWidth / currentMount.clientHeight, 0.1, 100);
       camera.position.z = 3;
@@ -92,28 +93,25 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
       directionalLight.position.set(1, 4, 2);
       scene.add(ambientLight, directionalLight);
 
+      // --- Renderer ---
+      // This is the line that was failing. We wrap it in a try-catch.
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "low-power" });
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
       renderer.setClearAlpha(0);
       currentMount.appendChild(renderer.domElement);
     } catch (e: any) {
-      console.error("Failed to create WebGLRenderer:", e);
-      setError(`WebGL Error: ${e.message || 'Context creation failed.'}`);
-      onModelErrorOrMissing?.();
-      setIsLoading(false);
+      console.error("Failed to create WebGL context:", e);
+      if (isMounted) {
+        setError(`WebGL Error: ${e.message || 'Context creation failed.'}`);
+        onModelErrorOrMissing?.();
+        setIsLoading(false);
+      }
       // Clean up partially created scene if renderer fails
       if(scene) scene.clear();
       scene = null;
-      return;
+      return; // Stop execution of this effect
     }
-
-    // --- Interaction Handlers ---
-    const handleMouseMove = (event: MouseEvent) => {
-      targetRotation.y = (event.clientX / window.innerWidth - 0.5) * 0.4;
-      targetRotation.x = (event.clientY / window.innerHeight - 0.5) * 0.3;
-    };
-    window.addEventListener('mousemove', handleMouseMove);
 
     // --- Model Loading ---
     if (gltfLoader) {
@@ -135,11 +133,11 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
           
           scene.add(modelGroup);
         },
-        undefined,
+        undefined, // onProgress callback
         (loadError) => {
           if (!isMounted) return;
           console.error(`Error loading model ${modelPath}:`, loadError);
-          setError('Failed to load model.');
+          setError('Failed to load model file.');
           onModelErrorOrMissing?.();
           setIsLoading(false);
         }
@@ -147,14 +145,14 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
     }
 
     // --- Animation Loop ---
+    // Simplified to a simple auto-rotation to isolate the WebGL context issue.
     const animate = () => {
       if (!isMounted) return;
       animationFrameId = requestAnimationFrame(animate);
       
       if (renderer && scene && camera) {
         if (modelGroup) {
-          modelGroup.rotation.x += (targetRotation.x - modelGroup.rotation.x) * LERP_SPEED;
-          modelGroup.rotation.y += (targetRotation.y - modelGroup.rotation.y) * LERP_SPEED;
+          modelGroup.rotation.y += 0.005; // Simple auto-rotation
         }
         renderer.render(scene, camera);
       }
@@ -174,9 +172,9 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
     resizeObserver.observe(currentMount);
 
     // --- Cleanup function ---
+    // This is the most critical part for fixing the context limit error.
     return () => {
       isMounted = false;
-      window.removeEventListener('mousemove', handleMouseMove);
       resizeObserver.disconnect();
       cancelAnimationFrame(animationFrameId);
 
@@ -198,9 +196,10 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
       scene = null;
       
       if (renderer) {
+        // Force the browser to release the WebGL context.
         renderer.forceContextLoss();
         renderer.dispose();
-        if (currentMount.contains(renderer.domElement)) {
+        if (currentMount && currentMount.contains(renderer.domElement)) {
           currentMount.removeChild(renderer.domElement);
         }
       }
@@ -212,6 +211,9 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
 
   const handleRetry = useCallback(() => {
     setError(null);
+    // Setting isInView to false and then true will trigger a re-setup.
+    setIsInView(false);
+    setTimeout(() => setIsInView(true), 50);
   }, []);
 
   return (
@@ -232,6 +234,7 @@ const ProjectModelViewer: React.FC<ProjectModelViewerProps> = ({ modelPath, onMo
             </Button>
         </div>
       )}
+      {/* The canvas is appended here by Three.js */}
     </div>
   );
 };
